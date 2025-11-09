@@ -19,6 +19,21 @@ import {
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
+function calculateStartingPrice(product: any) {
+    if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
+        return null;
+    }
+    const firstTier = product.pricing.tiers[0];
+    const { qty, setup = 0, unitCost = 0, margin = 0 } = firstTier;
+    if (!qty || !unitCost) return null;
+
+    const totalCost = setup + (qty * unitCost);
+    const finalPrice = totalCost / (1 - margin / 100);
+    const pricePerUnit = finalPrice / qty;
+    return pricePerUnit;
+}
+
+
 function ProductsComponent() {
     const firestore = useFirestore();
     const searchParams = useSearchParams();
@@ -75,19 +90,18 @@ function ProductsComponent() {
         // Sort products
         products.sort((a, b) => {
             const [key, order] = sortOption.split('-');
-            const valA = a[key as keyof typeof a];
-            const valB = b[key as keyof typeof b];
 
-            if (key === 'price' || key === 'popularity') {
-                 const numA = Number(valA) || 0;
-                 const numB = Number(valB) || 0;
-                 return order === 'asc' ? numA - numB : numB - numA;
-            }
-
-            if (typeof valA === 'string' && typeof valB === 'string') {
-                return order === 'asc' ? valA.localeCompare(valA) : valB.localeCompare(valA);
+            if (key === 'price') {
+                 const priceA = calculateStartingPrice(a) || Infinity;
+                 const priceB = calculateStartingPrice(b) || Infinity;
+                 return order === 'asc' ? priceA - priceB : priceB - priceA;
             }
             
+            if (key === 'name') {
+                return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+            }
+
+            // Default to popularity or other criteria if needed
             return 0;
         });
 
@@ -179,7 +193,9 @@ function ProductsComponent() {
                          <div className="flex h-64 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
                     ) : filteredAndSortedProducts.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filteredAndSortedProducts.map((product) => (
+                            {filteredAndSortedProducts.map((product) => {
+                                const startingPrice = calculateStartingPrice(product);
+                                return (
                                     <Link key={product.id} href={`/products/${product.id}`} className="block">
                                         <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col">
                                             <div className="overflow-hidden">
@@ -202,11 +218,20 @@ function ProductsComponent() {
                                             <CardContent className="p-4 flex-grow flex flex-col">
                                                 <h3 className="font-semibold text-lg truncate">{product.name}</h3>
                                                 <p className="text-sm text-muted-foreground flex-grow">{categories?.find(c => c.id === product.categoryId)?.name}</p>
-                                                <p className="font-bold text-lg mt-2">₦{product.price?.toLocaleString() || 'N/A'}</p>
+                                                {startingPrice ? (
+                                                     <p className="font-bold text-lg mt-2">
+                                                        Starts at ₦{Math.ceil(startingPrice).toLocaleString()}
+                                                     </p>
+                                                ) : (
+                                                     <p className="font-bold text-lg mt-2 text-muted-foreground">
+                                                        View Pricing
+                                                     </p>
+                                                )}
                                             </CardContent>
                                         </Card>
                                     </Link>
-                                ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-24 bg-card rounded-lg border border-dashed">
