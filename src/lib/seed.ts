@@ -17,7 +17,25 @@ const categories = [
 
 const products = [
     // Marketing Prints
-    { name: "Standard Business Cards", categoryId: "marketing-prints", featured: true },
+    { 
+        name: "Standard Business Cards", 
+        categoryId: "marketing-prints", 
+        featured: true,
+        pricing: {
+            baseCost: 5000,
+            tax: 7.5,
+            addons: [
+                { option: "Lamination", value: "Matte", type: "per_unit", cost: 5, active: true },
+                { option: "Lamination", value: "Gloss", type: "per_unit", cost: 5, active: true },
+                { option: "Corner", value: "Rounded", type: "per_order", cost: 1000, active: true },
+            ],
+            tiers: [
+                { qty: 100, setup: 2000, unitCost: 20, margin: 40 },
+                { qty: 200, setup: 2000, unitCost: 18, margin: 45 },
+                { qty: 500, setup: 2500, unitCost: 15, margin: 50 },
+            ]
+        }
+    },
     { name: "Premium Business Cards", categoryId: "marketing-prints" },
     { name: "Square Business Cards", categoryId: "marketing-prints" },
     { name: "Kraft Business Cards", categoryId: "marketing-prints" },
@@ -44,7 +62,24 @@ const products = [
     { name: "Branded Notebooks", categoryId: "marketing-prints" },
 
     // Large Format
-    { name: "Roll-Up Banner", categoryId: "large-format", featured: true },
+    { 
+        name: "Roll-Up Banner", 
+        categoryId: "large-format", 
+        featured: true,
+        pricing: {
+            baseCost: 15000,
+            tax: 7.5,
+            addons: [
+                 { option: "Stand Type", value: "Standard", type: "per_unit", cost: 0, active: true },
+                 { option: "Stand Type", value: "Premium", type: "per_unit", cost: 5000, active: true },
+            ],
+            tiers: [
+                { qty: 1, setup: 5000, unitCost: 10000, margin: 30 },
+                { qty: 5, setup: 5000, unitCost: 9500, margin: 35 },
+                { qty: 10, setup: 5000, unitCost: 9000, margin: 40 },
+            ]
+        }
+    },
     { name: "X-Stand Banner", categoryId: "large-format" },
     { name: "PVC Flex Banner", categoryId: "large-format" },
     { name: "Backdrop Banner", categoryId: "large-format" },
@@ -78,7 +113,21 @@ const products = [
     { name: "Greaseproof Paper", categoryId: "packaging" },
     { name: "Burger Wrap", categoryId: "packaging" },
     { name: "Shawarma Wrap", categoryId: "packaging" },
-    { name: "Pizza Box", categoryId: "packaging", featured: true },
+    { 
+        name: "Pizza Box", 
+        categoryId: "packaging", 
+        featured: true,
+        pricing: {
+            baseCost: 200,
+            tax: 7.5,
+            addons: [],
+            tiers: [
+                { qty: 100, setup: 1000, unitCost: 150, margin: 35 },
+                { qty: 500, setup: 1000, unitCost: 140, margin: 40 },
+                { qty: 1000, setup: 1000, unitCost: 130, margin: 45 },
+            ]
+        }
+    },
     { name: "French Fry Box", categoryId: "packaging" },
     { name: "Ice Cream Cup", categoryId: "packaging" },
     { name: "Salad Bowl", categoryId: "packaging" },
@@ -97,7 +146,21 @@ const products = [
 
     // Apparel
     { name: "T-Shirts (DTG)", categoryId: "apparel" },
-    { name: "Screen-Print T-Shirts", categoryId: "apparel", featured: true },
+    { 
+        name: "Screen-Print T-Shirts", 
+        categoryId: "apparel", 
+        featured: true,
+        pricing: {
+            baseCost: 3500,
+            tax: 7.5,
+            addons: [],
+            tiers: [
+                { qty: 20, setup: 10000, unitCost: 2500, margin: 40 },
+                { qty: 50, setup: 12000, unitCost: 2300, margin: 45 },
+                { qty: 100, setup: 15000, unitCost: 2000, margin: 50 },
+            ]
+        }
+    },
     { name: "Hoodie", categoryId: "apparel" },
     { name: "Polo Shirt", categoryId: "apparel" },
     { name: "Cap / Face Cap", categoryId: "apparel" },
@@ -179,15 +242,24 @@ export async function seedDatabase(db: Firestore) {
     const productsSnapshot = await getDocs(query(productsCollection));
     if (productsSnapshot.empty) {
         console.log('Seeding products...');
-        products.forEach((product, index) => {
-            const docRef = doc(productsCollection);
+        products.forEach((product) => {
+            const docRef = doc(productsCollection); // Auto-generates ID
+            
+            const defaultPricing = {
+                baseCost: 0,
+                tax: 7.5,
+                addons: [],
+                tiers: [],
+            };
+
             batch.set(docRef, {
                 name: product.name,
                 categoryId: product.categoryId,
                 description: `High-quality ${product.name}.`,
-                price: Math.floor(Math.random() * (200 - 20 + 1) + 20) * 1000,
+                price: Math.floor(Math.random() * (200 - 20 + 1) + 20) * 1000, // Example random price
                 featured: product.featured || false,
                 imageUrl: `https://picsum.photos/seed/${product.name.replace(/\s+/g, '-')}/600/400`,
+                pricing: product.pricing || defaultPricing,
             });
         });
     } else {
