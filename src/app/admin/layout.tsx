@@ -120,7 +120,7 @@ function SidebarMenuContent() {
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.label}>
-              <Link href={item.href} passHref legacyBehavior>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname.startsWith(item.href)}
                   onClick={() => setOpenMobile(false)}
@@ -137,7 +137,7 @@ function SidebarMenuContent() {
         <SidebarMenu>
           {settingsItems.map((item) => (
             <SidebarMenuItem key={item.label}>
-              <Link href={item.href} passHref legacyBehavior>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname.startsWith(item.href)}
                   onClick={() => setOpenMobile(false)}
