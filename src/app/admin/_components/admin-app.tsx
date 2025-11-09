@@ -18,6 +18,12 @@ import {
   Bell,
   Package,
   ChevronDown,
+  Palette,
+  DollarSign,
+  BarChart2,
+  Activity,
+  FileText,
+  ShoppingCart,
   ChevronLeft,
   PanelLeft,
 } from 'lucide-react';
@@ -63,7 +69,7 @@ const menuItems = [
     icon: Package,
     subItems: [
         { href: '/admin/products', label: 'All Products' },
-        { href: '/admin/products/new', label: 'Add New' },
+        { href: '/admin/products/new', label: 'Add Product' },
     ]
   },
   { href: '/admin/categories', label: 'Categories', icon: Tags },
@@ -71,6 +77,22 @@ const menuItems = [
   { href: '/admin/promos', label: 'Promos', icon: Megaphone },
   { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
 ];
+
+const orderManagementItems = [
+    { href: '#', label: 'Quotes', icon: FileText },
+    { href: '#', label: 'Orders', icon: ShoppingCart },
+]
+
+const toolsItems = [
+    { href: '#', label: 'Artwork', icon: Palette },
+    { href: '#', label: 'Pricing Engine', icon: DollarSign },
+];
+
+const insightsItems = [
+    { href: '#', label: 'Analytics', icon: BarChart2 },
+    { href: '#', label: 'Activity Log', icon: Activity },
+];
+
 
 const settingsItems = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
@@ -91,67 +113,85 @@ function SidebarMenuContent() {
       router.push('/admin/login');
     }
   };
+  
+  const renderMenuItems = (items: typeof menuItems) => {
+    return items.map((item) => (
+      item.subItems ? (
+        <Collapsible key={item.label} className="w-full" defaultOpen={pathname.startsWith(item.href)}>
+            <CollapsibleTrigger asChild>
+                <SidebarMenuButton
+                    isActive={pathname.startsWith(item.href) && !item.subItems.some(si => si.href === pathname)}
+                    className="w-full justify-between"
+                    tooltip={item.label}
+                >
+                    <div className="flex items-center gap-2">
+                        <item.icon className="h-5 w-5" />
+                        <span className={cn(!open && "hidden")}>{item.label}</span>
+                    </div>
+                    <ChevronDown className={cn("h-4 w-4", !open && "hidden")} />
+                </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent className={cn("pl-6", !open && "hidden")}>
+                <SidebarMenu>
+                 {item.subItems.map(subItem => (
+                    <SidebarMenuItem key={subItem.label}>
+                        <Link href={subItem.href}>
+                            <SidebarMenuButton
+                                variant="ghost"
+                                isActive={pathname === subItem.href}
+                                className="w-full justify-start"
+                            >
+                             <span className={cn(!open && "hidden")}>{subItem.label}</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                 ))}
+                 </SidebarMenu>
+            </CollapsibleContent>
+        </Collapsible>
+     ) : (
+        <SidebarMenuItem key={item.label}>
+        <Link href={item.href}>
+            <SidebarMenuButton
+            isActive={pathname === item.href}
+            className="w-full justify-start"
+            tooltip={item.label}
+            >
+                <item.icon className="h-5 w-5" />
+                <span className={cn(!open && "hidden")}>{item.label}</span>
+            </SidebarMenuButton>
+        </Link>
+        </SidebarMenuItem>
+     )
+    ));
+  };
 
   return (
     <>
-      <SidebarHeader className="border-b flex justify-between items-center p-2">
+      <SidebarHeader className="border-b flex justify-between items-center p-2 h-14">
         <div className="flex items-center gap-2 font-semibold">
           <Logo />
           <span className={cn("text-lg", !open && "hidden")}>PrintSwift Admin</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="flex-1 p-2">
-        <SidebarMenu>
-          {menuItems.map((item) => (
-             item.subItems ? (
-                <Collapsible key={item.label} className="w-full" defaultOpen={pathname.startsWith(item.href)}>
-                    <CollapsibleTrigger asChild>
-                        <SidebarMenuButton
-                            isActive={pathname.startsWith(item.href) && !item.subItems.some(si => si.href === pathname)}
-                            className="w-full justify-between"
-                            tooltip={item.label}
-                        >
-                            <div className="flex items-center gap-2">
-                                <item.icon className="h-5 w-5" />
-                                <span className={cn(!open && "hidden")}>{item.label}</span>
-                            </div>
-                            <ChevronDown className={cn("h-4 w-4", !open && "hidden")} />
-                        </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className={cn("pl-6", !open && "hidden")}>
-                        <SidebarMenu>
-                         {item.subItems.map(subItem => (
-                            <SidebarMenuItem key={subItem.label}>
-                                <Link href={subItem.href}>
-                                    <SidebarMenuButton
-                                        variant="ghost"
-                                        isActive={pathname === subItem.href}
-                                        className="w-full justify-start"
-                                    >
-                                     <span className={cn(!open && "hidden")}>{subItem.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                         ))}
-                         </SidebarMenu>
-                    </CollapsibleContent>
-                </Collapsible>
-             ) : (
-                <SidebarMenuItem key={item.label}>
-                <Link href={item.href}>
-                    <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    className="w-full justify-start"
-                    tooltip={item.label}
-                    >
-                        <item.icon className="h-5 w-5" />
-                        <span className={cn(!open && "hidden")}>{item.label}</span>
-                    </SidebarMenuButton>
-                </Link>
-                </SidebarMenuItem>
-             )
-          ))}
+        <SidebarMenu>{renderMenuItems(menuItems)}</SidebarMenu>
+        
+        <SidebarMenu className="mt-4 border-t pt-4">
+            <span className={cn("text-xs text-muted-foreground px-2 mb-2", !open && "hidden")}>Order Management</span>
+            {renderMenuItems(orderManagementItems)}
         </SidebarMenu>
+
+        <SidebarMenu className="mt-4 border-t pt-4">
+            <span className={cn("text-xs text-muted-foreground px-2 mb-2", !open && "hidden")}>Tools</span>
+            {renderMenuItems(toolsItems)}
+        </SidebarMenu>
+        
+        <SidebarMenu className="mt-4 border-t pt-4">
+            <span className={cn("text-xs text-muted-foreground px-2 mb-2", !open && "hidden")}>Insights</span>
+            {renderMenuItems(insightsItems)}
+        </SidebarMenu>
+
       </SidebarContent>
       <SidebarFooter className="border-t p-2">
         <SidebarMenu>
@@ -304,11 +344,15 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
 
   // Fallback for non-user, non-login page case during initial load.
   // This helps prevent rendering children that might rely on an authenticated user.
-  return (
-    <div className="flex h-screen items-center justify-center">
-      <LoaderCircle className="h-8 w-8 animate-spin" />
-    </div>
-  );
+  if (!isLoginPage) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoaderCircle className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  return null;
 }
 
 
@@ -323,3 +367,5 @@ export default function AdminApp({
     </FirebaseClientProvider>
   );
 }
+
+    
