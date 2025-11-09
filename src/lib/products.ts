@@ -171,6 +171,75 @@ export const productDetails: { [key: string]: any } = {
             "Resolution: 300 DPI",
             "Bleed: 3 mm on all sides"
         ]
+    },
+    'prod_busi_2': {
+        shortDescription: "Capture attention with vibrant, full-colour brochures and flyers, perfect for marketing campaigns, event promotions, and product information.",
+        keyFeatures: ["Vivid full-colour printing", "Variety of paper weights and finishes", "Folding options available (Tri-fold, Z-fold, etc.)", "Single or double-sided"],
+        availableSizes: ["A6 (105 x 148 mm)", "A5 (148 x 210 mm)", "A4 (210 x 297 mm)", "DL (99 x 210 mm)"],
+        materialOptions: ["150gsm Gloss/Matte Paper", "250gsm Silk Card", "350gsm Art Card"],
+        printOptions: ["Full-colour CMYK", "Single or double-sided"],
+        finishingOptions: ["Gloss or Matte Lamination", "Creasing/Folding"],
+        moq: "100 pieces",
+        priceRange: "₦25,000 – ₦150,000",
+        leadTime: ["2–4 working days"],
+        packaging: "Supplied flat or folded as per order, securely wrapped.",
+        bestFor: ["Marketing campaigns", "Price lists", "Event handouts", "Takeaway menus"],
+        artworkRequirements: ["File format: PDF, AI, PSD", "Colour mode: CMYK", "Resolution: 300 DPI", "Bleed: 3 mm"]
+    },
+    'prod_large_1': {
+        shortDescription: "Make a big impact at events and trade shows with our portable, easy-to-assemble roll-up banners, complete with a stand and carrying case.",
+        keyFeatures: ["High-resolution, non-curl PVC material", "Durable aluminium stand", "Lightweight and portable", "Includes a free carrying case"],
+        availableSizes: ["Standard: 850 x 2000 mm", "Wide: 1200 x 2000 mm"],
+        materialOptions: ["440gsm PVC Flex", "Light-stop Grey-back material"],
+        printOptions: ["Full-colour, high-resolution eco-solvent print"],
+        finishingOptions: ["N/A"],
+        moq: "1 unit",
+        priceRange: "₦45,000 – ₦70,000",
+        leadTime: ["1–2 working days"],
+        packaging: "Rolled into stand base, packed in a padded nylon carry bag.",
+        bestFor: ["Exhibitions", "Conferences", "In-store promotions", "Reception areas"],
+        artworkRequirements: ["File format: PDF, JPG", "Colour mode: CMYK", "Resolution: 150 DPI at full size", "No bleed required"]
+    },
+    'prod_stick_1': {
+        shortDescription: "Versatile and affordable paper stickers, perfect for branding, packaging, and promotions. Available in various shapes and sizes with a gloss or matte finish.",
+        keyFeatures: ["Full-colour printing", "Easy to peel and apply", "Ideal for indoor use", "Custom shapes available"],
+        availableSizes: ["Custom shapes and sizes (e.g., 50x50mm Circle, 80x40mm Rectangle)"],
+        materialOptions: ["80gsm Self-adhesive paper (Matte/Gloss)"],
+        printOptions: ["Full-colour CMYK"],
+        finishingOptions: ["Kiss-cut on sheets", "Die-cut to shape"],
+        moq: "100 pieces (1 A3 sheet)",
+        priceRange: "₦10,000 – ₦50,000",
+        leadTime: ["2–4 working days"],
+        packaging: "Supplied as A3 sheets or individually cut.",
+        bestFor: ["Product branding", "Packaging seals", "Promotional giveaways", "Labelling"],
+        artworkRequirements: ["File format: PDF, AI with cutlines", "Colour mode: CMYK", "Resolution: 300 DPI"]
+    },
+    'prod_app_1': {
+        shortDescription: "High-quality custom t-shirts for your brand, event, or team. We offer various printing methods to bring your design to life with vibrant colours and durability.",
+        keyFeatures: ["Wide range of colours and sizes", "DTG, screen print, and vinyl options", "Comfortable and durable fabrics", "Unisex, male, and female fits"],
+        availableSizes: ["S, M, L, XL, XXL, XXXL"],
+        materialOptions: ["100% Cotton (various weights)", "Cotton/Poly blends"],
+        printOptions: ["Direct-to-Garment (DTG) for full-colour", "Screen Printing for bulk orders", "Vinyl Flex for names and numbers"],
+        finishingOptions: ["Custom neck labels", "Folding and bagging"],
+        moq: "1 unit (DTG), 20 units (Screen Print)",
+        priceRange: "₦8,500 – ₦25,000 per shirt",
+        leadTime: ["3–7 working days, depending on quantity and method"],
+        packaging: "Individually folded and packed.",
+        bestFor: ["Company uniforms", "Event merchandise", "Fashion brands", "Team apparel"],
+        artworkRequirements: ["File format: PNG (transparent background for DTG), AI, EPS (for Screen Print)", "Resolution: 300 DPI"]
+    },
+    'prod_promo_3': {
+        shortDescription: "Brighten up desks with custom printed mugs. Perfect for corporate gifts, promotional items, or personal use. Your design is printed in vibrant, full colour.",
+        keyFeatures: ["High-quality ceramic mug", "Full-colour, wrap-around printing", "Dishwasher and microwave safe", "Durable sublimation print"],
+        availableSizes: ["11oz (standard)"],
+        materialOptions: ["White Ceramic"],
+        printOptions: ["Dye-sublimation for vivid, permanent colours"],
+        finishingOptions: ["N/A"],
+        moq: "1 unit",
+        priceRange: "₦4,500 – ₦8,000 per mug",
+        leadTime: ["1–3 working days"],
+        packaging: "Securely packed in a plain white or custom box.",
+        bestFor: ["Corporate gifts", "Promotional giveaways", "Personalized gifts", "Office use"],
+        artworkRequirements: ["File format: JPG, PNG, PDF", "Colour mode: RGB", "Resolution: 300 DPI"]
     }
-    // Add other product details here
 };
