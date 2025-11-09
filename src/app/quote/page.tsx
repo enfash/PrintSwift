@@ -20,8 +20,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoaderCircle, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { allProducts } from '@/lib/products';
+import { useSearchParams } from 'next/navigation';
 
 const quoteFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -35,7 +36,10 @@ const quoteFormSchema = z.object({
 
 const products = [...allProducts.map(p => p.name), "Other"];
 
-export default function QuotePage() {
+function QuoteForm() {
+  const searchParams = useSearchParams();
+  const productQuery = searchParams.get('product');
+
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState('');
@@ -46,6 +50,7 @@ export default function QuotePage() {
       name: '',
       email: '',
       company: '',
+      product: productQuery || undefined,
       quantity: 1,
       details: '',
     },
@@ -231,4 +236,13 @@ export default function QuotePage() {
       </Card>
     </div>
   );
+}
+
+
+export default function QuotePage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <QuoteForm />
+        </Suspense>
+    )
 }

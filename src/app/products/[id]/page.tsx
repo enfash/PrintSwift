@@ -33,7 +33,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                     Detailed information for this product is coming soon.
                 </p>
                  <Button asChild className="mt-8">
-                    <Link href="/quote">Request a Quote</Link>
+                    <Link href={`/quote?product=${product.name}`}>Request a Quote</Link>
                 </Button>
             </div>
         </div>
@@ -83,7 +83,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
             <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" asChild>
-                    <Link href="/quote">Request a Quote</Link>
+                    <Link href={`/quote?product=${product.name}`}>Request a Quote</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                     <Link href="/contact">Ask a Question <ArrowRight className="ml-2" /></Link>
