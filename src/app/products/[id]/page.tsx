@@ -24,7 +24,8 @@ function calculateCustomerPrice(tier: any) {
     };
 };
 
-export default function ProductDetailPage({ params: { id } }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const firestore = useFirestore();
   
   const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', id) : null, [firestore, id]);
