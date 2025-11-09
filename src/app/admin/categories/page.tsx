@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import Link from 'next/link';
 
 
 export default function CategoriesPage() {
@@ -56,8 +57,10 @@ export default function CategoriesPage() {
         <>
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Product Categories</h1>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Category
+                <Button asChild>
+                    <Link href="/admin/categories/new">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Category
+                    </Link>
                 </Button>
             </div>
             <Card className="mt-6">
@@ -108,7 +111,9 @@ export default function CategoriesPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/admin/categories/${category.id}`}>Edit</Link>
+                                                    </DropdownMenuItem>
                                                     <AlertDialogTrigger asChild>
                                                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                                                     </AlertDialogTrigger>
