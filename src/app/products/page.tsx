@@ -11,52 +11,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
-    Briefcase,
-    Printer,
-    Layers,
-    Box,
-    Shirt,
-    Gift,
-    MonitorPlay,
-    Palette,
-    PartyPopper,
     Search,
-    Package
+    Package,
+    LoaderCircle
 } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { allProducts } from '@/lib/products';
-
-
-const categories = [
-  { name: 'Marketing & Business Prints', icon: Briefcase },
-  { name: 'Large Format & Outdoor Prints', icon: Printer },
-  { name: 'Stickers & Labels', icon: Layers },
-  { name: 'Packaging Prints', icon: Box },
-  { name: 'Apparel & Textile Printing', icon: Shirt },
-  { name: 'Promotional Items', icon: Gift },
-  { name: 'Signage & Display Systems', icon: MonitorPlay },
-  { name: 'Digital Services', icon: Palette },
-  { name: 'Event & Personal Prints', icon: PartyPopper },
-];
-
-function findImage(id: string) {
-  return PlaceHolderImages.find((img) => img.id === id);
-}
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy as firestoreOrderBy } from 'firebase/firestore';
 
 export default function ProductsPage() {
+    const firestore = useFirestore();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [sortOption, setSortOption] = useState('popularity-desc');
 
-    const handleCategoryChange = (categoryName: string, checked: boolean | string) => {
+    const categoriesQuery = useMemoFirebase(() => collection(firestore, 'product_categories'), [firestore]);
+    const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesQuery);
+
+    const productsQuery = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+    const { data: allProducts, isLoading: isLoadingProducts } = useCollection<any>(productsQuery);
+
+    const handleCategoryChange = (categoryId: string, checked: boolean | string) => {
         if (checked) {
-            setSelectedCategories(prev => [...prev, categoryName]);
+            setSelectedCategories(prev => [...prev, categoryId]);
         } else {
-            setSelectedCategories(prev => prev.filter(c => c !== categoryName));
+            setSelectedCategories(prev => prev.filter(id => id !== categoryId));
         }
     };
 
     const filteredAndSortedProducts = useMemo(() => {
+        if (!allProducts) return [];
         let products = allProducts;
 
         // Filter by search term
@@ -66,7 +49,7 @@ export default function ProductsPage() {
 
         // Filter by categories
         if (selectedCategories.length > 0) {
-            products = products.filter(p => selectedCategories.includes(p.category));
+            products = products.filter(p => selectedCategories.includes(p.categoryId));
         }
 
         // Sort products
@@ -75,17 +58,23 @@ export default function ProductsPage() {
             const valA = a[key as keyof typeof a];
             const valB = b[key as keyof typeof b];
 
+            if (key === 'price' || key === 'popularity') {
+                 const numA = Number(valA) || 0;
+                 const numB = Number(valB) || 0;
+                 return order === 'asc' ? numA - numB : numB - numA;
+            }
+
             if (typeof valA === 'string' && typeof valB === 'string') {
                 return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
             }
-            if (typeof valA === 'number' && typeof valB === 'number') {
-                return order === 'asc' ? valA - valB : valB - valA;
-            }
+            
             return 0;
         });
 
         return products;
-    }, [searchTerm, selectedCategories, sortOption]);
+    }, [searchTerm, selectedCategories, sortOption, allProducts]);
+
+    const isLoading = isLoadingCategories || isLoadingProducts;
 
     return (
         <div className="container mx-auto max-w-7xl px-4 py-16 md:py-24">
@@ -118,18 +107,20 @@ export default function ProductsPage() {
                             </div>
                             <div>
                                 <h3 className="font-semibold mb-3">Category</h3>
-                                <div className="space-y-3">
-                                    {categories.map(category => (
-                                        <div key={category.name} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={category.name}
-                                                onCheckedChange={(checked) => handleCategoryChange(category.name, checked)}
-                                                checked={selectedCategories.includes(category.name)}
-                                            />
-                                            <Label htmlFor={category.name} className="font-normal cursor-pointer">{category.name}</Label>
-                                        </div>
-                                    ))}
-                                </div>
+                                {isLoadingCategories ? <p>Loading categories...</p> : (
+                                    <div className="space-y-3">
+                                        {categories?.map(category => (
+                                            <div key={category.id} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={category.id}
+                                                    onCheckedChange={(checked) => handleCategoryChange(category.id, checked)}
+                                                    checked={selectedCategories.includes(category.id)}
+                                                />
+                                                <Label htmlFor={category.id} className="font-normal cursor-pointer">{category.name}</Label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -139,7 +130,7 @@ export default function ProductsPage() {
                 <main className="lg:col-span-3">
                     <div className="flex justify-between items-center mb-6">
                         <p className="text-sm text-muted-foreground">
-                            Showing {filteredAndSortedProducts.length} of {allProducts.length} products
+                            {isLoading ? 'Loading...' : `Showing ${filteredAndSortedProducts.length} of ${allProducts?.length || 0} products`}
                         </p>
                         <div className="flex items-center gap-2">
                             <Label htmlFor="sort-by" className="text-sm">Sort by:</Label>
@@ -158,23 +149,22 @@ export default function ProductsPage() {
                         </div>
                     </div>
                     
-                    {filteredAndSortedProducts.length > 0 ? (
+                    {isLoadingProducts ? (
+                         <div className="flex h-64 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+                    ) : filteredAndSortedProducts.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filteredAndSortedProducts.map((product) => {
-                                const image = findImage(product.id);
-                                return (
+                            {filteredAndSortedProducts.map((product) => (
                                     <Link key={product.id} href={`/products/${product.id}`} className="block">
                                         <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col">
                                             <div className="overflow-hidden">
                                                 <div className="aspect-[4/3] relative">
-                                                    {image ? (
+                                                    {product.imageUrl ? (
                                                         <Image
-                                                            src={image.imageUrl}
+                                                            src={product.imageUrl}
                                                             alt={product.name}
                                                             fill
                                                             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                                                             sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                                                            data-ai-hint={image.imageHint}
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -185,13 +175,12 @@ export default function ProductsPage() {
                                             </div>
                                             <CardContent className="p-4 flex-grow flex flex-col">
                                                 <h3 className="font-semibold text-lg truncate">{product.name}</h3>
-                                                <p className="text-sm text-muted-foreground flex-grow">{product.category}</p>
-                                                <p className="font-bold text-lg mt-2">₦{product.price.toLocaleString()}</p>
+                                                <p className="text-sm text-muted-foreground flex-grow">{product.categoryName}</p>
+                                                <p className="font-bold text-lg mt-2">₦{product.price?.toLocaleString() || 'N/A'}</p>
                                             </CardContent>
                                         </Card>
                                     </Link>
-                                );
-                            })}
+                                ))}
                         </div>
                     ) : (
                         <div className="text-center py-24 bg-card rounded-lg border border-dashed">

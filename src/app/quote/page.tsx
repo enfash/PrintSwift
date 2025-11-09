@@ -16,29 +16,44 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoaderCircle, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState, Suspense } from 'react';
-import { allProducts } from '@/lib/products';
+import { useState, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import {
+  useCollection,
+  useFirestore,
+  addDocumentNonBlocking,
+  useMemoFirebase,
+} from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
 
 const quoteFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
+  phone: z.string().min(10, { message: 'Please enter a valid phone number.'}),
   company: z.string().optional(),
-  product: z.string({ required_error: 'Please select a product.' }),
+  productName: z.string({ required_error: 'Please select a product.' }),
   quantity: z.coerce.number().min(1, { message: 'Quantity must be at least 1.' }),
   artwork: z.any().optional(),
   details: z.string().min(10, { message: 'Please provide at least a brief description.' }),
 });
 
-const products = [...allProducts.map(p => p.name), "Other"];
-
 function QuoteForm() {
   const searchParams = useSearchParams();
-  const productQuery = searchParams.get('product');
+  const productNameQuery = searchParams.get('product');
+  const firestore = useFirestore();
+
+  const productsRef = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+  const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
 
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,25 +64,48 @@ function QuoteForm() {
     defaultValues: {
       name: '',
       email: '',
+      phone: '',
       company: '',
-      product: productQuery || undefined,
+      productName: productNameQuery || undefined,
       quantity: 1,
       details: '',
     },
   });
 
+  useEffect(() => {
+    if (productNameQuery) {
+        form.setValue('productName', productNameQuery);
+    }
+  }, [productNameQuery, form]);
+
   async function onSubmit(values: z.infer<typeof quoteFormSchema>) {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log(values);
-    setIsSubmitting(false);
-    form.reset();
-    setFileName('');
-    toast({
-      title: 'Quote Request Sent!',
-      description: "Thank you! We've received your request and will get back to you with a quote within 1-2 business days.",
-    });
+    const quoteRequestsRef = collection(firestore, 'quote_requests');
+    const selectedProduct = products?.find(p => p.name === values.productName);
+
+    try {
+        addDocumentNonBlocking(quoteRequestsRef, {
+            ...values,
+            productId: selectedProduct?.id || 'other',
+            submissionDate: serverTimestamp(),
+        });
+
+        setIsSubmitting(false);
+        form.reset();
+        setFileName('');
+        toast({
+            title: 'Quote Request Sent!',
+            description: "Thank you! We've received your request and will get back to you with a quote within 1-2 business days.",
+        });
+    } catch (error) {
+        console.error("Error submitting quote:", error);
+        setIsSubmitting(false);
+        toast({
+            variant: "destructive",
+            title: 'Submission Failed',
+            description: "There was an error sending your request. Please try again.",
+        });
+    }
   }
 
   return (
@@ -115,7 +153,21 @@ function QuoteForm() {
                   )}
                 />
               </div>
-              <FormField
+               <div className="grid sm:grid-cols-2 gap-6">
+                 <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                            <Input placeholder="+234 800 000 0000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                <FormField
                   control={form.control}
                   name="company"
                   render={({ field }) => (
@@ -128,23 +180,25 @@ function QuoteForm() {
                     </FormItem>
                   )}
                 />
+              </div>
 
               <h3 className="text-lg font-medium border-b pb-2 pt-4">Order Details</h3>
               <div className="grid sm:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="product"
+                  name="productName"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Product</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a product" />
+                            <SelectValue placeholder={isLoadingProducts ? "Loading products..." : "Select a product"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          {products?.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                          <SelectItem value="Other">Other (please specify in details)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -241,7 +295,7 @@ function QuoteForm() {
 
 export default function QuotePage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>}>
             <QuoteForm />
         </Suspense>
     )
