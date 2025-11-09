@@ -17,7 +17,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, LoaderCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -28,12 +28,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { format } from 'date-fns';
 
-const quotes = [
-    { id: 'QT-001', customer: 'Alice Johnson', product: 'Business Cards', date: '2023-10-26', status: 'Pending' },
-    { id: 'QT-002', customer: 'Ben Carter', product: '12oz Paper Cup', date: '2023-10-25', status: 'Sent' },
-    { id: 'QT-003', customer: 'Cathy Davis', product: 'Roll-Up Banner', date: '2023-10-24', status: 'Approved' },
-];
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -42,14 +40,17 @@ const getStatusVariant = (status: string) => {
         case 'Sent':
             return 'secondary';
         case 'Pending':
-            return 'outline';
         default:
-            return 'secondary';
+            return 'outline';
     }
 };
 
 export default function QuotesPage() {
     const router = useRouter();
+    const firestore = useFirestore();
+    const quotesRef = useMemoFirebase(() => firestore ? collection(firestore, 'quote_requests') : null, [firestore]);
+    const { data: quotes, isLoading } = useCollection<any>(quotesRef);
+
     return (
         <>
             <div className="flex items-center justify-between">
@@ -69,7 +70,6 @@ export default function QuotesPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Quote ID</TableHead>
                                 <TableHead>Customer</TableHead>
                                 <TableHead>Product</TableHead>
                                 <TableHead>Date</TableHead>
@@ -80,15 +80,22 @@ export default function QuotesPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {quotes.length > 0 ? quotes.map(quote => (
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="h-24 text-center">
+                                        <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : quotes && quotes.length > 0 ? quotes.map(quote => (
                                 <TableRow key={quote.id} onClick={() => router.push('/admin/quotes/new')} className="cursor-pointer">
-                                    <TableCell className="font-medium">{quote.id}</TableCell>
-                                    <TableCell>{quote.customer}</TableCell>
-                                    <TableCell>{quote.product}</TableCell>
-                                    <TableCell>{quote.date}</TableCell>
+                                    <TableCell className="font-medium">{quote.name}</TableCell>
+                                    <TableCell>{quote.productName}</TableCell>
                                     <TableCell>
-                                        <Badge variant={getStatusVariant(quote.status)}>
-                                            {quote.status}
+                                        {quote.submissionDate ? format(quote.submissionDate.toDate(), 'PPP') : 'N/A'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={getStatusVariant(quote.status || 'Pending')}>
+                                            {quote.status || 'Pending'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -110,7 +117,7 @@ export default function QuotesPage() {
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">
+                                    <TableCell colSpan={5} className="h-24 text-center">
                                         No quote requests found.
                                     </TableCell>
                                 </TableRow>

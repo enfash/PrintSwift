@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, LoaderCircle } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -20,14 +20,15 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
-const categories = [
-    { id: '1', name: 'Paper Cups', slug: 'paper-cups', order: 1, imageUrl: 'https://picsum.photos/seed/cups/40/40' },
-    { id: '2', name: 'Stickers', slug: 'stickers', order: 2, imageUrl: 'https://picsum.photos/seed/stickers/40/40' },
-    { id: '3', name: 'Banners', slug: 'banners', order: 3, imageUrl: 'https://picsum.photos/seed/banners/40/40' },
-];
 
 export default function CategoriesPage() {
+    const firestore = useFirestore();
+    const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
+    const { data: categories, isLoading } = useCollection<any>(categoriesRef);
+
     return (
         <>
             <div className="flex items-center justify-between">
@@ -48,27 +49,31 @@ export default function CategoriesPage() {
                                 <TableHead className="hidden w-[100px] sm:table-cell">Image</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Slug</TableHead>
-                                <TableHead>Order</TableHead>
                                 <TableHead>
                                     <span className="sr-only">Actions</span>
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {categories.map(category => (
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : categories && categories.length > 0 ? categories.map(category => (
                                 <TableRow key={category.id}>
                                      <TableCell className="hidden sm:table-cell">
                                         <Image
                                             alt={category.name}
                                             className="aspect-square rounded-md object-cover"
                                             height="40"
-                                            src={category.imageUrl}
+                                            src={`https://picsum.photos/seed/${category.id}/40/40`}
                                             width="40"
                                         />
                                     </TableCell>
                                     <TableCell className="font-medium">{category.name}</TableCell>
-                                    <TableCell>{category.slug}</TableCell>
-                                    <TableCell>{category.order}</TableCell>
+                                    <TableCell>{category.id}</TableCell>
                                     <TableCell>
                                        <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -85,7 +90,13 @@ export default function CategoriesPage() {
                                         </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        No categories found. Seed the database from the dashboard.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
@@ -93,5 +104,3 @@ export default function CategoriesPage() {
         </>
     );
 }
-
-    

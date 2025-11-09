@@ -18,7 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -28,15 +28,23 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-// Mock data based on wireframe
-const products = [
-    { id: '1', name: 'Business Cards', category: 'Prints', status: 'Published', imageUrl: 'https://picsum.photos/seed/1/40/40' },
-    { id: '2', name: '12oz Paper Cup', category: 'Cups', status: 'Published', imageUrl: 'https://picsum.photos/seed/2/40/40' },
-    { id: '3', name: 'Roll-Up Banner', category: 'Banners', status: 'Draft', imageUrl: 'https://picsum.photos/seed/3/40/40' },
-];
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 export default function ProductsPage() {
+    const firestore = useFirestore();
+    const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
+    const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
+    
+    const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
+    const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
+
+    const getCategoryName = (categoryId: string) => {
+        return categories?.find(c => c.id === categoryId)?.name || 'N/A';
+    };
+
+    const isLoading = isLoadingProducts || isLoadingCategories;
+
     return (
         <>
             <div className="flex items-center justify-between">
@@ -68,22 +76,28 @@ export default function ProductsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {products.length > 0 ? products.map(product => (
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="h-24 text-center">
+                                        <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : products && products.length > 0 ? products.map(product => (
                                 <TableRow key={product.id}>
                                     <TableCell className="hidden sm:table-cell">
                                         <Image
                                             alt={product.name}
                                             className="aspect-square rounded-md object-cover"
                                             height="40"
-                                            src={product.imageUrl}
+                                            src={product.imageUrl || 'https://placehold.co/40x40'}
                                             width="40"
                                         />
                                     </TableCell>
                                     <TableCell className="font-medium">{product.name}</TableCell>
-                                    <TableCell>{product.category}</TableCell>
+                                    <TableCell>{getCategoryName(product.categoryId)}</TableCell>
                                     <TableCell>
                                         <Badge variant={product.status === 'Published' ? 'default' : 'secondary'}>
-                                            {product.status}
+                                            {product.status || 'Draft'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -105,7 +119,7 @@ export default function ProductsPage() {
                             )) : (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-24 text-center">
-                                        No products found.
+                                        No products found. Seed the database from the dashboard.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -116,5 +130,3 @@ export default function ProductsPage() {
         </>
     );
 }
-
-    

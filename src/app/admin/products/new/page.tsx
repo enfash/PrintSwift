@@ -10,8 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UploadCloud } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 export default function NewProductPage() {
+    const firestore = useFirestore();
+    const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
+    const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
+
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
@@ -40,12 +46,14 @@ export default function NewProductPage() {
                            <Label htmlFor="product-category">Category</Label>
                             <Select>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a category" />
+                                    <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select a category"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="prints">Prints</SelectItem>
-                                    <SelectItem value="cups">Cups</SelectItem>
-                                    <SelectItem value="banners">Banners</SelectItem>
+                                    {categories?.map(category => (
+                                        <SelectItem key={category.id} value={category.id}>
+                                            {category.name}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -154,5 +162,3 @@ export default function NewProductPage() {
         </div>
     );
 }
-
-    
