@@ -5,11 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Award, Package, Clock, Users, LoaderCircle, DollarSign } from 'lucide-react';
+import { Package, LoaderCircle, DollarSign } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc }from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 function calculateCustomerPrice(tier: any) {
@@ -24,11 +24,18 @@ function calculateCustomerPrice(tier: any) {
     };
 };
 
-export default function ProductDetailPage({ params: { id } }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const firestore = useFirestore();
   
   const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', id) : null, [firestore, id]);
   const { data: product, isLoading, error } = useDoc<any>(productRef);
+
+  const categoryRef = useMemoFirebase(() => {
+    if (!firestore || !product?.categoryId) return null;
+    return doc(firestore, 'product_categories', product.categoryId);
+  }, [firestore, product?.categoryId]);
+  const { data: category } = useDoc<any>(categoryRef);
 
   if (isLoading) {
     return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
@@ -69,7 +76,13 @@ export default function ProductDetailPage({ params: { id } }: { params: { id: st
           {/* Product Details */}
           <div className="space-y-8">
             <div>
-              {product.categoryName && <Badge variant="secondary" className="mb-2">{product.categoryName}</Badge>}
+              {category && (
+                <Link href={`/products?category=${category.id}`}>
+                    <Badge variant="secondary" className="mb-2 hover:bg-muted transition-colors">
+                        {category.name}
+                    </Badge>
+                </Link>
+              )}
               <h1 className="text-3xl md:text-4xl font-bold font-headline">{product.name}</h1>
               <p className="mt-3 text-lg text-muted-foreground">
                 {product.description}
