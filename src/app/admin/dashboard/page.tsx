@@ -12,9 +12,6 @@ import {
   Tags,
   MessageSquareQuote,
   Megaphone,
-  PlusCircle,
-  Upload,
-  Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -57,29 +54,25 @@ const quickLinks = [
 
 export default function Dashboard() {
   return (
-    <>
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <Button variant="outline">Quick Links</Button>
-      </div>
-
-      {/* Top Stats */}
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              {stat.icon}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="mt-8 grid gap-8 md:grid-cols-2">
-        {/* Recent Activity Feed */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="md:col-span-2 space-y-8">
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {stats.map((stat) => (
+                <Card key={stat.title}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                    {stat.icon}
+                    </CardHeader>
+                    <CardContent>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    </CardContent>
+                </Card>
+                ))}
+            </div>
+        </div>
+        
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
@@ -101,8 +94,9 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Quick Links */}
+      <div className="md:col-span-1">
         <Card>
           <CardHeader>
             <CardTitle>Quick Links</CardTitle>
@@ -118,6 +112,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }
