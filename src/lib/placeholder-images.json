@@ -29,6 +29,84 @@
       "description": "A canvas tote bag with a custom graphic print.",
       "imageUrl": "https://images.unsplash.com/photo-1663573690125-d326a87a2535?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx0b3RlJTIwYmFnfGVufDB8fHx8MTc2MjYyMTcyMHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "tote bag"
+    },
+    {
+      "id": "vinyl-banner",
+      "description": "A large vinyl banner for an event.",
+      "imageUrl": "https://images.unsplash.com/photo-1612983656848-3bcea6bf7d0d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx2aW55bCUyMGJhbm5lcnxlbnwwfHx8fDE3NjI2NTIwNjN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vinyl banner"
+    },
+    {
+      "id": "flyers",
+      "description": "A stack of colorful marketing flyers.",
+      "imageUrl": "https://images.unsplash.com/photo-1599131013520-1b2670e370b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtYXJrZXRpbmclMjBmbHllcnN8ZW58MHx8fHwxNzYyNjUyMDYzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "marketing flyers"
+    },
+    {
+      "id": "custom-tshirt",
+      "description": "A person wearing a custom printed t-shirt.",
+      "imageUrl": "https://images.unsplash.com/photo-1620045284735-21555f138704?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjdXN0b20lMjB0LXNoaXJ0fGVufDB8fHx8MTc2MjYyMTM1OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "custom t-shirt"
+    },
+    {
+      "id": "branded-envelope",
+      "description": "A branded envelope with a company logo.",
+      "imageUrl": "https://images.unsplash.com/photo-1709467585708-464df45fad00?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxicmFuZGVkJTIwZW52ZWxvcGV8ZW58MHx8fHwxNzYyNjUyMDY0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "branded envelope"
+    },
+    {
+      "id": "gift-box",
+      "description": "A beautifully decorated corporate gift box.",
+      "imageUrl": "https://images.unsplash.com/photo-1625552186152-668cd2f0b707?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Z2lmdCUyMGJveHxlbnwwfHx8fDE3NjI2MDE5ODh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gift box"
+    },
+    {
+      "id": "rollup-banner",
+      "description": "A roll-up banner stand for a trade show.",
+      "imageUrl": "https://images.unsplash.com/photo-1683227235812-dbb413c77b26?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyb2xsdXAlMjBiYW5uZXJ8ZW58MHx8fHwxNzYyNjUyMDYzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "rollup banner"
+    },
+    {
+      "id": "stickers",
+      "description": "A sheet of custom die-cut stickers.",
+      "imageUrl": "https://images.unsplash.com/photo-1761276297637-4418549ead2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjdXN0b20lMjBzdGlja2Vyc3xlbnwwfHx8fDE3NjI2NTIwNjN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "custom stickers"
+    },
+    {
+      "id": "mailing-bag",
+      "description": "A poly mailer bag with custom branding.",
+      "imageUrl": "https://images.unsplash.com/photo-1641928748469-f5aaf3e5da5e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYWlsaW5nJTIwYmFnfGVufDB8fHx8MTc2MjY1MjA2M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mailing bag"
+    },
+    {
+      "id": "about-us-banner",
+      "description": "A diverse team collaborating in a modern office.",
+      "imageUrl": "https://images.unsplash.com/photo-1622675363311-3e1904dc1885?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkaXZlcnNlJTIwdGVhbXxlbnwwfHx8fDE3NjI1NjMyNDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "diverse team"
+    },
+    {
+      "id": "team-member-1",
+      "description": "Portrait of a female CEO.",
+      "imageUrl": "https://images.unsplash.com/photo-1600275669439-14e40452d20b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmZW1hbGUlMjBjZW98ZW58MHx8fHwxNzYyNjUyMDYzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "female ceo"
+    },
+    {
+      "id": "team-member-2",
+      "description": "Portrait of a male production manager.",
+      "imageUrl": "https://images.unsplash.com/photo-1543132220-4bf3de6e10ae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtYWxlJTIwbWFuYWdlcnxlbnwwfHx8fDE3NjI1Nzc0MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "male manager"
+    },
+    {
+      "id": "team-member-3",
+      "description": "Portrait of a female designer.",
+      "imageUrl": "https://images.unsplash.com/photo-1753162658216-13e9cb395982?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmZW1hbGUlMjBkZXNpZ25lcnxlbnwwfHx8fDE3NjI2NTIwNjN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "female designer"
+    },
+    {
+      "id": "team-member-4",
+      "description": "Portrait of a male marketing director.",
+      "imageUrl": "https://images.unsplash.com/photo-1543132220-92cfd9fc2a13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtYWxlJTIwZGlyZWN0b3J8ZW58MHx8fHwxNzYyNjUyMDYzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "male director"
     }
   ]
 }
