@@ -10,38 +10,82 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
-  Package,
-  Gift,
-  Megaphone,
-  NotebookText,
-  Shirt,
-  Presentation,
-  Search,
+    Briefcase,
+    Printer,
+    Layers,
+    Box,
+    Shirt,
+    Gift,
+    MonitorPlay,
+    Palette,
+    PartyPopper,
+    Search,
+    Package
 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const allProducts = [
-    { id: 'prod_1', name: 'Custom Mugs', imageId: 'custom-mug', category: 'Corporate Gifts', price: 15.99, popularity: 95 },
-    { id: 'prod_2', name: 'Branded Boxes', imageId: 'branded-box', category: 'Branded Packaging', price: 5.50, popularity: 80 },
-    { id: 'prod_3', name: 'Premium Business Cards', imageId: 'business-card', category: 'Business Stationery', price: 0.25, popularity: 98 },
-    { id: 'prod_4', name: 'Eco-Friendly Tote Bags', imageId: 'tote-bag', category: 'Custom Apparel', price: 12.00, popularity: 90 },
-    { id: 'prod_5', name: 'Vinyl Banners', imageId: 'vinyl-banner', category: 'Signage & Banners', price: 75.00, popularity: 75 },
-    { id: 'prod_6', name: 'Flyers & Leaflets', imageId: 'flyers', category: 'Marketing Materials', price: 0.10, popularity: 88 },
-    { id: 'prod_7', name: 'Custom T-Shirts', imageId: 'custom-tshirt', category: 'Custom Apparel', price: 25.00, popularity: 92 },
-    { id: 'prod_8', name: 'Branded Envelopes', imageId: 'branded-envelope', category: 'Business Stationery', price: 0.30, popularity: 70 },
-    { id: 'prod_9', name: 'Gift Boxes', imageId: 'gift-box', category: 'Corporate Gifts', price: 8.00, popularity: 85 },
-    { id: 'prod_10', name: 'Roll-Up Banners', imageId: 'rollup-banner', category: 'Signage & Banners', price: 120.00, popularity: 82 },
-    { id: 'prod_11', name: 'Sticker Sheets', imageId: 'stickers', category: 'Marketing Materials', price: 1.50, popularity: 93 },
-    { id: 'prod_12', name: 'Mailing Bags', imageId: 'mailing-bag', category: 'Branded Packaging', price: 1.20, popularity: 65 },
+    // 1. Marketing & Business Prints
+    { id: 'prod_busi_1', name: 'Business Cards', imageId: 'business-card', category: 'Marketing & Business Prints', price: 15000, popularity: 98 },
+    { id: 'prod_busi_2', name: 'Brochures / Flyers', imageId: 'flyers', category: 'Marketing & Business Prints', price: 25000, popularity: 95 },
+    { id: 'prod_busi_3', name: 'Posters (A3-A0)', imageId: 'posters', category: 'Marketing & Business Prints', price: 5000, popularity: 88 },
+    { id: 'prod_busi_4', name: 'Presentation Folders', imageId: 'folders', category: 'Marketing & Business Prints', price: 35000, popularity: 82 },
+    { id: 'prod_busi_5', name: 'Letterheads', imageId: 'letterhead', category: 'Marketing & Business Prints', price: 20000, popularity: 90 },
+
+    // 2. Large Format & Outdoor Prints
+    { id: 'prod_large_1', name: 'Roll-Up Banners', imageId: 'rollup-banner', category: 'Large Format & Outdoor Prints', price: 45000, popularity: 92 },
+    { id: 'prod_large_2', name: 'PVC Flex Banners', imageId: 'vinyl-banner', category: 'Large Format & Outdoor Prints', price: 15000, popularity: 85 },
+    { id: 'prod_large_3', name: 'Backdrop Banners', imageId: 'backdrop-banner', category: 'Large Format & Outdoor Prints', price: 65000, popularity: 89 },
+    { id: 'prod_large_4', name: 'Wall Murals', imageId: 'wall-mural', category: 'Large Format & Outdoor Prints', price: 25000, popularity: 78 },
+
+    // 3. Stickers & Labels
+    { id: 'prod_stick_1', name: 'Paper Stickers', imageId: 'stickers', category: 'Stickers & Labels', price: 10000, popularity: 93 },
+    { id: 'prod_stick_2', name: 'Vinyl Stickers', imageId: 'vinyl-stickers', category: 'Stickers & Labels', price: 18000, popularity: 91 },
+    { id: 'prod_stick_3', name: 'Product Labels', imageId: 'product-labels', category: 'Stickers & Labels', price: 12000, popularity: 87 },
+
+    // 4. Packaging Prints
+    { id: 'prod_pack_1', name: 'Branded Paper Bags', imageId: 'paper-bag', category: 'Packaging Prints', price: 300, popularity: 88 },
+    { id: 'prod_pack_2', name: 'Food Packaging Boxes', imageId: 'food-box', category: 'Packaging Prints', price: 250, popularity: 84 },
+    { id_pack_3: 'prod_3', name: 'Product Boxes', imageId: 'product-box', category: 'Packaging Prints', price: 450, popularity: 86 },
+    { id: 'prod_pack_4', name: 'Hang Tags', imageId: 'hang-tags', category: 'Packaging Prints', price: 50, popularity: 80 },
+
+    // 5. Apparel & Textile Printing
+    { id: 'prod_app_1', name: 'T-Shirts', imageId: 'custom-tshirt', category: 'Apparel & Textile Printing', price: 8500, popularity: 94 },
+    { id: 'prod_app_2', name: 'Hoodies & Sweatshirts', imageId: 'hoodie', category: 'Apparel & Textile Printing', price: 15000, popularity: 89 },
+    { id: 'prod_app_3', name: 'Polo Shirts', imageId: 'polo-shirt', category: 'Apparel & Textile Printing', price: 10000, popularity: 85 },
+    { id: 'prod_app_4', name: 'Face Caps / Hats', imageId: 'cap', category: 'Apparel & Textile Printing', price: 5000, popularity: 90 },
+
+    // 6. Promotional Items (Corporate Gifts)
+    { id: 'prod_promo_1', name: 'Branded Notebooks', imageId: 'notebook', category: 'Promotional Items', price: 3500, popularity: 92 },
+    { id: 'prod_promo_2', name: 'Mugs (Sublimation)', imageId: 'custom-mug', category: 'Promotional Items', price: 4500, popularity: 95 },
+    { id: 'prod_promo_3', name: 'Branded Pens', imageId: 'pens', category: 'Promotional Items', price: 500, popularity: 88 },
+    { id: 'prod_promo_4', name: 'ID Cards + Holders', imageId: 'id-card', category: 'Promotional Items', price: 2500, popularity: 80 },
+
+    // 7. Signage & Display Systems
+    { id: 'prod_sign_1', name: 'A-Frames / Signboards', imageId: 'a-frame-sign', category: 'Signage & Display Systems', price: 30000, popularity: 75 },
+    { id: 'prod_sign_2', name: 'Light Boxes', imageId: 'light-box', category: 'Signage & Display Systems', price: 80000, popularity: 82 },
+    { id: 'prod_sign_3', name: 'Acrylic Signs', imageId: 'acrylic-sign', category: 'Signage & Display Systems', price: 25000, popularity: 85 },
+
+    // 8. Digital Services
+    { id: 'prod_dig_1', name: 'Brand Identity Design', imageId: 'brand-identity', category: 'Digital Services', price: 150000, popularity: 90 },
+    { id: 'prod_dig_2', name: 'Logo Design', imageId: 'logo-design', category: 'Digital Services', price: 50000, popularity: 94 },
+
+    // 9. Event & Personal Prints
+    { id: 'prod_event_1', name: 'Invitation Cards', imageId: 'invitation-card', category: 'Event & Personal Prints', price: 800, popularity: 88 },
+    { id: 'prod_event_2', name: 'Wedding Programmes', imageId: 'wedding-program', category: 'Event & Personal Prints', price: 1000, popularity: 86 },
+    { id: 'prod_event_3', name: 'Souvenir Bags', imageId: 'souvenir-bag', category: 'Event & Personal Prints', price: 1500, popularity: 84 },
 ];
 
 const categories = [
-  { name: 'Branded Packaging', icon: Package },
-  { name: 'Corporate Gifts', icon: Gift },
-  { name: 'Marketing Materials', icon: Megaphone },
-  { name: 'Business Stationery', icon: NotebookText },
-  { name: 'Custom Apparel', icon: Shirt },
-  { name: 'Signage & Banners', icon: Presentation },
+  { name: 'Marketing & Business Prints', icon: Briefcase },
+  { name: 'Large Format & Outdoor Prints', icon: Printer },
+  { name: 'Stickers & Labels', icon: Layers },
+  { name: 'Packaging Prints', icon: Box },
+  { name: 'Apparel & Textile Printing', icon: Shirt },
+  { name: 'Promotional Items', icon: Gift },
+  { name: 'Signage & Display Systems', icon: MonitorPlay },
+  { name: 'Digital Services', icon: Palette },
+  { name: 'Event & Personal Prints', icon: PartyPopper },
 ];
 
 function findImage(id: string) {
@@ -190,7 +234,7 @@ export default function ProductsPage() {
                                         <CardContent className="p-4">
                                             <h3 className="font-semibold text-lg truncate">{product.name}</h3>
                                             <p className="text-sm text-muted-foreground">{product.category}</p>
-                                            <p className="font-bold text-lg mt-2">${product.price.toFixed(2)}</p>
+                                            <p className="font-bold text-lg mt-2">₦{product.price.toLocaleString()}</p>
                                         </CardContent>
                                     </Card>
                                 );

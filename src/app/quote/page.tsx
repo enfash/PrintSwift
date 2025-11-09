@@ -33,13 +33,16 @@ const quoteFormSchema = z.object({
 });
 
 const products = [
-  'Branded Packaging',
-  'Corporate Gifts',
-  'Marketing Materials',
-  'Business Stationery',
-  'Custom Apparel',
-  'Signage & Banners',
-  'Other',
+    'Marketing & Business Prints',
+    'Large Format & Outdoor Prints',
+    'Stickers & Labels',
+    'Packaging Prints',
+    'Apparel & Textile Printing',
+    'Promotional Items',
+    'Signage & Display Systems',
+    'Digital Services',
+    'Event & Personal Prints',
+    'Other',
 ];
 
 export default function QuotePage() {

@@ -3,33 +3,33 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Package,
-  Gift,
-  Megaphone,
-  NotebookText,
-  Shirt,
-  Presentation,
-  MousePointerSquareDashed,
-  UploadCloud,
-  Truck,
-  ArrowRight,
+    Briefcase,
+    Gift,
+    Printer,
+    Box,
+    Shirt,
+    MonitorPlay,
+    MousePointerSquareDashed,
+    UploadCloud,
+    Truck,
+    ArrowRight,
 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const categories = [
-  { name: 'Branded Packaging', icon: <Package className="w-8 h-8" />, href: '/products' },
+  { name: 'Marketing Prints', icon: <Briefcase className="w-8 h-8" />, href: '/products' },
   { name: 'Corporate Gifts', icon: <Gift className="w-8 h-8" />, href: '/products' },
-  { name: 'Marketing Materials', icon: <Megaphone className="w-8 h-8" />, href: '/products' },
-  { name: 'Business Stationery', icon: <NotebookText className="w-8 h-8" />, href: '/products' },
+  { name: 'Large Format', icon: <Printer className="w-8 h-8" />, href: '/products' },
+  { name: 'Packaging', icon: <Box className="w-8 h-8" />, href: '/products' },
   { name: 'Custom Apparel', icon: <Shirt className="w-8 h-8" />, href: '/products' },
-  { name: 'Signage & Banners', icon: <Presentation className="w-8 h-8" />, href: '/products' },
+  { name: 'Signage', icon: <MonitorPlay className="w-8 h-8" />, href: '/products' },
 ];
 
 const featuredProducts = [
-  { id: 'prod_1', name: 'Custom Mugs', imageId: 'custom-mug' },
-  { id: 'prod_2', name: 'Branded Boxes', imageId: 'branded-box' },
-  { id: 'prod_3', name: 'Premium Business Cards', imageId: 'business-card' },
-  { id: 'prod_4', name: 'Eco-Friendly Tote Bags', imageId: 'tote-bag' },
+  { id: 'prod_busi_1', name: 'Premium Business Cards', imageId: 'business-card' },
+  { id: 'prod_large_1', name: 'Roll-Up Banners', imageId: 'rollup-banner' },
+  { id: 'prod_promo_2', name: 'Custom Mugs', imageId: 'custom-mug' },
+  { id: 'prod_app_1', name: 'Custom T-Shirts', imageId: 'custom-tshirt' },
 ];
 
 const howItWorksSteps = [

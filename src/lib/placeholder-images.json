@@ -107,6 +107,156 @@
       "description": "Portrait of a male marketing director.",
       "imageUrl": "https://images.unsplash.com/photo-1543132220-92cfd9fc2a13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtYWxlJTIwZGlyZWN0b3J8ZW58MHx8fHwxNzYyNjUyMDYzfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "male director"
+    },
+    {
+      "id": "posters",
+      "description": "A collection of vibrant A2 and A3 posters on a wall.",
+      "imageUrl": "https://images.unsplash.com/photo-1760699128544-39c01944c7f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjb2xvcmZ1bCUyMHBvc3RlcnN8ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "colorful posters"
+    },
+    {
+      "id": "folders",
+      "description": "Glossy presentation folders stacked neatly.",
+      "imageUrl": "https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwcmVzZW50YXRpb24lMjBmb2xkZXJzfGVufDB8fHx8MTc2MjY1MjMwNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "presentation folders"
+    },
+    {
+      "id": "letterhead",
+      "description": "Crisp company letterheads with a logo.",
+      "imageUrl": "https://images.unsplash.com/photo-1631084854691-49b4975177f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjb21wYW55JTIwbGV0dGVyaGVhZHN8ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "company letterheads"
+    },
+    {
+      "id": "backdrop-banner",
+      "description": "A large event backdrop banner for a conference.",
+      "imageUrl": "https://images.unsplash.com/photo-1729237261091-bae8eba0c60c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxldmVudCUyMGJhY2tkcm9wfGVufDB8fHx8MTc2MjY1MjMwNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "event backdrop"
+    },
+    {
+      "id": "wall-mural",
+      "description": "A stunning wall mural in a modern office space.",
+      "imageUrl": "https://images.unsplash.com/photo-1761934871238-ffbce8e2b6c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8b2ZmaWNlJTIwbXVyYWx8ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "office mural"
+    },
+    {
+      "id": "vinyl-stickers",
+      "description": "A sheet of custom-cut vinyl stickers.",
+      "imageUrl": "https://images.unsplash.com/photo-1691748994172-35248b2688f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8dmlueWwlMjBzdGlja2Vyc3xlbnwwfHx8fDE3NjI1NDUxMzJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vinyl stickers"
+    },
+    {
+      "id": "product-labels",
+      "description": "Roll of labels for beauty products.",
+      "imageUrl": "https://images.unsplash.com/photo-1668419911929-70a6cfa7f9f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cHJvZHVjdCUyMGxhYmVsc3xlbnwwfHx8fDE3NjI2NTIzMDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product labels"
+    },
+    {
+      "id": "paper-bag",
+      "description": "A branded paper bag with rope handles.",
+      "imageUrl": "https://images.unsplash.com/photo-1584736286355-4da22f54d54b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxicmFuZGVkJTIwcGFwZXJiYWd8ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "branded paperbag"
+    },
+    {
+      "id": "food-box",
+      "description": "A custom printed burger box.",
+      "imageUrl": "https://images.unsplash.com/photo-1651981140119-0701bd856a98?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YnVyZ2VyJTIwYm94fGVufDB8fHx8MTc2MjY1MjMwNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "burger box"
+    },
+    {
+      "id": "product-box",
+      "description": "A small product box for cosmetics.",
+      "imageUrl": "https://images.unsplash.com/photo-1759563874660-e51f23908127?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjb3NtZXRpY3MlMjBib3h8ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cosmetics box"
+    },
+    {
+      "id": "hang-tags",
+      "description": "Stylish hang tags for clothing.",
+      "imageUrl": "https://images.unsplash.com/photo-1545007805-a44ee83438fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjbG90aGluZyUyMHRhZ3N8ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "clothing tags"
+    },
+    {
+      "id": "hoodie",
+      "description": "A comfortable hoodie with a printed design.",
+      "imageUrl": "https://images.unsplash.com/photo-1603319444400-216c0718d03c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjdXN0b20lMjBob29kaWV8ZW58MHx8fHwxNzYyNjUyMzA1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "custom hoodie"
+    },
+    {
+      "id": "polo-shirt",
+      "description": "A branded polo shirt with an embroidered logo.",
+      "imageUrl": "https://images.unsplash.com/photo-1756043819063-6c4a404e78c3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxicmFuZGVkJTIwcG9sb3xlbnwwfHx8fDE3NjI2NTIzMDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "branded polo"
+    },
+    {
+      "id": "cap",
+      "description": "A custom embroidered baseball cap.",
+      "imageUrl": "https://images.unsplash.com/photo-1644381671478-7ebb411f21d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjdXN0b20lMjBjYXB8ZW58MHx8fHwxNzYyNjUyMzA1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "custom cap"
+    },
+    {
+      "id": "notebook",
+      "description": "A custom branded hardcover notebook.",
+      "imageUrl": "https://images.unsplash.com/photo-1586996157548-baa18d7d358f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxicmFuZGVkJTIwbm90ZWJvb2t8ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "branded notebook"
+    },
+    {
+      "id": "pens",
+      "description": "A set of promotional pens with a logo.",
+      "imageUrl": "https://images.unsplash.com/photo-1620807244748-b305ad07a298?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwcm9tb3Rpb25hbCUyMHBlbnN8ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "promotional pens"
+    },
+    {
+      "id": "id-card",
+      "description": "A corporate ID card in a plastic holder.",
+      "imageUrl": "https://images.unsplash.com/photo-1637070155805-e6fbee6ec2cf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxJRCUyMGNhcmR8ZW58MHx8fHwxNzYyNjIyOTkxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ID card"
+    },
+    {
+      "id": "a-frame-sign",
+      "description": "An A-frame sign outside a cafe.",
+      "imageUrl": "https://images.unsplash.com/photo-1632189436482-c11fb5b5ae78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c2lkZXdhbGslMjBzaWdufGVufDB8fHx8MTc2MjY1MjMwNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sidewalk sign"
+    },
+    {
+      "id": "light-box",
+      "description": "An illuminated light box sign.",
+      "imageUrl": "https://images.unsplash.com/photo-1618491311827-24c68a1aa2be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8aWxsdW1pbmF0ZWQlMjBzaWdufGVufDB8fHx8MTc2MjY1MjMwNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "illuminated sign"
+    },
+    {
+      "id": "acrylic-sign",
+      "description": "A modern office sign made of acrylic.",
+      "imageUrl": "https://images.unsplash.com/photo-1586252999747-9c4393922b69?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWNyeWxpYyUyMHNpZ258ZW58MHx8fHwxNzYyNjUyMzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "acrylic sign"
+    },
+    {
+      "id": "brand-identity",
+      "description": "A full brand identity suite mockup.",
+      "imageUrl": "https://images.unsplash.com/photo-1618249807726-2f381c277de1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxicmFuZCUyMGlkZW50aXR5fGVufDB8fHx8MTc2MjYzNTQxMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "brand identity"
+    },
+    {
+      "id": "logo-design",
+      "description": "A showcase of a creative logo design.",
+      "imageUrl": "https://images.unsplash.com/photo-1493421419110-74f4e85ba126?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxsb2dvJTIwZGVzaWdufGVufDB8fHx8MTc2MjYzNTQxMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "logo design"
+    },
+    {
+      "id": "invitation-card",
+      "description": "An elegant wedding invitation card.",
+      "imageUrl": "https://images.unsplash.com/photo-1592347093417-0e95eb5851aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxpbnZpdGF0aW9uJTIwY2FyZHxlbnwwfHx8fDE3NjI2NTIzMDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "invitation card"
+    },
+    {
+      "id": "wedding-program",
+      "description": "A program for a wedding ceremony.",
+      "imageUrl": "https://images.unsplash.com/photo-1759887244219-17c3d64a7f01?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3ZWRkaW5nJTIwcHJvZ3JhbXxlbnwwfHx8fDE3NjI2NTIzMDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wedding program"
+    },
+    {
+      "id": "souvenir-bag",
+      "description": "A small souvenir bag for an event.",
+      "imageUrl": "https://images.unsplash.com/photo-1715889872741-8cc4cd25a04d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzb3V2ZW5pciUyMGJhZ3xlbnwwfHx8fDE3NjI2NTIzMDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "souvenir bag"
     }
   ]
 }

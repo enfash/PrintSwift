@@ -30,10 +30,10 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4 font-headline">Categories</h3>
             <ul className="space-y-2">
-              <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Branded Packaging</Link></li>
+              <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Marketing Prints</Link></li>
+              <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Packaging</Link></li>
+              <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Apparel</Link></li>
               <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Corporate Gifts</Link></li>
-              <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Marketing Materials</Link></li>
-              <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Business Stationery</Link></li>
             </ul>
           </div>
 
