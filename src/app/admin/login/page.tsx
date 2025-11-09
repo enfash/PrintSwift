@@ -23,9 +23,10 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
+import { doc } from 'firebase/firestore';
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -37,6 +38,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,11 +47,11 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
-    if (!auth) {
+    if (!auth || !firestore) {
         toast({
             variant: 'destructive',
             title: 'Authentication Error',
-            description: 'Firebase Auth is not initialized.',
+            description: 'Firebase services are not initialized.',
         });
         setIsSubmitting(false);
         return;
@@ -61,28 +63,55 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Redirecting to your dashboard...',
       });
+      // No need to set isSubmitting to false, as a redirect will happen
     } catch (error) {
        if (error instanceof FirebaseError && error.code === 'auth/user-not-found') {
-        // If user does not exist, create it.
-        try {
-            await createUserWithEmailAndPassword(auth, values.email, values.password);
-            toast({
-                title: 'Admin User Created',
-                description: 'Successfully created the admin account. Logging in...',
-            });
-        } catch (creationError) {
-             toast({
-                variant: 'destructive',
-                title: 'Failed to Create User',
-                description: 'Could not create the admin user.',
-            });
-            setIsSubmitting(false);
-        }
-       } else {
+        // If user does not exist, and it's the admin email, create it.
+        if (values.email === 'admin@example.com') {
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+                const user = userCredential.user;
+
+                // Create the admin role document in Firestore
+                const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
+                // Use non-blocking write. The security rule "isOwner(uid)" allows this.
+                setDocumentNonBlocking(adminRoleRef, {}, {});
+
+                toast({
+                    title: 'Admin User Created',
+                    description: 'Successfully created the admin account and assigned role. Logging in...',
+                });
+                // Successful creation will trigger onAuthStateChanged and redirect.
+            } catch (creationError) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Failed to Create Admin User',
+                    description: 'Could not create the admin user account.',
+                });
+                setIsSubmitting(false);
+            }
+        } else {
+            // If it's not the admin email, just show user not found.
             toast({
                 variant: 'destructive',
                 title: 'Authentication Failed',
                 description: 'Invalid email or password.',
+            });
+            setIsSubmitting(false);
+        }
+       } else if (error instanceof FirebaseError && error.code === 'auth/wrong-password'){
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Failed',
+                description: 'Invalid email or password.',
+            });
+            setIsSubmitting(false);
+       } else {
+            console.error("Login error:", error);
+            toast({
+                variant: 'destructive',
+                title: 'An Unexpected Error Occurred',
+                description: 'Please try again later.',
             });
             setIsSubmitting(false);
        }
