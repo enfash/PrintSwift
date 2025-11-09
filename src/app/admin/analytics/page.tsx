@@ -1,141 +1,142 @@
 
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { DollarSign, ShoppingCart, Users, Activity } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import {
+  DollarSign,
+  ShoppingCart,
+  Users,
+  Percent,
+  File,
+} from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 
-const chartData = [
-  { month: 'January', sales: 186, orders: 80 },
-  { month: 'February', sales: 305, orders: 200 },
-  { month: 'March', sales: 237, orders: 120 },
-  { month: 'April', sales: 73, orders: 190 },
-  { month: 'May', sales: 209, orders: 130 },
-  { month: 'June', sales: 214, orders: 140 },
+const revenueData = [
+  { date: '01/11', revenue: 186000 },
+  { date: '02/11', revenue: 305000 },
+  { date: '03/11', revenue: 237000 },
+  { date: '04/11', revenue: 73000 },
+  { date: '05/11', revenue: 209000 },
+  { date: '06/11', revenue: 214000 },
+  { date: '07/11', revenue: 450000 },
 ];
 
-const chartConfig = {
-  sales: {
-    label: 'Sales (₦)',
-    color: 'hsl(var(--primary))',
-  },
-  orders: {
-    label: 'Orders',
-    color: 'hsl(var(--accent))',
-  },
-};
+const ordersByStatusData = [
+    { status: 'Delivered', orders: 120 },
+    { status: 'Production', orders: 80 },
+    { status: 'Awaiting Pay', orders: 50 },
+    { status: 'Cancelled', orders: 15 },
+]
 
-const topProducts = [
-    { name: 'Business Cards', unitsSold: 1200 },
-    { name: '12oz Paper Cups', unitsSold: 850 },
-    { name: 'Roll-up Banners', unitsSold: 400 },
-    { name: 'Branded T-shirts', unitsSold: 350 },
-    { name: 'Stickers', unitsSold: 150 },
+const topProductsData = [
+    { product: 'Biz Cards', revenue: 1200000 },
+    { product: 'Paper Cups', revenue: 850000 },
+    { product: 'Banners', revenue: 400000 },
+    { product: 'T-shirts', revenue: 350000 },
+    { product: 'Stickers', revenue: 150000 },
 ];
+
+const quoteFunnelData = [
+    { stage: 'Sent', value: 100 },
+    { stage: 'Won', value: 42 },
+    { stage: 'Converted', value: 35 },
+];
+
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+        <div className="flex items-center gap-2">
+            <Select defaultValue="this-month">
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="this-month">This Month</SelectItem>
+                    <SelectItem value="last-month">Last Month</SelectItem>
+                </SelectContent>
+            </Select>
+            <Button variant="outline"><File className="mr-2 h-4 w-4"/>Export CSV</Button>
+        </div>
+      </div>
+      
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₦4,250,320</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Revenue ₦</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader>
+          <CardContent><div className="text-2xl font-bold">7,450,000</div><p className="text-xs text-muted-foreground">+20.1% from last month</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+1280</div>
-            <p className="text-xs text-muted-foreground">+18.3% from last month</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Orders</CardTitle><ShoppingCart className="h-4 w-4 text-muted-foreground" /></CardHeader>
+          <CardContent><div className="text-2xl font-bold">128</div><p className="text-xs text-muted-foreground">+18.3% from last month</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+234</div>
-            <p className="text-xs text-muted-foreground">+52 since last month</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Avg Order ₦</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader>
+          <CardContent><div className="text-2xl font-bold">58,203</div><p className="text-xs text-muted-foreground">+1.1% from last month</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3.2%</div>
-            <p className="text-xs text-muted-foreground">+1.1% from last month</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Quote Win Rate</CardTitle><Percent className="h-4 w-4 text-muted-foreground" /></CardHeader>
+          <CardContent><div className="text-2xl font-bold">42%</div><p className="text-xs text-muted-foreground">+5% from last month</p></CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
-            <CardDescription>Monthly revenue and order volume.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-              <BarChart data={chartData} accessibilityLayer>
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                  tickFormatter={(value) => value.slice(0, 3)}
-                />
-                 <YAxis />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
-                <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
-                <Bar dataKey="orders" fill="var(--color-orders)" radius={4} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
+       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+         <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>Revenue Over Time</CardTitle></CardHeader>
+          <CardContent><ChartContainer config={{}} className="h-[250px] w-full"><LineChart data={revenueData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}><CartesianGrid vertical={false} /><XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickFormatter={(v) => `${v/1000}k`}/><ChartTooltip content={<ChartTooltipContent />} /><Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent>
         </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Top Selling Products</CardTitle>
-                <CardDescription>Products with the highest sales volume.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    {topProducts.map((product, index) => (
-                        <div key={product.name} className="flex items-center">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                               {index + 1}
-                            </div>
-                            <div className="ml-4 flex-grow">
-                                <p className="font-medium">{product.name}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="font-semibold">{product.unitsSold.toLocaleString()}</p>
-                                <p className="text-xs text-muted-foreground">units sold</p>
-                            </div>
-                        </div>
-                    ))}
+         <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>Orders by Status</CardTitle></CardHeader>
+          <CardContent><ChartContainer config={{}} className="h-[250px] w-full"><BarChart data={ordersByStatusData} layout="vertical" margin={{ top: 5, right: 10, left: -10, bottom: 0 }}><CartesianGrid horizontal={false} /><YAxis dataKey="status" type="category" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" /><XAxis type="number" hide={true} /><ChartTooltip content={<ChartTooltipContent />} /><Bar dataKey="orders" fill="hsl(var(--primary))" radius={4} /></BarChart></ChartContainer></CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>Top Products by Revenue</CardTitle></CardHeader>
+          <CardContent><ChartContainer config={{}} className="h-[250px] w-full"><BarChart data={topProductsData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}><CartesianGrid vertical={false} /><XAxis dataKey="product" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickFormatter={(v) => `${v/1000000}m`}/><ChartTooltip content={<ChartTooltipContent />} /><Bar dataKey="revenue" fill="hsl(var(--primary))" radius={4} /></BarChart></ChartContainer></CardContent>
+        </Card>
+         <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>Quote Funnel</CardTitle></CardHeader>
+          <CardContent><ChartContainer config={{}} className="h-[250px] w-full"><BarChart data={quoteFunnelData} layout="vertical" margin={{ top: 5, right: 10, left: -10, bottom: 0 }}><CartesianGrid horizontal={false} /><YAxis dataKey="stage" type="category" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" /><XAxis type="number" hide={true}/><ChartTooltip content={<ChartTooltipContent />} /><Bar dataKey="value" fill="hsl(var(--primary))" radius={4} /></BarChart></ChartContainer></CardContent>
+        </Card>
+       </div>
+       <Card>
+         <CardHeader>
+            <CardTitle>Filters & Goals</CardTitle>
+         </CardHeader>
+         <CardContent className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+                <h3 className="font-semibold">Filter Data</h3>
+                <div className="flex flex-wrap gap-2">
+                    <Select><SelectTrigger className="w-40"><SelectValue placeholder="Channel"/></SelectTrigger></Select>
+                    <Select><SelectTrigger className="w-40"><SelectValue placeholder="Category"/></SelectTrigger></Select>
+                    <Select><SelectTrigger className="w-40"><SelectValue placeholder="Customer"/></SelectTrigger></Select>
                 </div>
-            </CardContent>
-        </Card>
-      </div>
+            </div>
+            <div className="space-y-2">
+                 <h3 className="font-semibold">Set Monthly Target ₦</h3>
+                 <div className="flex items-center gap-2">
+                    <Input placeholder="e.g., 10,000,000"/>
+                    <Button>Set Target</Button>
+                 </div>
+                 <Progress value={72} className="mt-2" />
+                 <p className="text-sm text-muted-foreground text-right">72% of target reached</p>
+            </div>
+         </CardContent>
+       </Card>
     </div>
   );
 }
+

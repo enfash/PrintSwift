@@ -26,6 +26,8 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const quotes = [
     { id: 'QT-001', customer: 'Alice Johnson', product: 'Business Cards', date: '2023-10-26', status: 'Pending' },
@@ -47,12 +49,15 @@ const getStatusVariant = (status: string) => {
 };
 
 export default function QuotesPage() {
+    const router = useRouter();
     return (
         <>
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Quote Requests</h1>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Create New Quote
+                <Button asChild>
+                    <Link href="/admin/quotes/new">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Create New Quote
+                    </Link>
                 </Button>
             </div>
             <Card className="mt-6">
@@ -76,7 +81,7 @@ export default function QuotesPage() {
                         </TableHeader>
                         <TableBody>
                             {quotes.length > 0 ? quotes.map(quote => (
-                                <TableRow key={quote.id}>
+                                <TableRow key={quote.id} onClick={() => router.push('/admin/quotes/new')} className="cursor-pointer">
                                     <TableCell className="font-medium">{quote.id}</TableCell>
                                     <TableCell>{quote.customer}</TableCell>
                                     <TableCell>{quote.product}</TableCell>
