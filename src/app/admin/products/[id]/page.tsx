@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,15 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UploadCloud, Trash2, LoaderCircle } from 'lucide-react';
+import { UploadCloud, LoaderCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
@@ -31,67 +31,60 @@ const productSchema = z.object({
 });
 
 
-export default function ProductFormPage({ params }: { params?: { id: string } }) {
+export default function ProductFormPage({ params }: { params: { id: string } }) {
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const isEditMode = !!params?.id;
+    
+    const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', params.id) : null, [firestore, params.id]);
+    const { data: product, isLoading: isLoadingProduct } = useDoc<z.infer<typeof productSchema>>(productRef);
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
 
     const form = useForm<z.infer<typeof productSchema>>({
         resolver: zodResolver(productSchema),
-        defaultValues: {
-            name: '',
-            categoryId: '',
-            status: 'Draft',
-            featured: false,
-        },
     });
-    
-    // In a real app, you would fetch the product data here if in edit mode
-    // and use form.reset(productData) to populate the form.
 
+    useEffect(() => {
+        if (product) {
+            form.reset(product);
+        }
+    }, [product, form]);
+    
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
         if (!firestore) return;
         setIsSubmitting(true);
         
-        const productData = {
-            ...values,
-            imageUrl: `https://picsum.photos/seed/${values.name.replace(/\s+/g, '-')}/600/400`, // Placeholder
-        };
+        const productData = { ...values };
 
         try {
-            if (isEditMode) {
-                const productRef = doc(firestore, 'products', params.id);
-                updateDocumentNonBlocking(productRef, productData);
-                toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
-            } else {
-                const productsCollection = collection(firestore, 'products');
-                await addDocumentNonBlocking(productsCollection, productData);
-                toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
-            }
+            const productDocRef = doc(firestore, 'products', params.id);
+            updateDocumentNonBlocking(productDocRef, productData);
+            toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             router.push('/admin/products');
         } catch (error) {
-            console.error("Error saving product:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the product.' });
+            console.error("Error updating product:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update the product.' });
             setIsSubmitting(false);
         }
     };
 
+    if (isLoadingProduct) {
+        return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
+    }
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">{isEditMode ? 'Edit Product' : 'Add New Product'}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
                     <div className="flex items-center gap-2">
-                        {isEditMode && <Button variant="outline" type="button" onClick={() => router.push('/admin/products')}>Cancel</Button>}
+                        <Button variant="outline" type="button" onClick={() => router.push('/admin/products')}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditMode ? 'Save Changes' : 'Save Product'}
+                            Save Changes
                         </Button>
                     </div>
                 </div>
@@ -119,7 +112,7 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Category</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select a category"} />
@@ -137,13 +130,13 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
                                 </FormItem>
                                 )}
                             />
-                            <FormField
+                             <FormField
                                 control={form.control}
                                 name="shortDescription"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Short Description</FormLabel>
-                                        <FormControl><Textarea placeholder="A brief summary of the product." {...field} /></FormControl>
+                                        <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -178,7 +171,7 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Base Price (₦)</FormLabel>
-                                        <FormControl><Input type="number" placeholder="e.g., 15000" {...field} /></FormControl>
+                                        <FormControl><Input type="number" placeholder="e.g., 15000" {...field} value={field.value || ''} /></FormControl>
                                         <FormDescription>This will be used for sorting and display. Detailed pricing is handled by the pricing engine.</FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -195,7 +188,7 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
                                         <p className="text-sm text-muted-foreground">Set product visibility.</p>
                                     </div>
                                     <FormControl>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <SelectTrigger className="w-[180px]">
                                                 <SelectValue placeholder="Status" />
                                             </SelectTrigger>
@@ -238,4 +231,3 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
         </Form>
     );
 }
-
