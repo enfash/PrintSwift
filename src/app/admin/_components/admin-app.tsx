@@ -18,6 +18,9 @@ import {
   Bell,
   Package,
   LogIn,
+  ChevronDown,
+  PlusCircle,
+  MoreHorizontal
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -44,6 +47,7 @@ import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 
 // This hook should be defined in a separate file in a real app, e.g., hooks/use-dummy-auth.ts
@@ -83,7 +87,15 @@ const useDummyUser = () => {
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/products', label: 'Products', icon: Package },
+  { 
+    href: '/admin/products', 
+    label: 'Products', 
+    icon: Package,
+    subItems: [
+        { href: '/admin/products', label: 'All Products' },
+        { href: '/admin/products/new', label: 'Add New' },
+    ]
+  },
   { href: '/admin/categories', label: 'Categories', icon: Tags },
   { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
   { href: '/admin/promos', label: 'Promos', icon: Megaphone },
@@ -94,6 +106,7 @@ const settingsItems = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
   { href: '/admin/users', label: 'Users & Roles', icon: Users },
 ];
+
 
 function SidebarMenuContent() {
   const pathname = usePathname();
@@ -116,27 +129,61 @@ function SidebarMenuContent() {
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 font-semibold">
           <Logo />
-          <span>PrintSwift Admin</span>
+          <span className="text-lg">Bomedia Admin</span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="flex-1 p-4">
+      <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
           {menuItems.map((item) => (
-            <SidebarMenuItem key={item.label}>
-              <Link href={item.href}>
-                <SidebarMenuButton
-                  isActive={pathname === item.href}
-                  className="w-full justify-start"
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
+             item.subItems ? (
+                <Collapsible key={item.label} className="w-full" defaultOpen={pathname.startsWith(item.href)}>
+                    <CollapsibleTrigger className="w-full">
+                        <SidebarMenuButton
+                            isActive={pathname.startsWith(item.href) && item.href !== '/admin/products'}
+                            className="w-full justify-between"
+                        >
+                            <div className="flex items-center gap-2">
+                                <item.icon className="h-5 w-5" />
+                                {item.label}
+                            </div>
+                            <ChevronDown className="h-4 w-4" />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pl-6">
+                        <SidebarMenu>
+                         {item.subItems.map(subItem => (
+                            <SidebarMenuItem key={subItem.label}>
+                                <Link href={subItem.href}>
+                                    <SidebarMenuButton
+                                        variant="ghost"
+                                        isActive={pathname === subItem.href}
+                                        className="w-full justify-start"
+                                    >
+                                    {subItem.label}
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                         ))}
+                         </SidebarMenu>
+                    </CollapsibleContent>
+                </Collapsible>
+             ) : (
+                <SidebarMenuItem key={item.label}>
+                <Link href={item.href}>
+                    <SidebarMenuButton
+                    isActive={pathname === item.href}
+                    className="w-full justify-start"
+                    >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                    </SidebarMenuButton>
+                </Link>
+                </SidebarMenuItem>
+             )
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t p-4">
+      <SidebarFooter className="border-t p-2">
         <SidebarMenu>
           {settingsItems.map((item) => (
             <SidebarMenuItem key={item.label}>
@@ -198,43 +245,48 @@ function AdminHeader() {
   
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      <MobileSidebar />
-      <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        <form className="ml-auto flex-1 sm:flex-initial">
-            <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder="Search..."
-                    className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-                />
-            </div>
-        </form>
-        <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell className="h-5 w-5" />
-        </Button>
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+        <MobileSidebar />
+        <div className="flex items-center gap-2 font-semibold sm:hidden">
+            <Logo />
+            <span>Bomedia Admin</span>
+        </div>
+
+        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
+            <form className="ml-auto flex-1 sm:flex-initial">
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search..."
+                        className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[336px]"
+                    />
+                </div>
+            </form>
             <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar className="h-8 w-8">
-                <AvatarImage src={''} alt="User avatar" />
-                <AvatarFallback>
-                    {user?.email?.charAt(0).toUpperCase() || 'A'}
-                </AvatarFallback>
-                </Avatar>
+                <Bell className="h-5 w-5" />
             </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link href="/admin/settings">Settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar className="h-8 w-8">
+                    <AvatarImage src={''} alt="User avatar" />
+                    <AvatarFallback>
+                        {user?.email?.charAt(0).toUpperCase() || 'A'}
+                    </AvatarFallback>
+                    </Avatar>
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/admin/settings">Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
    </header>
   );
 }
@@ -272,8 +324,6 @@ export default function AdminApp({
     );
   }
 
-  // If loading is finished and there's still no user, redirect.
-  // This prevents rendering the admin shell for a split second before redirecting.
   if (!user) {
      return (
       <div className="flex h-screen items-center justify-center">
@@ -285,19 +335,21 @@ export default function AdminApp({
 
   return (
     <FirebaseClientProvider>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-muted/40">
-          <Sidebar>
-             <SidebarMenuContent />
-          </Sidebar>
-          <div className="flex flex-col flex-1">
-            <AdminHeader />
-            <main className="flex-1 gap-4 p-4 sm:px-6 md:gap-8">
-              {children}
-            </main>
-          </div>
+        <div className="flex min-h-screen w-full flex-col bg-muted/40">
+          <SidebarProvider>
+            <Sidebar className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-card sm:flex">
+                <SidebarMenuContent />
+            </Sidebar>
+            <div className="flex flex-col sm:pl-64">
+                <AdminHeader />
+                <main className="flex-1 gap-4 p-4 sm:px-6 md:gap-8">
+                  {children}
+                </main>
+            </div>
+          </SidebarProvider>
         </div>
-      </SidebarProvider>
     </FirebaseClientProvider>
   );
 }
+
+    
