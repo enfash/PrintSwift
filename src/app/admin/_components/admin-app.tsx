@@ -25,6 +25,7 @@ import {
   FileText,
   ShoppingCart,
   PanelLeft,
+  Home,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -261,6 +262,11 @@ function AdminHeader() {
                 className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
             />
         </div>
+        <Button asChild variant="ghost" size="icon">
+          <Link href="/">
+            <Home className="h-5 w-5" />
+          </Link>
+        </Button>
         <Button variant="ghost" size="icon" className="rounded-full">
             <Bell className="h-5 w-5" />
         </Button>
