@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-printing",
+      "description": "A modern printing press machine in operation.",
+      "imageUrl": "https://images.unsplash.com/photo-1693031630369-bd429a57f115?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwcmludGluZyUyMHByZXNzfGVufDB8fHx8MTc2MjU0MzIyNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "printing press"
+    },
+    {
+      "id": "custom-mug",
+      "description": "A white ceramic mug with a custom logo printed on it.",
+      "imageUrl": "https://images.unsplash.com/photo-1733305361537-9fc4659253ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjdXN0b20lMjBtdWd8ZW58MHx8fHwxNzYyNTQxODA1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "custom mug"
+    },
+    {
+      "id": "branded-box",
+      "description": "A cardboard shipping box with custom branding.",
+      "imageUrl": "https://images.unsplash.com/photo-1759563874665-af0168ce2011?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxicmFuZGVkJTIwYm94fGVufDB8fHx8MTc2MjY1MTc3Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "branded box"
+    },
+    {
+      "id": "business-card",
+      "description": "A stack of professionally designed business cards.",
+      "imageUrl": "https://images.unsplash.com/photo-1605098293544-25f4c32344c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxidXNpbmVzcyUyMGNhcmR8ZW58MHx8fHwxNzYyNjUxNzc2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "business card"
+    },
+    {
+      "id": "tote-bag",
+      "description": "A canvas tote bag with a custom graphic print.",
+      "imageUrl": "https://images.unsplash.com/photo-1663573690125-d326a87a2535?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx0b3RlJTIwYmFnfGVufDB8fHx8MTc2MjYyMTcyMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tote bag"
+    }
+  ]
 }
