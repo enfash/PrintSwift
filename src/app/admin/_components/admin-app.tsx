@@ -49,7 +49,7 @@ import { LoaderCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger as MobileSheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import LoginPage from '../login/page';
-import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { doc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
@@ -93,12 +93,12 @@ function SidebarMenuContent() {
 
   return (
     <>
-      <SidebarHeader className="border-b">
+      <SidebarHeader className="border-b flex justify-between items-center p-2">
         <div className="flex items-center gap-2 font-semibold">
           <Logo />
           <span className={cn("text-lg", !open && "hidden")}>PrintSwift Admin</span>
         </div>
-        <SidebarTrigger asChild>
+        <SidebarTrigger>
             <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
               <ChevronLeft />
             </Button>
