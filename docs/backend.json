@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "ProductCategory": {
@@ -12,23 +13,17 @@
         },
         "name": {
           "type": "string",
-          "description": "Name of the product category (e.g., 'Branded Packaging')."
+          "description": "Name of the product category (e.g., 'Marketing Prints')."
         },
         "description": {
           "type": "string",
           "description": "Description of the product category."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the image representing the product category.",
-          "format": "uri"
         }
       },
       "required": [
         "id",
         "name",
-        "description",
-        "imageUrl"
+        "description"
       ]
     },
     "Product": {
@@ -160,7 +155,7 @@
           "schema": {
             "$ref": "#/backend/entities/ProductCategory"
           },
-          "description": "Collection to store product categories. Accessible only by admins.",
+          "description": "Collection to store product categories. Accessible publicly for reads, writeable only by admins.",
           "params": [
             {
               "name": "productCategoryId",
@@ -176,7 +171,7 @@
           "schema": {
             "$ref": "#/backend/entities/Product"
           },
-          "description": "Collection to store product information. Accessible only by admins.",
+          "description": "Collection to store product information. Accessible publicly for reads, writeable only by admins.",
           "params": [
             {
               "name": "productId",
