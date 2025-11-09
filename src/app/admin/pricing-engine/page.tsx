@@ -27,6 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 
 const addons = [
   { option: 'Lamination', value: 'Matte', type: 'per unit', cost: '3.50', active: true },
