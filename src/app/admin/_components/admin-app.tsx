@@ -24,7 +24,6 @@ import {
   Activity,
   FileText,
   ShoppingCart,
-  ChevronLeft,
   PanelLeft,
 } from 'lucide-react';
 import {
@@ -51,14 +50,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FirebaseClientProvider, useUser, useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger as MobileSheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import LoginPage from '../login/page';
 import { signOut } from 'firebase/auth';
-import { FirebaseError } from 'firebase/app';
-import { doc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
@@ -79,18 +76,18 @@ const menuItems = [
 ];
 
 const orderManagementItems = [
-    { href: '#', label: 'Quotes', icon: FileText },
-    { href: '#', label: 'Orders', icon: ShoppingCart },
+    { href: '/admin/quotes', label: 'Quotes', icon: FileText },
+    { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
 ]
 
 const toolsItems = [
-    { href: '#', label: 'Artwork', icon: Palette },
-    { href: '#', label: 'Pricing Engine', icon: DollarSign },
+    { href: '/admin/artwork', label: 'Artwork', icon: Palette },
+    { href: '/admin/pricing-engine', label: 'Pricing Engine', icon: DollarSign },
 ];
 
 const insightsItems = [
-    { href: '#', label: 'Analytics', icon: BarChart2 },
-    { href: '#', label: 'Activity Log', icon: Activity },
+    { href: '/admin/analytics', label: 'Analytics', icon: BarChart2 },
+    { href: '/admin/activity', label: 'Activity Log', icon: Activity },
 ];
 
 
@@ -171,7 +168,7 @@ function SidebarMenuContent() {
       <SidebarHeader className="border-b flex justify-between items-center p-2 h-14">
         <div className="flex items-center gap-2 font-semibold">
           <Logo />
-          <span className={cn("text-lg", !open && "hidden")}>PrintSwift Admin</span>
+          <span className={cn("text-lg", !open && "hidden")}>PrintSwift</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="flex-1 p-2">
@@ -253,10 +250,8 @@ function AdminHeader() {
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
         <MobileSidebar />
         <SidebarTrigger className="hidden sm:flex">
-          <Button size="icon" variant="outline">
-            <PanelLeft className="h-5 w-5" />
-            <span className="sr-only">Toggle Menu</span>
-          </Button>
+          <PanelLeft className="h-5 w-5" />
+          <span className="sr-only">Toggle Menu</span>
         </SidebarTrigger>
         <div className="relative ml-auto flex-1 md:grow-0">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -367,5 +362,3 @@ export default function AdminApp({
     </FirebaseClientProvider>
   );
 }
-
-    
