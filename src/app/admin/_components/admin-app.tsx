@@ -17,7 +17,6 @@ import {
   Search,
   Bell,
   Package,
-  LogIn,
   ChevronDown,
 } from 'lucide-react';
 import {
@@ -42,11 +41,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FirebaseClientProvider, useUser } from '@/firebase';
+import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-
+import LoginPage from '../login/page';
+import { signOut } from 'firebase/auth';
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -73,19 +73,14 @@ const settingsItems = [
 
 function SidebarMenuContent() {
   const pathname = usePathname();
-  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const router = useRouter();
 
 
-  const handleLogout = () => {
-    // This will be replaced with actual Firebase logout
-    console.log('Logging out...');
+  const handleLogout = async () => {
+    await signOut(auth);
     router.push('/admin/login');
   };
-
-  const handleLogin = () => {
-    router.push('/admin/login');
-  }
 
   return (
     <>
@@ -162,17 +157,10 @@ function SidebarMenuContent() {
             </SidebarMenuItem>
           ))}
            <SidebarMenuItem>
-            {user ? (
                 <SidebarMenuButton onClick={handleLogout} className="w-full justify-start">
                     <LogOut className="h-5 w-5" />
                     Logout
                 </SidebarMenuButton>
-            ) : (
-                <SidebarMenuButton onClick={handleLogin} className="w-full justify-start">
-                    <LogIn className="h-5 w-5" />
-                    Login
-                </SidebarMenuButton>
-            )}
            </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -197,12 +185,12 @@ function MobileSidebar() {
 }
 
 function AdminHeader() {
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
+  const auth = useAuth();
   const router = useRouter();
 
-  const handleLogout = () => {
-    // This will be replaced with actual Firebase logout
-    console.log('Logging out...');
+  const handleLogout = async () => {
+    await signOut(auth);
     router.push('/admin/login');
   };
   
@@ -224,7 +212,7 @@ function AdminHeader() {
             <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar className="h-8 w-8">
-                <AvatarImage src={''} alt="User avatar" />
+                <AvatarImage src={user?.photoURL || ''} alt="User avatar" />
                 <AvatarFallback>
                     {user?.email?.charAt(0).toUpperCase() || 'A'}
                 </AvatarFallback>
@@ -246,32 +234,25 @@ function AdminHeader() {
 }
 
 
-export default function AdminApp({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AdminProtectedContent({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-        if (!isUserLoading && !user && pathname !== '/admin/login') {
-            router.replace('/admin/login');
-        }
+    // If auth is done loading and there's no user, redirect to login.
+    // Allow access to the login page itself.
+    if (!isUserLoading && !user) {
+        router.replace('/admin/login');
+    }
+    // If the user is logged in and on the login page, redirect to dashboard.
+    if (!isUserLoading && user && pathname === '/admin/login') {
+        router.replace('/admin/dashboard');
     }
   }, [user, isUserLoading, router, pathname]);
 
-  if (pathname === '/admin/login') {
-    return (
-      <FirebaseClientProvider>
-        <div className="bg-background">{children}</div>
-      </FirebaseClientProvider>
-    );
-  }
-
-  if (isUserLoading || !user) {
+  // While checking auth, show a loader.
+  if (isUserLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin" />
@@ -279,21 +260,39 @@ export default function AdminApp({
     );
   }
 
+  // If there's no user, we are likely about to redirect,
+  // but we can show the login page to avoid flashes of content.
+  if (!user) {
+      return <LoginPage />;
+  }
+
+  // User is authenticated, show the admin dashboard layout.
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-muted/40">
+        <Sidebar className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r bg-card sm:flex">
+          <SidebarMenuContent />
+        </Sidebar>
+        <div className="flex flex-col sm:pl-60 flex-grow">
+          <AdminHeader />
+          <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-4 md:gap-8">
+            {children}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+
+export default function AdminApp({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <FirebaseClientProvider>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-muted/40">
-            <Sidebar className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r bg-card sm:flex">
-                <SidebarMenuContent />
-            </Sidebar>
-            <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-60">
-                <AdminHeader />
-                <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-4 md:gap-8">
-                  {children}
-                </main>
-            </div>
-        </div>
-      </SidebarProvider>
+        <AdminProtectedContent>{children}</AdminProtectedContent>
     </FirebaseClientProvider>
   );
 }
