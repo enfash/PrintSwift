@@ -99,13 +99,6 @@ function SidebarMenuContent() {
           <Logo />
           <span className={cn("text-lg", !open && "hidden")}>PrintSwift Admin</span>
         </div>
-        <div className={cn(!open && "hidden")}>
-            <SidebarTrigger>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
-                  <ChevronLeft />
-                </Button>
-            </SidebarTrigger>
-        </div>
       </SidebarHeader>
       <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
