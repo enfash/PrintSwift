@@ -42,6 +42,8 @@ const useDummyUser = () => {
         return null;
     });
 
+    const isUserLoading = false; // Dummy user is never in a loading state from server
+
     useEffect(() => {
         const handleStorageChange = () => {
             const storedUser = sessionStorage.getItem('dummyUser');
@@ -63,9 +65,10 @@ const useDummyUser = () => {
         sessionStorage.removeItem('dummyUser');
         setUser(null);
         window.dispatchEvent(new Event('storage'));
+        return Promise.resolve();
     };
 
-    return { user, login, logout, isUserLoading: false };
+    return { user, login, logout, isUserLoading };
 };
 
 
@@ -73,6 +76,8 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Use the dummy user hook for this pre-deployment setup
   const { user, isUserLoading, login } = useDummyUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -86,12 +91,12 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading) {
-    return <div className="flex h-screen items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
-  }
-   if (!isUserLoading && user) {
-    // Already logged in, redirecting...
-    return <div className="flex h-screen items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
+  if (isUserLoading || (!isUserLoading && user)) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
   }
 
 
@@ -101,13 +106,16 @@ export default function LoginPage() {
     const DUMMY_EMAIL = 'admin@example.com';
     const DUMMY_PASSWORD = 'password';
 
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     if (values.email === DUMMY_EMAIL && values.password === DUMMY_PASSWORD) {
       toast({
         title: 'Login Successful',
         description: 'Redirecting to your dashboard...',
       });
       login(values.email);
-      router.push('/admin/dashboard');
+      // No need to push here, the useEffect will handle redirection
     } else {
       toast({
         variant: 'destructive',
@@ -178,4 +186,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

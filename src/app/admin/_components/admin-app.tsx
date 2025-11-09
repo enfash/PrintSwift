@@ -41,7 +41,44 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FirebaseClientProvider, useUser } from '@/firebase';
+import { FirebaseClientProvider } from '@/firebase';
+import { LoaderCircle } from 'lucide-react';
+
+
+// This hook should be defined in a separate file in a real app, e.g., hooks/use-dummy-auth.ts
+// For this fix, we'll define it here to be self-contained with the component using it.
+const useDummyUser = () => {
+    const [user, setUser] = useState<{ email: string } | null>(null);
+    const [isUserLoading, setIsLoading] = useState(true); // Start as loading
+
+    useEffect(() => {
+        // Simulate checking session storage on component mount
+        const storedUser = sessionStorage.getItem('dummyUser');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+        setIsLoading(false);
+
+        // Listen for changes from other tabs
+        const handleStorageChange = () => {
+            const updatedUser = sessionStorage.getItem('dummyUser');
+            setUser(updatedUser ? JSON.parse(updatedUser) : null);
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+
+    const logout = () => {
+        sessionStorage.removeItem('dummyUser');
+        setUser(null);
+        window.dispatchEvent(new Event('storage'));
+        return Promise.resolve();
+    };
+
+    return { user, logout, isUserLoading };
+};
+
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Grid },
@@ -67,7 +104,7 @@ const settingsItems = [
 
 function SidebarMenuContent() {
   const pathname = usePathname();
-  const { user, isUserLoading, logout } = useUser();
+  const { logout } = useDummyUser();
   const router = useRouter();
 
 
@@ -128,7 +165,7 @@ function SidebarMenuContent() {
 }
 
 function AdminHeader() {
-  const { user, logout } = useUser();
+  const { user, logout } = useDummyUser();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -155,7 +192,7 @@ function AdminHeader() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.photoURL || ''} alt="User avatar" />
+              <AvatarImage src={''} alt="User avatar" />
               <AvatarFallback>
                 {user?.email?.charAt(0).toUpperCase() || 'A'}
               </AvatarFallback>
@@ -181,11 +218,11 @@ export default function AdminApp({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading } = useDummyUser();
   const router = useRouter();
   const pathname = usePathname();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
         if (!isUserLoading && !user && pathname !== '/admin/login') {
             router.replace('/admin/login');
@@ -201,13 +238,24 @@ export default function AdminApp({
     );
   }
 
-  if (isUserLoading || !user) {
+  if (isUserLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
+        <LoaderCircle className="h-8 w-8 animate-spin" />
       </div>
     );
   }
+
+  // If loading is finished and there's still no user, redirect.
+  // This prevents rendering the admin shell for a split second before redirecting.
+  if (!user) {
+     return (
+      <div className="flex h-screen items-center justify-center">
+        <LoaderCircle className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
 
   return (
     <FirebaseClientProvider>
