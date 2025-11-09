@@ -25,7 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, FirebaseError } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -45,20 +45,47 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'Firebase Auth is not initialized.',
+        });
+        setIsSubmitting(false);
+        return;
+    }
+    
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: 'Login Successful',
         description: 'Redirecting to your dashboard...',
       });
-      // The redirect will be handled by the main AdminApp component
     } catch (error) {
-       toast({
-        variant: 'destructive',
-        title: 'Authentication Failed',
-        description: 'Invalid email or password.',
-      });
-      setIsSubmitting(false);
+       if (error instanceof FirebaseError && error.code === 'auth/user-not-found') {
+        // If user does not exist, create it.
+        try {
+            await createUserWithEmailAndPassword(auth, values.email, values.password);
+            toast({
+                title: 'Admin User Created',
+                description: 'Successfully created the admin account. Logging in...',
+            });
+        } catch (creationError) {
+             toast({
+                variant: 'destructive',
+                title: 'Failed to Create User',
+                description: 'Could not create the admin user.',
+            });
+            setIsSubmitting(false);
+        }
+       } else {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Failed',
+                description: 'Invalid email or password.',
+            });
+            setIsSubmitting(false);
+       }
     }
   };
 
