@@ -24,10 +24,10 @@ function calculateCustomerPrice(tier: any) {
     };
 };
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params: { id } }: { params: { id: string } }) {
   const firestore = useFirestore();
   
-  const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', params.id) : null, [firestore, params.id]);
+  const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', id) : null, [firestore, id]);
   const { data: product, isLoading, error } = useDoc<any>(productRef);
 
   if (isLoading) {
