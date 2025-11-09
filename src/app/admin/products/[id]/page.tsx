@@ -7,13 +7,12 @@ import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UploadCloud, LoaderCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useDoc, useFirestore, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -22,16 +21,15 @@ import { useEffect, useState } from 'react';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
-  slug: z.string().optional(),
   categoryId: z.string({ required_error: 'Please select a category.' }),
-  shortDescription: z.string().optional(),
-  price: z.coerce.number().optional(),
+  description: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
   featured: z.boolean().default(false),
 });
 
 
-export default function ProductFormPage({ params: { id } }: { params: { id: string } }) {
+export default function ProductFormPage({ params }: { params: { id: string } }) {
+    const { id } = params;
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
@@ -132,10 +130,10 @@ export default function ProductFormPage({ params: { id } }: { params: { id: stri
                             />
                              <FormField
                                 control={form.control}
-                                name="shortDescription"
+                                name="description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Short Description</FormLabel>
+                                        <FormLabel>Description</FormLabel>
                                         <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -162,22 +160,9 @@ export default function ProductFormPage({ params: { id } }: { params: { id: stri
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Details</CardTitle>
+                            <CardTitle>Publishing</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                             <FormField
-                                control={form.control}
-                                name="price"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Base Price (₦)</FormLabel>
-                                        <FormControl><Input type="number" placeholder="e.g., 15000" {...field} value={field.value || ''} /></FormControl>
-                                        <FormDescription>This will be used for sorting and display. Detailed pricing is handled by the pricing engine.</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Separator />
                             <FormField
                                 control={form.control}
                                 name="status"
@@ -231,3 +216,5 @@ export default function ProductFormPage({ params: { id } }: { params: { id: stri
         </Form>
     );
 }
+
+    

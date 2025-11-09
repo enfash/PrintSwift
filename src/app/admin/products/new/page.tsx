@@ -1,20 +1,19 @@
 
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UploadCloud, Trash2, LoaderCircle } from 'lucide-react';
+import { UploadCloud, LoaderCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -22,21 +21,18 @@ import { useState } from 'react';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
-  slug: z.string().optional(),
   categoryId: z.string({ required_error: 'Please select a category.' }),
-  shortDescription: z.string().optional(),
-  price: z.coerce.number().optional(),
+  description: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
   featured: z.boolean().default(false),
 });
 
 
-export default function ProductFormPage({ params }: { params?: { id: string } }) {
+export default function ProductFormPage() {
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const isEditMode = !!params?.id;
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
@@ -46,13 +42,11 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
         defaultValues: {
             name: '',
             categoryId: '',
+            description: '',
             status: 'Draft',
             featured: false,
         },
     });
-    
-    // In a real app, you would fetch the product data here if in edit mode
-    // and use form.reset(productData) to populate the form.
 
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
         if (!firestore) return;
@@ -60,19 +54,19 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
         
         const productData = {
             ...values,
-            imageUrl: `https://picsum.photos/seed/${values.name.replace(/\s+/g, '-')}/600/400`, // Placeholder
+            imageUrl: `https://picsum.photos/seed/${values.name.replace(/\s+/g, '-')}/600/400`,
+            pricing: { // Default pricing structure
+                baseCost: 0,
+                tax: 7.5,
+                addons: [],
+                tiers: [],
+            }
         };
 
         try {
-            if (isEditMode) {
-                const productRef = doc(firestore, 'products', params.id);
-                updateDocumentNonBlocking(productRef, productData);
-                toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
-            } else {
-                const productsCollection = collection(firestore, 'products');
-                await addDocumentNonBlocking(productsCollection, productData);
-                toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
-            }
+            const productsCollection = collection(firestore, 'products');
+            await addDocumentNonBlocking(productsCollection, productData);
+            toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
             router.push('/admin/products');
         } catch (error) {
             console.error("Error saving product:", error);
@@ -86,12 +80,12 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">{isEditMode ? 'Edit Product' : 'Add New Product'}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Add New Product</h1>
                     <div className="flex items-center gap-2">
-                        {isEditMode && <Button variant="outline" type="button" onClick={() => router.push('/admin/products')}>Cancel</Button>}
+                        <Button variant="outline" type="button" onClick={() => router.push('/admin/products')}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditMode ? 'Save Changes' : 'Save Product'}
+                            Save Product
                         </Button>
                     </div>
                 </div>
@@ -139,11 +133,11 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
                             />
                             <FormField
                                 control={form.control}
-                                name="shortDescription"
+                                name="description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Short Description</FormLabel>
-                                        <FormControl><Textarea placeholder="A brief summary of the product." {...field} /></FormControl>
+                                        <FormLabel>Description</FormLabel>
+                                        <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -169,22 +163,9 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Details</CardTitle>
+                            <CardTitle>Publishing</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                             <FormField
-                                control={form.control}
-                                name="price"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Base Price (₦)</FormLabel>
-                                        <FormControl><Input type="number" placeholder="e.g., 15000" {...field} /></FormControl>
-                                        <FormDescription>This will be used for sorting and display. Detailed pricing is handled by the pricing engine.</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Separator />
                             <FormField
                                 control={form.control}
                                 name="status"
@@ -195,7 +176,7 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
                                         <p className="text-sm text-muted-foreground">Set product visibility.</p>
                                     </div>
                                     <FormControl>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <SelectTrigger className="w-[180px]">
                                                 <SelectValue placeholder="Status" />
                                             </SelectTrigger>
@@ -239,3 +220,4 @@ export default function ProductFormPage({ params }: { params?: { id: string } })
     );
 }
 
+    
