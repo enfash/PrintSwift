@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoaderCircle, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { allProducts } from '../products/page';
+import { allProducts } from '@/lib/products';
 
 const quoteFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
