@@ -208,7 +208,7 @@ const Sidebar = React.forwardRef<
     return (
       <div
         ref={ref}
-        className={cn("group peer hidden md:block text-sidebar-foreground", className)}
+        className={cn("group peer hidden md:flex h-full flex-col bg-card border-r w-[var(--sidebar-width-icon)] data-[state=expanded]:w-[var(--sidebar-width)] transition-all duration-300 ease-in-out", className)}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
@@ -561,7 +561,7 @@ const SidebarMenuButton = React.forwardRef<
           hidden={state !== "collapsed" || isMobile}
           {...tooltip}
         >
-          {tooltip}
+          {tooltip.children}
         </TooltipContent>
       </Tooltip>
     )
