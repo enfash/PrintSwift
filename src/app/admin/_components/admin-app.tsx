@@ -245,20 +245,16 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/admin/login';
 
   React.useEffect(() => {
-    // If auth is done loading...
     if (!isUserLoading) {
-      // ...and there's no user, redirect to login, UNLESS we are already on the login page.
       if (!user && !isLoginPage) {
           router.replace('/admin/login');
       }
-      // ...and there IS a user, redirect to dashboard if they are on the login page.
       if (user && isLoginPage) {
           router.replace('/admin/dashboard');
       }
     }
   }, [user, isUserLoading, router, pathname, isLoginPage]);
 
-  // While checking auth, show a global loader.
   if (isUserLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -267,12 +263,10 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If there's no user and we're on the login page, show the login page.
   if (!user && isLoginPage) {
       return <LoginPage />;
   }
 
-  // If there's a user, show the authed part of the app.
   if (user) {
     return (
       <SidebarProvider>
@@ -291,7 +285,6 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If no user and not on login page, we're likely redirecting, show a loader.
   return (
     <div className="flex h-screen items-center justify-center">
       <LoaderCircle className="h-8 w-8 animate-spin" />
