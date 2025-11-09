@@ -21,29 +21,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoaderCircle, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { allProducts } from '../products/page';
 
 const quoteFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   company: z.string().optional(),
-  product: z.string({ required_error: 'Please select a product category.' }),
+  product: z.string({ required_error: 'Please select a product.' }),
   quantity: z.coerce.number().min(1, { message: 'Quantity must be at least 1.' }),
   artwork: z.any().optional(),
   details: z.string().min(10, { message: 'Please provide at least a brief description.' }),
 });
 
-const products = [
-    'Marketing & Business Prints',
-    'Large Format & Outdoor Prints',
-    'Stickers & Labels',
-    'Packaging Prints',
-    'Apparel & Textile Printing',
-    'Promotional Items',
-    'Signage & Display Systems',
-    'Digital Services',
-    'Event & Personal Prints',
-    'Other',
-];
+const products = [...allProducts.map(p => p.name), "Other"];
 
 export default function QuotePage() {
   const { toast } = useToast();
@@ -141,11 +131,11 @@ export default function QuotePage() {
                   name="product"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Product Category</FormLabel>
+                      <FormLabel>Product</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a product category" />
+                            <SelectValue placeholder="Select a product" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
