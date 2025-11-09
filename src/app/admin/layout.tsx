@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -43,8 +43,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FirebaseClientProvider, useUser } from '@/firebase';
-import { getAuth } from 'firebase/auth';
+import { FirebaseClientProvider } from '@/firebase';
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Grid },
@@ -68,13 +67,45 @@ const settingsItems = [
   { href: '/admin/users', label: 'Users & Roles', icon: Users },
 ];
 
+// Dummy user state for local development/testing
+const useDummyUser = () => {
+    const [user, setUser] = useState<{ email: string } | null>(null);
+    const [isUserLoading, setIsLoading] = useState(true);
+    const router = useRouter();
+
+    useEffect(() => {
+        const storedUser = sessionStorage.getItem('dummyUser');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+        setIsLoading(false);
+
+        const handleStorageChange = () => {
+            const storedUser = sessionStorage.getItem('dummyUser');
+            setUser(storedUser ? JSON.parse(storedUser) : null);
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+
+    }, []);
+
+    const logout = () => {
+        sessionStorage.removeItem('dummyUser');
+        setUser(null);
+        window.dispatchEvent(new Event('storage'));
+        router.push('/admin/login');
+    };
+
+    return { user, isUserLoading, logout };
+};
+
 function SidebarMenuContent() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const auth = getAuth();
+  const { logout } = useDummyUser();
 
   const handleLogout = () => {
-    auth.signOut();
+    logout();
   };
 
   return (
@@ -130,11 +161,10 @@ function SidebarMenuContent() {
 }
 
 function AdminHeader() {
-  const { user } = useUser();
-  const auth = getAuth();
+  const { user, logout } = useDummyUser();
 
   const handleLogout = () => {
-    auth.signOut();
+    logout();
   };
   
   return (
@@ -155,7 +185,7 @@ function AdminHeader() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.photoURL || ''} alt="User avatar" />
+              <AvatarImage src={''} alt="User avatar" />
               <AvatarFallback>
                 {user?.email?.charAt(0).toUpperCase() || 'A'}
               </AvatarFallback>
@@ -181,13 +211,15 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading } = useDummyUser();
   const router = useRouter();
   const pathname = usePathname();
 
   React.useEffect(() => {
-    if (!isUserLoading && !user && pathname !== '/admin/login') {
-      router.replace('/admin/login');
+    if (typeof window !== 'undefined') {
+        if (!isUserLoading && !user && pathname !== '/admin/login') {
+            router.replace('/admin/login');
+        }
     }
   }, [user, isUserLoading, router, pathname]);
 
@@ -202,7 +234,6 @@ export default function AdminLayout({
   if (isUserLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
-        {/* Or a spinner component */}
         <p>Loading...</p>
       </div>
     );

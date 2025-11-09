@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -25,11 +25,6 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from 'firebase/auth';
 import { useUser } from '@/firebase';
 
 const formSchema = z.object({
@@ -37,50 +32,87 @@ const formSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
 
+// Dummy user state for local development/testing
+const useDummyUser = () => {
+    const [user, setUser] = useState<{ email: string } | null>(() => {
+        if (typeof window !== 'undefined') {
+            const storedUser = sessionStorage.getItem('dummyUser');
+            return storedUser ? JSON.parse(storedUser) : null;
+        }
+        return null;
+    });
+
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const storedUser = sessionStorage.getItem('dummyUser');
+            setUser(storedUser ? JSON.parse(storedUser) : null);
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    const login = (email: string) => {
+        const dummyUser = { email };
+        sessionStorage.setItem('dummyUser', JSON.stringify(dummyUser));
+        setUser(dummyUser);
+        // Dispatch a storage event to notify other tabs/windows
+        window.dispatchEvent(new Event('storage'));
+    };
+
+    const logout = () => {
+        sessionStorage.removeItem('dummyUser');
+        setUser(null);
+        window.dispatchEvent(new Event('storage'));
+    };
+
+    return { user, login, logout, isUserLoading: false };
+};
+
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(true); // Default to sign up
-  const { user, isUserLoading } = useUser();
-  const auth = getAuth();
+  const { user, isUserLoading, login } = useDummyUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: 'admin@example.com', password: 'password' },
   });
 
-  if (!isUserLoading && user) {
-    router.replace('/admin/dashboard');
-    return null;
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.replace('/admin/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading) {
+    return <div className="flex h-screen items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
   }
+   if (!isUserLoading && user) {
+    // Already logged in, redirecting...
+    return <div className="flex h-screen items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
+  }
+
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
-    try {
-      if (isSignUp) {
-        // This is a simplified check. In a real app, you'd want a more robust way
-        // to control who can sign up as an admin, e.g., via Firestore rules or a backend check.
-        // For now, we'll assume the first user is the admin.
-        await createUserWithEmailAndPassword(auth, values.email, values.password);
-        toast({
-          title: 'Account Created',
-          description: 'You have been successfully signed up. Redirecting...',
-        });
-      } else {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
-        toast({
-          title: 'Login Successful',
-          description: 'Redirecting to your dashboard...',
-        });
-      }
+    // Dummy login credentials
+    const DUMMY_EMAIL = 'admin@example.com';
+    const DUMMY_PASSWORD = 'password';
+
+    if (values.email === DUMMY_EMAIL && values.password === DUMMY_PASSWORD) {
+      toast({
+        title: 'Login Successful',
+        description: 'Redirecting to your dashboard...',
+      });
+      login(values.email);
       router.push('/admin/dashboard');
-    } catch (error: any) {
-      console.error(error);
+    } else {
       toast({
         variant: 'destructive',
         title: 'Authentication Failed',
-        description: error.message || 'An unknown error occurred.',
+        description: 'Invalid email or password.',
       });
       setIsSubmitting(false);
     }
@@ -91,12 +123,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">
-            {isSignUp ? 'Admin Sign Up' : 'Admin Login'}
+            Admin Login
           </CardTitle>
           <CardDescription>
-            {isSignUp
-              ? 'Create your admin account to manage the store.'
-              : 'Enter your credentials to access the dashboard.'}
+            Enter the credentials to access the dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,26 +162,20 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
+              <p className="text-xs text-muted-foreground">
+                Hint: Use `admin@example.com` and `password`.
+              </p>
               <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? (
                   <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {isSignUp ? 'Sign Up' : 'Login'}
+                Login
               </Button>
             </form>
           </Form>
-          <div className="mt-4 text-center text-sm">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <Button
-              variant="link"
-              className="p-0"
-              onClick={() => setIsSignUp(!isSignUp)}
-            >
-              {isSignUp ? 'Login' : 'Sign Up'}
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+

@@ -11,7 +11,7 @@ export function initializeFirebase() {
   if (!getApps().length) {
     let firebaseApp;
     try {
-      firebaseApp = initializeApp();
+      firebaseApp = initializeApp(firebaseConfig);
     } catch (e) {
       if (process.env.NODE_ENV === "production") {
         console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
@@ -25,11 +25,20 @@ export function initializeFirebase() {
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
-  return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
-  };
+  try {
+    return {
+      firebaseApp,
+      auth: getAuth(firebaseApp),
+      firestore: getFirestore(firebaseApp)
+    };
+  } catch (e) {
+      // return dummy services if initialization fails
+      return {
+          firebaseApp: {} as FirebaseApp,
+          auth: {} as any,
+          firestore: {} as any,
+      }
+  }
 }
 
 export * from './provider';
@@ -37,7 +46,7 @@ export * from './client-provider';
 export * from './firestore/use-collection';
 export * from './firestore/use-doc';
 export * from './non-blocking-updates';
-export * from './non-blocking-login';
+// export * from './non-blocking-login';
 export * from './errors';
 export * from './error-emitter';
 
