@@ -102,15 +102,21 @@ export default function PricingEnginePage() {
     });
 
     useEffect(() => {
+        const defaultPricing = { baseCost: 0, tax: 7.5, addons: [], tiers: [] };
         if (selectedProduct) {
             form.reset({
                 productId: selectedProduct.id,
-                pricing: selectedProduct.pricing || { baseCost: 0, tax: 7.5, addons: [], tiers: [] }
+                pricing: {
+                    baseCost: selectedProduct.pricing?.baseCost || 0,
+                    tax: selectedProduct.pricing?.tax || 7.5,
+                    addons: selectedProduct.pricing?.addons || [],
+                    tiers: selectedProduct.pricing?.tiers || [],
+                }
             });
         } else if (!isLoadingSelectedProduct) {
             form.reset({
                 productId: selectedProductId || '',
-                pricing: { baseCost: 0, tax: 7.5, addons: [], tiers: [] }
+                pricing: defaultPricing
             });
         }
     }, [selectedProduct, selectedProductId, isLoadingSelectedProduct, form]);
@@ -297,5 +303,3 @@ export default function PricingEnginePage() {
         </form>
     );
 }
-
-    
