@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -19,8 +19,6 @@ import {
   Package,
   LogIn,
   ChevronDown,
-  PlusCircle,
-  MoreHorizontal
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -44,45 +42,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseClientProvider, useUser } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-
-
-// This hook should be defined in a separate file in a real app, e.g., hooks/use-dummy-auth.ts
-// For this fix, we'll define it here to be self-contained with the component using it.
-const useDummyUser = () => {
-    const [user, setUser] = useState<{ email: string } | null>(null);
-    const [isUserLoading, setIsLoading] = useState(true); // Start as loading
-
-    useEffect(() => {
-        // Simulate checking session storage on component mount
-        const storedUser = sessionStorage.getItem('dummyUser');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-        setIsLoading(false);
-
-        // Listen for changes from other tabs
-        const handleStorageChange = () => {
-            const updatedUser = sessionStorage.getItem('dummyUser');
-            setUser(updatedUser ? JSON.parse(updatedUser) : null);
-        };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
-
-
-    const logout = () => {
-        sessionStorage.removeItem('dummyUser');
-        setUser(null);
-        window.dispatchEvent(new Event('storage'));
-        return Promise.resolve();
-    };
-
-    return { user, logout, isUserLoading };
-};
 
 
 const menuItems = [
@@ -110,14 +73,14 @@ const settingsItems = [
 
 function SidebarMenuContent() {
   const pathname = usePathname();
-  const { user, logout } = useDummyUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
 
   const handleLogout = () => {
-    logout().then(() => {
-        router.push('/admin/login');
-    });
+    // This will be replaced with actual Firebase logout
+    console.log('Logging out...');
+    router.push('/admin/login');
   };
 
   const handleLogin = () => {
@@ -137,9 +100,9 @@ function SidebarMenuContent() {
           {menuItems.map((item) => (
              item.subItems ? (
                 <Collapsible key={item.label} className="w-full" defaultOpen={pathname.startsWith(item.href)}>
-                    <CollapsibleTrigger className="w-full">
+                    <CollapsibleTrigger asChild className="w-full">
                         <SidebarMenuButton
-                            isActive={pathname.startsWith(item.href) && item.href !== '/admin/products'}
+                            isActive={pathname.startsWith(item.href) && !item.subItems.some(si => si.href === pathname)}
                             className="w-full justify-between"
                         >
                             <div className="flex items-center gap-2">
@@ -234,73 +197,65 @@ function MobileSidebar() {
 }
 
 function AdminHeader() {
-  const { user, logout } = useDummyUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   const handleLogout = () => {
-    logout().then(() => {
-        router.push('/admin/login');
-    });
+    // This will be replaced with actual Firebase logout
+    console.log('Logging out...');
+    router.push('/admin/login');
   };
   
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
         <MobileSidebar />
-        <div className="flex items-center gap-2 font-semibold sm:hidden">
-            <Logo />
-            <span>Bomedia Admin</span>
+        <div className="relative ml-auto flex-1 md:grow-0">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+                type="search"
+                placeholder="Search..."
+                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+            />
         </div>
-
-        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
-            <form className="ml-auto flex-1 sm:flex-initial">
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder="Search..."
-                        className="w-full rounded-lg bg-card pl-8 md:w-[200px] lg:w-[336px]"
-                    />
-                </div>
-            </form>
+        <Button variant="ghost" size="icon" className="rounded-full">
+            <Bell className="h-5 w-5" />
+        </Button>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
-                <Bell className="h-5 w-5" />
+                <Avatar className="h-8 w-8">
+                <AvatarImage src={''} alt="User avatar" />
+                <AvatarFallback>
+                    {user?.email?.charAt(0).toUpperCase() || 'A'}
+                </AvatarFallback>
+                </Avatar>
             </Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                    <Avatar className="h-8 w-8">
-                    <AvatarImage src={''} alt="User avatar" />
-                    <AvatarFallback>
-                        {user?.email?.charAt(0).toUpperCase() || 'A'}
-                    </AvatarFallback>
-                    </Avatar>
-                </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link href="/admin/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+                <Link href="/admin/settings">Settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
    </header>
   );
 }
+
 
 export default function AdminApp({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading } = useDummyUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
         if (!isUserLoading && !user && pathname !== '/admin/login') {
             router.replace('/admin/login');
@@ -316,7 +271,7 @@ export default function AdminApp({
     );
   }
 
-  if (isUserLoading) {
+  if (isUserLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin" />
@@ -324,32 +279,21 @@ export default function AdminApp({
     );
   }
 
-  if (!user) {
-     return (
-      <div className="flex h-screen items-center justify-center">
-        <LoaderCircle className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-
   return (
     <FirebaseClientProvider>
-        <div className="flex min-h-screen w-full flex-col bg-muted/40">
-          <SidebarProvider>
-            <Sidebar className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-card sm:flex">
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-muted/40">
+            <Sidebar className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r bg-card sm:flex">
                 <SidebarMenuContent />
             </Sidebar>
-            <div className="flex flex-col sm:pl-64">
+            <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-60">
                 <AdminHeader />
-                <main className="flex-1 gap-4 p-4 sm:px-6 md:gap-8">
+                <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-4 md:gap-8">
                   {children}
                 </main>
             </div>
-          </SidebarProvider>
         </div>
+      </SidebarProvider>
     </FirebaseClientProvider>
   );
 }
-
-    
