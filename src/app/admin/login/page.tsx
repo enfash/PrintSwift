@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
-import { useUser } from '@/firebase';
 
 const formSchema = z.object({
   email: z.string().email(),
