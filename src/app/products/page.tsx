@@ -1,11 +1,12 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,26 +17,45 @@ import {
     LoaderCircle
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy as firestoreOrderBy } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 
-export default function ProductsPage() {
+function ProductsComponent() {
     const firestore = useFirestore();
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const initialCategory = searchParams.get('category');
+
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : []);
     const [sortOption, setSortOption] = useState('popularity-desc');
 
-    const categoriesQuery = useMemoFirebase(() => collection(firestore, 'product_categories'), [firestore]);
+    const categoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesQuery);
 
-    const productsQuery = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+    const productsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
     const { data: allProducts, isLoading: isLoadingProducts } = useCollection<any>(productsQuery);
 
-    const handleCategoryChange = (categoryId: string, checked: boolean | string) => {
-        if (checked) {
-            setSelectedCategories(prev => [...prev, categoryId]);
-        } else {
-            setSelectedCategories(prev => prev.filter(id => id !== categoryId));
+    useEffect(() => {
+        const newCategory = searchParams.get('category');
+        if (newCategory) {
+            setSelectedCategories(prev => prev.includes(newCategory) ? prev : [...prev, newCategory]);
         }
+    }, [searchParams]);
+
+    const handleCategoryChange = (categoryId: string, checked: boolean | string) => {
+        const newSelectedCategories = checked
+            ? [...selectedCategories, categoryId]
+            : selectedCategories.filter(id => id !== categoryId);
+        
+        setSelectedCategories(newSelectedCategories);
+
+        const params = new URLSearchParams(searchParams.toString());
+        if (newSelectedCategories.length > 0) {
+            params.set('category', newSelectedCategories.join(','));
+        } else {
+            params.delete('category');
+        }
+        router.replace(`/products?${params.toString()}`);
     };
 
     const filteredAndSortedProducts = useMemo(() => {
@@ -49,7 +69,7 @@ export default function ProductsPage() {
 
         // Filter by categories
         if (selectedCategories.length > 0) {
-            products = products.filter(p => selectedCategories.includes(p.categoryId));
+            products = products.filter(p => p.categoryId && selectedCategories.includes(p.categoryId));
         }
 
         // Sort products
@@ -65,7 +85,7 @@ export default function ProductsPage() {
             }
 
             if (typeof valA === 'string' && typeof valB === 'string') {
-                return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                return order === 'asc' ? valA.localeCompare(valA) : valB.localeCompare(valA);
             }
             
             return 0;
@@ -75,6 +95,12 @@ export default function ProductsPage() {
     }, [searchTerm, selectedCategories, sortOption, allProducts]);
 
     const isLoading = isLoadingCategories || isLoadingProducts;
+    
+    const clearFilters = () => {
+        setSearchTerm('');
+        setSelectedCategories([]);
+        router.replace('/products');
+    };
 
     return (
         <div className="container mx-auto max-w-7xl px-4 py-16 md:py-24">
@@ -107,7 +133,7 @@ export default function ProductsPage() {
                             </div>
                             <div>
                                 <h3 className="font-semibold mb-3">Category</h3>
-                                {isLoadingCategories ? <p>Loading categories...</p> : (
+                                {isLoadingCategories ? <div className="space-y-2"><LoaderCircle className="animate-spin h-5 w-5" /></div> : (
                                     <div className="space-y-3">
                                         {categories?.map(category => (
                                             <div key={category.id} className="flex items-center space-x-2">
@@ -130,7 +156,7 @@ export default function ProductsPage() {
                 <main className="lg:col-span-3">
                     <div className="flex justify-between items-center mb-6">
                         <p className="text-sm text-muted-foreground">
-                            {isLoading ? 'Loading...' : `Showing ${filteredAndSortedProducts.length} of ${allProducts?.length || 0} products`}
+                            {isLoadingProducts ? 'Loading...' : `Showing ${filteredAndSortedProducts.length} of ${allProducts?.length || 0} products`}
                         </p>
                         <div className="flex items-center gap-2">
                             <Label htmlFor="sort-by" className="text-sm">Sort by:</Label>
@@ -175,7 +201,7 @@ export default function ProductsPage() {
                                             </div>
                                             <CardContent className="p-4 flex-grow flex flex-col">
                                                 <h3 className="font-semibold text-lg truncate">{product.name}</h3>
-                                                <p className="text-sm text-muted-foreground flex-grow">{product.categoryName}</p>
+                                                <p className="text-sm text-muted-foreground flex-grow">{categories?.find(c => c.id === product.categoryId)?.name}</p>
                                                 <p className="font-bold text-lg mt-2">₦{product.price?.toLocaleString() || 'N/A'}</p>
                                             </CardContent>
                                         </Card>
@@ -187,7 +213,7 @@ export default function ProductsPage() {
                             <Search className="mx-auto h-12 w-12 text-muted-foreground" />
                             <h3 className="mt-4 text-lg font-medium">No Products Found</h3>
                             <p className="mt-1 text-sm text-muted-foreground">Try adjusting your filters to find what you're looking for.</p>
-                            <Button variant="outline" className="mt-6" onClick={() => { setSearchTerm(''); setSelectedCategories([]); }}>
+                            <Button variant="outline" className="mt-6" onClick={clearFilters}>
                                 Clear Filters
                             </Button>
                         </div>
@@ -196,4 +222,13 @@ export default function ProductsPage() {
             </div>
         </div>
     );
+}
+
+
+export default function ProductsPage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><LoaderCircle className="h-12 w-12 animate-spin" /></div>}>
+            <ProductsComponent />
+        </Suspense>
+    )
 }

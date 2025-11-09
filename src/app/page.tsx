@@ -1,3 +1,5 @@
+
+'use client';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -13,24 +15,21 @@ import {
     UploadCloud,
     Truck,
     ArrowRight,
+    LoaderCircle
 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit } from 'firebase/firestore';
 
-const categories = [
-  { name: 'Marketing Prints', icon: <Briefcase className="w-8 h-8" />, href: '/products' },
-  { name: 'Corporate Gifts', icon: <Gift className="w-8 h-8" />, href: '/products' },
-  { name: 'Large Format', icon: <Printer className="w-8 h-8" />, href: '/products' },
-  { name: 'Packaging', icon: <Box className="w-8 h-8" />, href: '/products' },
-  { name: 'Custom Apparel', icon: <Shirt className="w-8 h-8" />, href: '/products' },
-  { name: 'Signage', icon: <MonitorPlay className="w-8 h-8" />, href: '/products' },
-];
-
-const featuredProducts = [
-  { id: 'prod_busi_1', name: 'Premium Business Cards', imageId: 'business-card' },
-  { id: 'prod_large_1', name: 'Roll-Up Banners', imageId: 'rollup-banner' },
-  { id: 'prod_promo_2', name: 'Custom Mugs', imageId: 'custom-mug' },
-  { id: 'prod_app_1', name: 'Custom T-Shirts', imageId: 'custom-tshirt' },
-];
+const categoryIcons: { [key: string]: React.ReactElement } = {
+  'Marketing & Business Prints': <Briefcase className="w-8 h-8" />,
+  'Corporate Gifts': <Gift className="w-8 h-8" />,
+  'Large Format & Outdoor Prints': <Printer className="w-8 h-8" />,
+  'Packaging Prints': <Box className="w-8 h-8" />,
+  'Apparel & Textile Printing': <Shirt className="w-8 h-8" />,
+  'Signage & Display Systems': <MonitorPlay className="w-8 h-8" />,
+  'Default': <Briefcase className="w-8 h-8" />
+};
 
 const howItWorksSteps = [
   {
@@ -59,6 +58,13 @@ function findImage(id: string) {
 
 export default function Home() {
   const heroImage = findImage('hero-printing');
+  const firestore = useFirestore();
+
+  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
+  const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
+
+  const featuredProductsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('featured', '==', true), limit(4)) : null, [firestore]);
+  const { data: featuredProducts, isLoading: isLoadingProducts } = useCollection<any>(featuredProductsRef);
 
   return (
     <>
@@ -101,18 +107,22 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-headline">Browse by Category</h2>
             <p className="mt-3 text-lg text-muted-foreground">Explore our wide range of custom printing solutions</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {categories.map((category) => (
-              <Link href={category.href} key={category.name} className="group">
-                <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 hover:-translate-y-1">
-                  <div className="flex justify-center items-center mb-4 text-primary group-hover:text-accent transition-colors">
-                    {category.icon}
-                  </div>
-                  <h3 className="font-semibold">{category.name}</h3>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          {isLoadingCategories ? (
+            <div className="flex justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              {categories?.slice(0, 6).map((category) => (
+                <Link href={`/products?category=${category.id}`} key={category.id} className="group">
+                  <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 hover:-translate-y-1 h-full">
+                    <div className="flex justify-center items-center mb-4 text-primary group-hover:text-accent transition-colors">
+                      {categoryIcons[category.name] || categoryIcons['Default']}
+                    </div>
+                    <h3 className="font-semibold">{category.name}</h3>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -123,31 +133,36 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-headline">Featured Products</h2>
             <p className="mt-3 text-lg text-muted-foreground">Our most popular custom printing solutions</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => {
-              const image = findImage(product.imageId);
-              return (
-                <Card key={product.id} className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl">
-                  <div className="overflow-hidden">
-                    <div className="aspect-[4/3] relative">
-                      {image && (
-                        <Image
-                          src={image.imageUrl}
-                          alt={product.name}
-                          fill
-                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                          data-ai-hint={image.imageHint}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg">{product.name}</h3>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          {isLoadingProducts ? (
+            <div className="flex justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {featuredProducts?.map((product) => {
+                return (
+                  <Link key={product.id} href={`/products/${product.id}`}>
+                    <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full">
+                      <div className="overflow-hidden">
+                        <div className="aspect-[4/3] relative">
+                          {product.imageUrl ? (
+                            <Image
+                              src={product.imageUrl}
+                              alt={product.name}
+                              fill
+                              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                              data-ai-hint="product image"
+                            />
+                          ) : <div className="w-full h-full bg-muted" />}
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold text-lg">{product.name}</h3>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
           <div className="text-center mt-12">
             <Button asChild size="lg" variant="outline">
               <Link href="/products">
