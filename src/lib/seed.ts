@@ -1,5 +1,5 @@
 
-import { Firestore, collection, writeBatch, getDocs, query } from 'firebase/firestore';
+import { Firestore, collection, writeBatch, getDocs, query, doc } from 'firebase/firestore';
 
 // Main categories
 const categories = [
@@ -168,7 +168,7 @@ export async function seedDatabase(db: Firestore) {
     if (categoriesSnapshot.empty) {
         console.log('Seeding categories...');
         categories.forEach(category => {
-            const docRef = collection(db, 'product_categories').doc(category.id);
+            const docRef = doc(db, 'product_categories', category.id);
             batch.set(docRef, { name: category.name, description: `Explore our ${category.name}.` });
         });
     } else {
@@ -180,7 +180,7 @@ export async function seedDatabase(db: Firestore) {
     if (productsSnapshot.empty) {
         console.log('Seeding products...');
         products.forEach((product, index) => {
-            const docRef = collection(db, 'products').doc();
+            const docRef = doc(productsCollection);
             batch.set(docRef, {
                 name: product.name,
                 categoryId: product.categoryId,
