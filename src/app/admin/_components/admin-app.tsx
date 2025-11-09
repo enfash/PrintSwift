@@ -18,6 +18,7 @@ import {
   Bell,
   Package,
   ChevronDown,
+  ChevronLeft,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -28,6 +29,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
 import {
@@ -43,10 +46,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger as MobileSheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import LoginPage from '../login/page';
 import { signOut } from 'firebase/auth';
+import { cn } from '@/lib/utils';
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -75,6 +79,7 @@ function SidebarMenuContent() {
   const pathname = usePathname();
   const auth = useAuth();
   const router = useRouter();
+  const { open } = useSidebar();
 
 
   const handleLogout = async () => {
@@ -89,8 +94,13 @@ function SidebarMenuContent() {
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 font-semibold">
           <Logo />
-          <span className="text-lg">Bomedia Admin</span>
+          <span className={cn("text-lg", !open && "hidden")}>PrintSwift Admin</span>
         </div>
+        <SidebarTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
+              <ChevronLeft />
+            </Button>
+        </SidebarTrigger>
       </SidebarHeader>
       <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
@@ -101,15 +111,16 @@ function SidebarMenuContent() {
                         <SidebarMenuButton
                             isActive={pathname.startsWith(item.href) && !item.subItems.some(si => si.href === pathname)}
                             className="w-full justify-between"
+                            tooltip={item.label}
                         >
                             <div className="flex items-center gap-2">
                                 <item.icon className="h-5 w-5" />
-                                {item.label}
+                                <span className={cn(!open && "hidden")}>{item.label}</span>
                             </div>
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className={cn("h-4 w-4", !open && "hidden")} />
                         </SidebarMenuButton>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="pl-6">
+                    <CollapsibleContent className={cn("pl-6", !open && "hidden")}>
                         <SidebarMenu>
                          {item.subItems.map(subItem => (
                             <SidebarMenuItem key={subItem.label}>
@@ -119,7 +130,7 @@ function SidebarMenuContent() {
                                         isActive={pathname === subItem.href}
                                         className="w-full justify-start"
                                     >
-                                    {subItem.label}
+                                     <span className={cn(!open && "hidden")}>{subItem.label}</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
@@ -133,9 +144,10 @@ function SidebarMenuContent() {
                     <SidebarMenuButton
                     isActive={pathname === item.href}
                     className="w-full justify-start"
+                    tooltip={item.label}
                     >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
+                        <item.icon className="h-5 w-5" />
+                        <span className={cn(!open && "hidden")}>{item.label}</span>
                     </SidebarMenuButton>
                 </Link>
                 </SidebarMenuItem>
@@ -151,17 +163,18 @@ function SidebarMenuContent() {
                 <SidebarMenuButton
                   isActive={pathname.startsWith(item.href)}
                    className="w-full justify-start"
+                   tooltip={item.label}
                 >
                   <item.icon className="h-5 w-5" />
-                  {item.label}
+                  <span className={cn(!open && "hidden")}>{item.label}</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
           ))}
            <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout} className="w-full justify-start">
+                <SidebarMenuButton onClick={handleLogout} className="w-full justify-start" tooltip="Logout">
                     <LogOut className="h-5 w-5" />
-                    Logout
+                    <span className={cn(!open && "hidden")}>Logout</span>
                 </SidebarMenuButton>
            </SidebarMenuItem>
         </SidebarMenu>
@@ -173,12 +186,12 @@ function SidebarMenuContent() {
 function MobileSidebar() {
   return (
     <Sheet>
-      <SheetTrigger asChild>
+      <MobileSheetTrigger asChild>
         <Button size="icon" variant="outline" className="sm:hidden">
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle Menu</span>
         </Button>
-      </SheetTrigger>
+      </MobileSheetTrigger>
       <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
         <SidebarMenuContent />
       </SheetContent>
@@ -271,10 +284,10 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
     return (
       <SidebarProvider>
         <div className="flex min-h-screen w-full bg-muted/40">
-          <Sidebar className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r bg-card sm:flex">
+          <Sidebar>
             <SidebarMenuContent />
           </Sidebar>
-          <div className="flex flex-col sm:pl-60 flex-grow">
+          <div className="flex flex-col flex-grow sm:pl-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:pl-[var(--sidebar-width)] transition-all duration-300 ease-in-out">
             <AdminHeader />
             <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-4 md:gap-8">
               {children}
