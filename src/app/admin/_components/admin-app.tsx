@@ -19,6 +19,7 @@ import {
   Package,
   ChevronDown,
   ChevronLeft,
+  PanelLeft,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -98,11 +99,13 @@ function SidebarMenuContent() {
           <Logo />
           <span className={cn("text-lg", !open && "hidden")}>PrintSwift Admin</span>
         </div>
-        <SidebarTrigger>
-            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
-              <ChevronLeft />
-            </Button>
-        </SidebarTrigger>
+        <div className={cn(!open && "hidden")}>
+            <SidebarTrigger>
+                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
+                  <ChevronLeft />
+                </Button>
+            </SidebarTrigger>
+        </div>
       </SidebarHeader>
       <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
@@ -216,6 +219,12 @@ function AdminHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
         <MobileSidebar />
+        <SidebarTrigger className="hidden sm:flex">
+          <Button size="icon" variant="outline">
+            <PanelLeft className="h-5 w-5" />
+            <span className="sr-only">Toggle Menu</span>
+          </Button>
+        </SidebarTrigger>
         <div className="relative ml-auto flex-1 md:grow-0">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
