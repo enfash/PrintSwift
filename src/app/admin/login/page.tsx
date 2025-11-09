@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -63,50 +64,44 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Redirecting to your dashboard...',
       });
-      // No need to set isSubmitting to false, as a redirect will happen
+      // A redirect will happen via the useUser hook, so no need to setIsSubmitting(false)
     } catch (error) {
-       if (error instanceof FirebaseError && error.code === 'auth/user-not-found') {
-        // If user does not exist, and it's the admin email, create it.
+       // Catches both user not found and invalid credential, as Firebase behavior can vary.
+       if (error instanceof FirebaseError && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
+        // If the user does not exist, and it's the default admin email, create the account.
         if (values.email === 'admin@example.com') {
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
                 const user = userCredential.user;
 
-                // Create the admin role document in Firestore
+                // Create the admin role document in Firestore to grant permissions.
                 const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
-                // Use non-blocking write. The security rule "isOwner(uid)" allows this.
                 setDocumentNonBlocking(adminRoleRef, {}, {});
 
                 toast({
-                    title: 'Admin User Created',
-                    description: 'Successfully created the admin account and assigned role. Logging in...',
+                    title: 'Admin Account Created',
+                    description: 'Your admin account has been created. Logging you in...',
                 });
-                // Successful creation will trigger onAuthStateChanged and redirect.
+                // Successful creation triggers onAuthStateChanged, leading to a redirect.
             } catch (creationError) {
                  toast({
                     variant: 'destructive',
                     title: 'Failed to Create Admin User',
-                    description: 'Could not create the admin user account.',
+                    description: 'Could not create the admin user account. Please check console for details.',
                 });
                 setIsSubmitting(false);
             }
         } else {
-            // If it's not the admin email, just show user not found.
+            // If it's not the admin email, just show the standard failure message.
             toast({
                 variant: 'destructive',
                 title: 'Authentication Failed',
-                description: 'Invalid email or password.',
+                description: 'Invalid email or password provided.',
             });
             setIsSubmitting(false);
         }
-       } else if (error instanceof FirebaseError && error.code === 'auth/wrong-password'){
-            toast({
-                variant: 'destructive',
-                title: 'Authentication Failed',
-                description: 'Invalid email or password.',
-            });
-            setIsSubmitting(false);
        } else {
+            // Handle other unexpected Firebase or network errors.
             console.error("Login error:", error);
             toast({
                 variant: 'destructive',
