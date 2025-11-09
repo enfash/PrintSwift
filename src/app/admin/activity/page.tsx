@@ -46,11 +46,11 @@ export default function ActivityLogPage() {
                                     <AvatarFallback>{activity.user.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div className="grid gap-1">
-                                    <p className="text-sm font-medium leading-none">
+                                    <div className="text-sm font-medium leading-none">
                                         <span className="font-semibold">{activity.user}</span>
                                         <Badge variant={getActionBadge(activity.action)} className="mx-2">{activity.action}</Badge>
                                         <span>{activity.target}</span>
-                                    </p>
+                                    </div>
                                     <p className="text-sm text-muted-foreground">{activity.time}</p>
                                 </div>
                             </div>
