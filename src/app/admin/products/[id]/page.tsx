@@ -31,13 +31,13 @@ const productSchema = z.object({
 });
 
 
-export default function ProductFormPage({ params }: { params: { id: string } }) {
+export default function ProductFormPage({ params: { id } }: { params: { id: string } }) {
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', params.id) : null, [firestore, params.id]);
+    const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', id) : null, [firestore, id]);
     const { data: product, isLoading: isLoadingProduct } = useDoc<z.infer<typeof productSchema>>(productRef);
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
@@ -60,7 +60,7 @@ export default function ProductFormPage({ params }: { params: { id: string } }) 
         const productData = { ...values };
 
         try {
-            const productDocRef = doc(firestore, 'products', params.id);
+            const productDocRef = doc(firestore, 'products', id);
             updateDocumentNonBlocking(productDocRef, productData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             router.push('/admin/products');
