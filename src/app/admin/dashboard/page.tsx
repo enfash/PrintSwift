@@ -22,17 +22,17 @@ import { Button } from '@/components/ui/button';
 const stats = [
   {
     title: 'Total Products',
-    value: '250',
+    value: '128',
     icon: <Package className="h-6 w-6 text-primary" />,
   },
   {
     title: 'Total Categories',
-    value: '9',
+    value: '12',
     icon: <Tags className="h-6 w-6 text-green-500" />,
   },
   {
     title: 'Active Testimonials',
-    value: '12',
+    value: '8',
     icon: <MessageSquareQuote className="h-6 w-6 text-yellow-500" />,
   },
   {
@@ -42,17 +42,26 @@ const stats = [
   },
 ];
 
+const recentActivity = [
+    { description: 'You updated Product: 12oz Paper Cups', time: '2 h ago' },
+    { description: 'You created Product: Business Cards', time: '1 dy ago' },
+    { description: 'You added Promo: Summer Sale', time: '2 dy ago' },
+];
+
 const quickLinks = [
-  { title: 'Add New Product', href: '/admin/products/new', icon: PlusCircle },
-  { title: 'Upload Media', href: '#', icon: Upload },
-  { title: 'Create Promo', href: '#', icon: Megaphone },
-  { title: 'View Website', href: '/', icon: Eye },
+  { title: 'Add New Product', href: '/admin/products/new' },
+  { title: 'Upload Media', href: '/admin/media' },
+  { title: 'Create Promo', href: '/admin/promos' },
+  { title: 'View Website', href: '/' },
 ];
 
 export default function Dashboard() {
   return (
     <>
-      <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <Button variant="outline">Quick Links</Button>
+      </div>
 
       {/* Top Stats */}
       <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -76,10 +85,19 @@ export default function Dashboard() {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                No recent activity.
-              </p>
+            <div className="space-y-6">
+                {recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-start">
+                        <div className="flex flex-col items-center mr-4">
+                            <div className="w-3 h-3 bg-primary rounded-full"></div>
+                            {index < recentActivity.length - 1 && <div className="w-px h-12 bg-border"></div>}
+                        </div>
+                        <div className="flex-grow">
+                            <p className="text-sm">{activity.description}</p>
+                            <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        </div>
+                    </div>
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -89,11 +107,10 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>Quick Links</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4">
+          <CardContent className="flex flex-col gap-4">
             {quickLinks.map((link) => (
-              <Button asChild key={link.title} variant="outline">
+              <Button asChild key={link.title} variant="outline" className="w-full justify-start">
                 <Link href={link.href}>
-                  <link.icon className="mr-2 h-4 w-4" />
                   {link.title}
                 </Link>
               </Button>

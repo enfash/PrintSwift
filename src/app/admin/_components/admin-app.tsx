@@ -5,11 +5,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Grid,
+  LayoutDashboard,
   Tags,
   MessageSquareQuote,
   Megaphone,
-  Image as ImageIcon,
+  ImageIcon,
   Settings,
   Users,
   LogOut,
@@ -17,6 +17,7 @@ import {
   Search,
   Bell,
   Package,
+  LogIn,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -27,7 +28,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
 import {
@@ -43,6 +43,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 
 // This hook should be defined in a separate file in a real app, e.g., hooks/use-dummy-auth.ts
@@ -81,19 +82,11 @@ const useDummyUser = () => {
 
 
 const menuItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: Grid },
-  {
-    href: '/admin/products',
-    label: 'Products',
-    icon: Package,
-    subItems: [
-      { href: '/admin/products', label: 'All Products' },
-      { href: '/admin/products/new', label: 'Add New Product' },
-    ],
-  },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/categories', label: 'Categories', icon: Tags },
   { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
-  { href: '/admin/promos', label: 'Promos / Pop-Up Ads', icon: Megaphone },
+  { href: '/admin/promos', label: 'Promos', icon: Megaphone },
   { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
 ];
 
@@ -104,7 +97,7 @@ const settingsItems = [
 
 function SidebarMenuContent() {
   const pathname = usePathname();
-  const { logout } = useDummyUser();
+  const { user, logout } = useDummyUser();
   const router = useRouter();
 
 
@@ -114,23 +107,28 @@ function SidebarMenuContent() {
     });
   };
 
+  const handleLogin = () => {
+    router.push('/admin/login');
+  }
+
   return (
     <>
-      <SidebarHeader>
-        <div className="flex items-center gap-2">
+      <SidebarHeader className="border-b">
+        <div className="flex items-center gap-2 font-semibold">
           <Logo />
-          <span className="text-xl font-bold">PrintSwift</span>
+          <span>PrintSwift Admin</span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="p-2">
+      <SidebarContent className="flex-1 p-4">
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.label}>
               <Link href={item.href}>
                 <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={pathname === item.href}
+                  className="w-full justify-start"
                 >
-                  <item.icon />
+                  <item.icon className="h-5 w-5" />
                   {item.label}
                 </SidebarMenuButton>
               </Link>
@@ -138,29 +136,53 @@ function SidebarMenuContent() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="border-t p-4">
         <SidebarMenu>
           {settingsItems.map((item) => (
             <SidebarMenuItem key={item.label}>
               <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname.startsWith(item.href)}
+                   className="w-full justify-start"
                 >
-                  <item.icon />
+                  <item.icon className="h-5 w-5" />
                   {item.label}
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
           ))}
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout}>
-              <LogOut />
-              Logout
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+           <SidebarMenuItem>
+            {user ? (
+                <SidebarMenuButton onClick={handleLogout} className="w-full justify-start">
+                    <LogOut className="h-5 w-5" />
+                    Logout
+                </SidebarMenuButton>
+            ) : (
+                <SidebarMenuButton onClick={handleLogin} className="w-full justify-start">
+                    <LogIn className="h-5 w-5" />
+                    Login
+                </SidebarMenuButton>
+            )}
+           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </>
+  );
+}
+
+function MobileSidebar() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button size="icon" variant="outline" className="sm:hidden">
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
+        <SidebarMenuContent />
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -175,8 +197,8 @@ function AdminHeader() {
   };
   
   return (
-    <section>
-       <SidebarTrigger className="sm:hidden"/>
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+      <MobileSidebar />
       <div className="relative ml-auto flex-1 md:grow-0">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
@@ -209,7 +231,7 @@ function AdminHeader() {
           <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-   </section>
+   </header>
   );
 }
 
@@ -233,7 +255,7 @@ export default function AdminApp({
   if (pathname === '/admin/login') {
     return (
       <FirebaseClientProvider>
-        <div className="bg-muted/40">{children}</div>
+        <div className="bg-background">{children}</div>
       </FirebaseClientProvider>
     );
   }
@@ -259,19 +281,17 @@ export default function AdminApp({
 
   return (
     <FirebaseClientProvider>
-      <SidebarProvider>
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
-          <Sidebar>
-            <SidebarMenuContent />
-          </Sidebar>
-          <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
+          <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
+             <SidebarMenuContent />
+          </aside>
+          <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-60">
             <AdminHeader />
-            <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+            <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
               {children}
             </main>
           </div>
         </div>
-      </SidebarProvider>
     </FirebaseClientProvider>
   );
 }
