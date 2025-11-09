@@ -46,7 +46,7 @@ const allProducts = [
     // 4. Packaging Prints
     { id: 'prod_pack_1', name: 'Branded Paper Bags', imageId: 'paper-bag', category: 'Packaging Prints', price: 300, popularity: 88 },
     { id: 'prod_pack_2', name: 'Food Packaging Boxes', imageId: 'food-box', category: 'Packaging Prints', price: 250, popularity: 84 },
-    { id_pack_3: 'prod_3', name: 'Product Boxes', imageId: 'product-box', category: 'Packaging Prints', price: 450, popularity: 86 },
+    { id: 'prod_pack_3', name: 'Product Boxes', imageId: 'product-box', category: 'Packaging Prints', price: 450, popularity: 86 },
     { id: 'prod_pack_4', name: 'Hang Tags', imageId: 'hang-tags', category: 'Packaging Prints', price: 50, popularity: 80 },
 
     // 5. Apparel & Textile Printing
@@ -255,3 +255,5 @@ export default function ProductsPage() {
         </div>
     );
 }
+
+    
