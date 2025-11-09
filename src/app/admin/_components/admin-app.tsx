@@ -44,12 +44,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
+import { FirebaseClientProvider, useUser, useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger as MobileSheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import LoginPage from '../login/page';
-import { signOut } from 'firebase/auth';
+import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
+import { doc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
@@ -107,7 +109,7 @@ function SidebarMenuContent() {
           {menuItems.map((item) => (
              item.subItems ? (
                 <Collapsible key={item.label} className="w-full" defaultOpen={pathname.startsWith(item.href)}>
-                    <CollapsibleTrigger asChild className="w-full">
+                    <CollapsibleTrigger asChild>
                         <SidebarMenuButton
                             isActive={pathname.startsWith(item.href) && !item.subItems.some(si => si.href === pathname)}
                             className="w-full justify-between"
@@ -298,6 +300,8 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Fallback for non-user, non-login page case during initial load.
+  // This helps prevent rendering children that might rely on an authenticated user.
   return (
     <div className="flex h-screen items-center justify-center">
       <LoaderCircle className="h-8 w-8 animate-spin" />
