@@ -1,20 +1,20 @@
 
 'use client';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, FileCheck, Award, Package, Clock, Users, ArrowRight, LoaderCircle } from 'lucide-react';
+import { Check, FileCheck, Award, Package, Clock, Users, LoaderCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { useDoc, useFirestore } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
 export default function ProductDetailPage({ params }: { params: { id: string } }) {
   const firestore = useFirestore();
   
-  const productRef = doc(firestore, 'products', params.id);
+  const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', params.id) : null, [firestore, params.id]);
   const { data: product, isLoading, error } = useDoc<any>(productRef);
 
   if (isLoading) {
@@ -25,9 +25,11 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     notFound();
   }
 
-  // For now, we only have details for business cards.
-  // We can show a generic page for others, or a "details coming soon" message.
-  if (!product.details) {
+  // Use product data directly from Firestore
+  const productDetails = product;
+
+  // A generic page for products without detailed descriptions.
+  if (!productDetails.shortDescription) {
     return (
         <div className="container mx-auto max-w-5xl px-4 py-16 md:py-24">
             <div className="text-center">
@@ -72,12 +74,12 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           {/* Product Details */}
           <div className="space-y-8">
             <div>
-              <Badge variant="secondary" className="mb-2">{product.categoryName}</Badge>
+              {product.categoryName && <Badge variant="secondary" className="mb-2">{product.categoryName}</Badge>}
               <h1 className="text-3xl md:text-4xl font-bold font-headline">{product.name}</h1>
               <p className="mt-3 text-lg text-muted-foreground">
-                {product.details.shortDescription}
+                {productDetails.shortDescription}
               </p>
-              <p className="text-3xl font-bold mt-4">{product.details.priceRange}</p>
+              {productDetails.priceRange && <p className="text-3xl font-bold mt-4">{productDetails.priceRange}</p>}
               <p className="text-sm text-muted-foreground">Varies by quantity, material, and finishing.</p>
             </div>
 
@@ -93,11 +95,11 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             <Separator />
             
             {/* Key Features */}
-            {product.details.keyFeatures && (
+            {productDetails.keyFeatures && (
             <div className="space-y-4">
                 <h3 className="text-xl font-bold font-headline flex items-center"><Award className="mr-3 h-6 w-6 text-accent" /> Key Features</h3>
                 <ul className="space-y-2 pl-4">
-                    {product.details.keyFeatures.map((feature: string) => (
+                    {productDetails.keyFeatures.map((feature: string) => (
                         <li key={feature} className="flex items-start">
                             <Check className="h-5 w-5 mr-3 mt-1 text-accent shrink-0"/>
                             <span className="text-muted-foreground">{feature}</span>
@@ -111,28 +113,28 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
             {/* Specifications */}
             <div className="grid sm:grid-cols-2 gap-8">
-                {product.details.availableSizes && <div className="space-y-4">
+                {productDetails.availableSizes && <div className="space-y-4">
                     <h4 className="font-semibold text-lg">Available Sizes</h4>
                     <ul className="text-muted-foreground list-disc list-inside space-y-1">
-                        {product.details.availableSizes.map((size: string) => <li key={size}>{size}</li>)}
+                        {productDetails.availableSizes.map((size: string) => <li key={size}>{size}</li>)}
                     </ul>
                 </div>}
-                {product.details.materialOptions && <div className="space-y-4">
+                {productDetails.materialOptions && <div className="space-y-4">
                     <h4 className="font-semibold text-lg">Material Options</h4>
                     <ul className="text-muted-foreground list-disc list-inside space-y-1">
-                        {product.details.materialOptions.map((material: string) => <li key={material}>{material}</li>)}
+                        {productDetails.materialOptions.map((material: string) => <li key={material}>{material}</li>)}
                     </ul>
                 </div>}
-                {product.details.printOptions && <div className="space-y-4">
+                {productDetails.printOptions && <div className="space-y-4">
                     <h4 className="font-semibold text-lg">Print Options</h4>
                     <ul className="text-muted-foreground list-disc list-inside space-y-1">
-                        {product.details.printOptions.map((option: string) => <li key={option}>{option}</li>)}
+                        {productDetails.printOptions.map((option: string) => <li key={option}>{option}</li>)}
                     </ul>
                 </div>}
-                {product.details.finishingOptions && <div className="space-y-4">
+                {productDetails.finishingOptions && <div className="space-y-4">
                     <h4 className="font-semibold text-lg">Finishing Options</h4>
                     <ul className="text-muted-foreground list-disc list-inside space-y-1">
-                        {product.details.finishingOptions.map((finish: string) => <li key={finish}>{finish}</li>)}
+                        {productDetails.finishingOptions.map((finish: string) => <li key={finish}>{finish}</li>)}
                     </ul>
                 </div>}
             </div>
@@ -141,33 +143,33 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
             {/* Other Details */}
             <div className="grid sm:grid-cols-2 gap-6 text-sm">
-                {product.details.moq && <div className="flex items-start space-x-3">
+                {productDetails.moq && <div className="flex items-start space-x-3">
                     <Package className="h-5 w-5 mt-0.5 text-accent shrink-0" />
                     <div>
                         <h5 className="font-semibold">Minimum Order</h5>
-                        <p className="text-muted-foreground">{product.details.moq}</p>
+                        <p className="text-muted-foreground">{productDetails.moq}</p>
                     </div>
                 </div>}
-                {product.details.leadTime && <div className="flex items-start space-x-3">
+                {productDetails.leadTime && <div className="flex items-start space-x-3">
                     <Clock className="h-5 w-5 mt-0.5 text-accent shrink-0" />
                     <div>
                         <h5 className="font-semibold">Lead Time</h5>
-                        <p className="text-muted-foreground">{product.details.leadTime.join(' / ')}</p>
+                        <p className="text-muted-foreground">{Array.isArray(productDetails.leadTime) ? productDetails.leadTime.join(' / ') : productDetails.leadTime}</p>
                     </div>
                 </div>}
-                 {product.details.bestFor && <div className="flex items-start space-x-3">
+                 {productDetails.bestFor && <div className="flex items-start space-x-3">
                     <Users className="h-5 w-5 mt-0.5 text-accent shrink-0" />
                     <div>
                         <h5 className="font-semibold">Best For</h5>
-                        <p className="text-muted-foreground">{product.details.bestFor.join(', ')}</p>
+                        <p className="text-muted-foreground">{Array.isArray(productDetails.bestFor) ? productDetails.bestFor.join(', ') : productDetails.bestFor}</p>
                     </div>
                 </div>}
-                {product.details.artworkRequirements && <div className="flex items-start space-x-3">
+                {productDetails.artworkRequirements && <div className="flex items-start space-x-3">
                     <FileCheck className="h-5 w-5 mt-0.5 text-accent shrink-0" />
                     <div>
                         <h5 className="font-semibold">Artwork Requirements</h5>
                         <ul className="text-muted-foreground space-y-0.5">
-                            {product.details.artworkRequirements.map((req: string) => <li key={req}>{req}</li>)}
+                            {Array.isArray(productDetails.artworkRequirements) ? productDetails.artworkRequirements.map((req: string) => <li key={req}>{req}</li>) : <li>{productDetails.artworkRequirements}</li>}
                         </ul>
                     </div>
                 </div>}
@@ -177,11 +179,4 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       </div>
     </div>
   );
-}
-
-export async function generateStaticParams() {
-  // This part is tricky without direct DB access at build time.
-  // For now, we return an empty array and rely on fallback: 'blocking'
-  // or on-demand generation. In a real app, you might pre-build popular products.
-  return [];
 }
