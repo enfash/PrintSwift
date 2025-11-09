@@ -1,0 +1,207 @@
+{
+  "entities": {
+    "ProductCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ProductCategory",
+      "type": "object",
+      "description": "Represents a category of products offered by the printing service.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product category."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product category (e.g., 'Branded Packaging')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the product category."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the image representing the product category.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl"
+      ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a specific product offered by the printing service.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the product image.",
+          "format": "uri"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to ProductCategory. (Relationship: ProductCategory 1:N Product)"
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the product."
+        },
+        "featured": {
+          "type": "boolean",
+          "description": "Indicates if the product is featured."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl",
+        "categoryId",
+        "price",
+        "featured"
+      ]
+    },
+    "QuoteRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QuoteRequest",
+      "type": "object",
+      "description": "Represents a quote request submitted by a customer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the quote request."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the customer submitting the quote request."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the customer.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the customer."
+        },
+        "company": {
+          "type": "string",
+          "description": "Company name of the customer (if applicable)."
+        },
+        "details": {
+          "type": "string",
+          "description": "Details of the quote request, including product specifications and quantities."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N QuoteRequest).  ID of the product the quote is for."
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "Date and time the quote request was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "phone",
+        "details",
+        "productId",
+        "submissionDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/roles_admin/{uid}",
+        "definition": {
+          "entityName": "user",
+          "schema": {
+            "$ref": "#/backend/entities/user"
+          },
+          "description": "Collection to store admin user IDs. Existence of a document indicates admin role.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "User ID of the administrator."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/product_categories/{productCategoryId}",
+        "definition": {
+          "entityName": "ProductCategory",
+          "schema": {
+            "$ref": "#/backend/entities/ProductCategory"
+          },
+          "description": "Collection to store product categories. Accessible only by admins.",
+          "params": [
+            {
+              "name": "productCategoryId",
+              "description": "Unique identifier for the product category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Collection to store product information. Accessible only by admins.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/quote_requests/{quoteRequestId}",
+        "definition": {
+          "entityName": "QuoteRequest",
+          "schema": {
+            "$ref": "#/backend/entities/QuoteRequest"
+          },
+          "description": "Collection to store customer quote requests. Accessible only by admins.",
+          "params": [
+            {
+              "name": "quoteRequestId",
+              "description": "Unique identifier for the quote request."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure prioritizes security, scalability, and ease of debugging, adhering to the core design principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It addresses the user's requirement for a secure admin page to manage products, categories, and customer quote requests, along with a summary dashboard.\n\n**Authorization Independence:**\n*   Admin Access: The `/roles_admin/{uid}` collection grants admin privileges. The existence of a document for a user ID in this collection signifies admin access. No data from other documents is required to validate admin privileges.\n\n*   No Hierarchical `get()` calls: All paths are independent and do not require reading parent documents to determine authorization.\n\n**Structural Segregation:**\n*   Admin Data Segregation: Admin-managed data (products, categories, quote requests) is stored separately, allowing specific security rules to be applied.\n\n**Access Modeling:**\n*   Global Roles (DBAC): Admin roles are managed using the `/roles_admin/{uid}` collection, enabling simple existence-based security rules.\n\n**QAPs (Rules Are Not Filters):**\n*   The segregation of data into different collections based on access requirements supports secure `list` operations. For example, listing products or categories only requires read access to those specific collections, which is granted based on admin role.\n\n**Specific Path Explanations:**\n*   `/roles_admin/{uid}`:  This collection uses **Existence over Content** to assign admin roles. The existence of a document with a specific `uid` grants admin privileges to that user.\n*   `/product_categories/{productCategoryId}`: Stores product category information. Only admins can create, read, update, or delete documents in this collection.\n*   `/products/{productId}`: Stores product information. Only admins can create, read, update, or delete documents in this collection. \n*   `/quote_requests/{quoteRequestId}`: Stores customer quote requests. Only admins can read requests.\n"
+  }
+}
