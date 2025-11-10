@@ -106,7 +106,9 @@ export default function ProductsPage() {
                                         <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
                                     </TableCell>
                                 </TableRow>
-                            ) : products && products.length > 0 ? products.map(product => (
+                            ) : products && products.length > 0 ? products.map(product => {
+                                const slug = product.id;
+                                return (
                                 <TableRow key={product.id}>
                                     <TableCell className="hidden sm:table-cell">
                                         <Image
@@ -136,7 +138,7 @@ export default function ProductsPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem asChild>
-                                                        <Link href={`/admin/products/${product.id}`}>Edit</Link>
+                                                        <Link href={`/admin/products/${slug}`}>Edit</Link>
                                                     </DropdownMenuItem>
                                                     <AlertDialogTrigger asChild>
                                                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
@@ -161,7 +163,8 @@ export default function ProductsPage() {
                                         </AlertDialog>
                                     </TableCell>
                                 </TableRow>
-                            )) : (
+                                );
+                            }) : (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-24 text-center">
                                         No products found. Seed the database from the dashboard.

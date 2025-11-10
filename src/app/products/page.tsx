@@ -195,8 +195,9 @@ function ProductsComponent() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredAndSortedProducts.map((product) => {
                                 const startingPrice = calculateStartingPrice(product);
+                                const slug = product.id;
                                 return (
-                                    <Link key={product.id} href={`/products/${product.id}`} className="block">
+                                    <Link key={product.id} href={`/products/${slug}`} className="block">
                                         <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col">
                                             <div className="overflow-hidden">
                                                 <div className="aspect-[4/3] relative">

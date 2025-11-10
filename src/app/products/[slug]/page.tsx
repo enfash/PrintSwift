@@ -1,6 +1,6 @@
-
 'use client';
-import { notFound } from 'next/navigation';
+import { use, useEffect } from 'react';
+import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Package, LoaderCircle, DollarSign } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc }from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 function calculateCustomerPrice(tier: any) {
@@ -24,11 +24,13 @@ function calculateCustomerPrice(tier: any) {
     };
 };
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const resolvedParams = use(params);
+  const { slug } = resolvedParams;
   const firestore = useFirestore();
+  const router = useRouter();
   
-  const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', id) : null, [firestore, id]);
+  const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', slug) : null, [firestore, slug]);
   const { data: product, isLoading, error } = useDoc<any>(productRef);
 
   const categoryRef = useMemoFirebase(() => {
@@ -37,12 +39,19 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   }, [firestore, product?.categoryId]);
   const { data: category } = useDoc<any>(categoryRef);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading && !product) {
+      notFound();
+    }
+  }, [isLoading, product]);
+
+  if (isLoading || !product) {
     return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
   }
-
-  if (!product || error) {
-    notFound();
+  
+  if (error) {
+    // This can be a more specific error page if needed
+    return <div className="flex h-96 items-center justify-center"><p>Error loading product.</p></div>;
   }
   
   const hasPricingTiers = product.pricing?.tiers && product.pricing.tiers.length > 0;
@@ -77,7 +86,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           <div className="space-y-8">
             <div>
               {category && (
-                <Link href={`/products?category=${category.id}`}>
+                <Link href={`/products?category=${product.categoryId}`}>
                     <Badge variant="secondary" className="mb-2 hover:bg-muted transition-colors">
                         {category.name}
                     </Badge>

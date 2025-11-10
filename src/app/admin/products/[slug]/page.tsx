@@ -12,12 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UploadCloud, LoaderCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
@@ -28,15 +28,16 @@ const productSchema = z.object({
 });
 
 
-export default function ProductFormPage({ params }: { params: { id: string } }) {
-    const { id } = params;
+export default function ProductFormPage({ params }: { params: { slug: string } }) {
+    const resolvedParams = use(params);
+    const { slug } = resolvedParams;
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', id) : null, [firestore, id]);
-    const { data: product, isLoading: isLoadingProduct } = useDoc<z.infer<typeof productSchema>>(productRef);
+    const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', slug) : null, [firestore, slug]);
+    const { data: product, isLoading: isLoadingProduct } = useDoc<z.infer<typeof productSchema> & { id: string }>(productRef);
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
@@ -52,13 +53,13 @@ export default function ProductFormPage({ params }: { params: { id: string } }) 
     }, [product, form]);
     
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
-        if (!firestore) return;
+        if (!firestore || !product) return;
         setIsSubmitting(true);
         
         const productData = { ...values };
 
         try {
-            const productDocRef = doc(firestore, 'products', id);
+            const productDocRef = doc(firestore, 'products', product.id);
             updateDocumentNonBlocking(productDocRef, productData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             router.push('/admin/products');
@@ -71,6 +72,10 @@ export default function ProductFormPage({ params }: { params: { id: string } }) 
 
     if (isLoadingProduct) {
         return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
+    }
+    
+    if (!product) {
+        return <div className="flex h-96 items-center justify-center"><p>Product not found.</p></div>;
     }
 
     return (
@@ -216,5 +221,3 @@ export default function ProductFormPage({ params }: { params: { id: string } }) 
         </Form>
     );
 }
-
-    
