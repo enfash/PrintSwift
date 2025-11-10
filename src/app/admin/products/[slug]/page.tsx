@@ -83,16 +83,12 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
         
         try {
             const productDocRef = doc(firestore, 'products', product.id);
-            // In a real application, you would upload files to storage first
-            // and get the actual URLs. Here we're assuming the URLs are either
-            // placeholders or direct links that are already in the form state.
-            const finalImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
-            const placeholderUrls = Array.from({ length: values.imageUrls.length - finalImageUrls.length }, (_, i) => `https://picsum.photos/seed/${product.id}-${i}/${600}/${400}`);
-            const allUrls = [...finalImageUrls, ...placeholderUrls];
-
+            // Filter out temporary blob URLs before submitting to Firestore.
+            const persistentImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
+            
             const updateData = {
                 ...values,
-                imageUrls: allUrls
+                imageUrls: persistentImageUrls
             };
             
             await updateDocumentNonBlocking(productDocRef, updateData);
@@ -371,7 +367,3 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
         </Form>
     );
 }
-
-    
-
-    

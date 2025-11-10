@@ -86,17 +86,19 @@ export default function ProductFormPage() {
         const productsCollectionRef = collection(firestore, 'products');
         const newProductRef = doc(productsCollectionRef);
 
-        // In a real application, you would upload files to storage first
-        // and get the actual URLs. Here we're using placeholder URLs for
-        // blobs, which you'd replace with real ones post-upload.
-        const finalImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
-        const placeholderUrls = Array.from({ length: values.imageUrls.length - finalImageUrls.length }, (_, i) => `https://picsum.photos/seed/${newProductRef.id}-${i}/${600}/${400}`);
-        const allUrls = [...finalImageUrls, ...placeholderUrls];
+        // Filter out temporary blob URLs before submitting to Firestore.
+        const persistentImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
+
+        if (persistentImageUrls.length === 0 && values.imageUrls.length > 0) {
+            toast({ variant: 'destructive', title: 'Upload in Progress', description: "Please replace temporary image previews with permanent links or wait for uploads to complete."});
+            setIsSubmitting(false);
+            return;
+        }
 
         const finalProductData = {
             id: newProductRef.id,
             ...values,
-            imageUrls: allUrls,
+            imageUrls: persistentImageUrls,
             pricing: { // Default pricing structure
                 baseCost: 0,
                 tax: 7.5,
@@ -371,5 +373,3 @@ export default function ProductFormPage() {
         </Form>
     );
 }
-
-    
