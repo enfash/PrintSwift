@@ -32,8 +32,7 @@ const productSchema = z.object({
 
 
 export default function ProductFormPage({ params }: { params: { slug: string } }) {
-    const resolvedParams = use(params);
-    const { slug } = resolvedParams;
+    const { slug } = params;
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
@@ -71,11 +70,9 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         if (!firestore || !product) return;
         setIsSubmitting(true);
         
-        const productData = { ...values };
-
         try {
             const productDocRef = doc(firestore, 'products', product.id);
-            updateDocumentNonBlocking(productDocRef, productData);
+            updateDocumentNonBlocking(productDocRef, values);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             router.push('/admin/products');
         } catch (error) {
@@ -85,7 +82,6 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         }
     };
     
-    // This is a placeholder for a real file upload implementation
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
@@ -93,14 +89,12 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                 toast({ variant: 'destructive', title: "Too many images", description: "You can upload a maximum of 6 images."});
                 return;
             }
-            // In a real app, you'd upload this file to Firebase Storage
-            // and get a URL back. For now, we'll use a placeholder URL.
-             Array.from(files).forEach(file => {
-                const tempPreviewUrl = URL.createObjectURL(file);
+            Array.from(files).forEach(file => {
+                const tempPreviewUrl = `https://picsum.photos/seed/${Math.random()}/600/400`;
                 append(tempPreviewUrl);
-             })
+            })
 
-            toast({ title: "Image Uploaded", description: "This is a preview. Save the product to make it permanent. Note: Real upload is not implemented."})
+            toast({ title: "Image Added", description: "This is a placeholder. Save the product to make it permanent."})
         }
     };
 
@@ -112,6 +106,8 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         try {
             z.string().url().parse(url);
             append(url);
+            const input = document.getElementById('imageUrlInput') as HTMLInputElement;
+            if (input) input.value = '';
         } catch {
             toast({ variant: 'destructive', title: "Invalid URL", description: "Please enter a valid image URL."});
         }
@@ -152,12 +148,17 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Product Title</FormLabel>
+                                            <FormLabel>Product Name</FormLabel>
                                             <FormControl><Input placeholder="e.g., Custom Mugs" {...field} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+                                <FormItem>
+                                    <FormLabel>Slug / ID</FormLabel>
+                                    <FormControl><Input value={slug} disabled /></FormControl>
+                                    <FormDescription>The slug cannot be changed after creation.</FormDescription>
+                                </FormItem>
                                 <FormField
                                     control={form.control}
                                     name="categoryId"
@@ -255,7 +256,7 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                          <Card>
                             <CardHeader>
                                 <CardTitle>Media</CardTitle>
-                                <CardDescription>Manage product images (up to 6).</CardDescription>
+                                <CardDescription>Manage product images (min 1, max 6).</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 gap-2">
@@ -281,7 +282,7 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                                      {fields.length === 0 && (
                                          <div className="col-span-3 aspect-video relative rounded-md border bg-muted flex flex-col items-center justify-center text-muted-foreground">
                                             <ImageIcon className="w-12 h-12" />
-                                            <p className="text-sm mt-2">No image set</p>
+                                            <p className="text-sm mt-2">No images added</p>
                                         </div>
                                      )}
                                 </div>
@@ -302,9 +303,9 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                                         <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="upload" className="pt-2">
-                                        <Input type="file" onChange={handleFileUpload} accept="image/*" multiple disabled={fields.length >= 6} />
+                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} />
                                         <FormDescription className="text-xs mt-2">
-                                            For demonstration purposes. Real upload is not implemented.
+                                            For demonstration, this adds placeholder images.
                                         </FormDescription>
                                     </TabsContent>
                                      <TabsContent value="url" className="pt-2">
@@ -327,3 +328,5 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         </Form>
     );
 }
+
+    

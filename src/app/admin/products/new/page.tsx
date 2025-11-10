@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UploadCloud, LoaderCircle } from 'lucide-react';
+import { UploadCloud, LoaderCircle, Image as ImageIcon, Link2, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
@@ -18,14 +18,18 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Image from 'next/image';
+
 
 const productSchema = z.object({
-  id: z.string().min(3, 'Slug/ID must be at least 3 characters. Use lowercase and dashes (e.g., "new-product").').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
+  id: z.string().min(3, 'Slug/ID must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
   categoryId: z.string({ required_error: 'Please select a category.' }),
   description: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
   featured: z.boolean().default(false),
+  imageUrls: z.array(z.string().url()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
 });
 
 
@@ -43,36 +47,37 @@ export default function ProductFormPage() {
         defaultValues: {
             id: '',
             name: '',
-            categoryId: '',
             description: '',
             status: 'Draft',
             featured: false,
+            imageUrls: [],
         },
+    });
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "imageUrls"
     });
 
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
         if (!firestore) return;
         setIsSubmitting(true);
         
-        const productData = {
-            name: values.name,
-            categoryId: values.categoryId,
-            description: values.description,
-            status: values.status,
-            featured: values.featured,
-            imageUrls: [`https://picsum.photos/seed/${values.id}/600/400`], // Start with one image
+        const { id, ...productData } = values;
+
+        const finalProductData = {
+            ...productData,
             pricing: { // Default pricing structure
                 baseCost: 0,
                 tax: 7.5,
                 addons: [],
                 tiers: [],
             }
-        };
+        }
 
         try {
-            const productDocRef = doc(firestore, 'products', values.id);
-            // Use setDoc to create a document with a specific ID
-            await setDocumentNonBlocking(productDocRef, productData, {});
+            const productDocRef = doc(firestore, 'products', id);
+            await setDocumentNonBlocking(productDocRef, finalProductData, {});
             toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
             router.push('/admin/products');
         } catch (error) {
@@ -81,6 +86,40 @@ export default function ProductFormPage() {
             setIsSubmitting(false);
         }
     };
+    
+    // This is a placeholder for a real file upload implementation
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files) {
+            if (fields.length + files.length > 6) {
+                toast({ variant: 'destructive', title: "Too many images", description: "You can upload a maximum of 6 images."});
+                return;
+            }
+            // In a real app, you'd upload this file to Firebase Storage
+            // and get a URL back. For now, we'll use a placeholder URL.
+             Array.from(files).forEach(file => {
+                const tempPreviewUrl = `https://picsum.photos/seed/${Math.random()}/600/400`;
+                append(tempPreviewUrl);
+             })
+
+            toast({ title: "Image Added", description: "This is a placeholder. Save the product to make it permanent."})
+        }
+    };
+
+    const handleAddImageUrl = (url: string) => {
+        if (fields.length >= 6) {
+            toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
+            return;
+        }
+        try {
+            z.string().url().parse(url);
+            append(url);
+            const input = document.getElementById('imageUrlInput') as HTMLInputElement;
+            if (input) input.value = '';
+        } catch {
+            toast({ variant: 'destructive', title: "Invalid URL", description: "Please enter a valid image URL."});
+        }
+    }
 
 
     return (
@@ -97,145 +136,204 @@ export default function ProductFormPage() {
                     </div>
                 </div>
 
-                <div className="grid gap-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Basic Info</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-8">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Basic Info</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Product Name</FormLabel>
+                                            <FormControl><Input placeholder="e.g., Custom Mugs" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                 <FormField
+                                    control={form.control}
+                                    name="id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Slug / ID</FormLabel>
+                                            <FormControl><Input placeholder="e.g., custom-mugs" {...field} /></FormControl>
+                                            <FormDescription>This will be the product's URL. Use lowercase letters, numbers, and hyphens only.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="categoryId"
+                                    render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Product Title</FormLabel>
-                                        <FormControl><Input placeholder="e.g., Custom Mugs" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Slug / ID</FormLabel>
-                                        <FormControl><Input placeholder="e.g., custom-mugs" {...field} /></FormControl>
-                                        <FormDescription>This will be the product's URL. Use lowercase letters, numbers, and hyphens only.</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="categoryId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Category</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select a category"} />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {categories?.map(category => (
-                                                <SelectItem key={category.id} value={category.id}>
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="description"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Description</FormLabel>
-                                        <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Media</CardTitle>
-                            <CardDescription>Upload images for your product.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground"/>
-                                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                </div>
-                                <Input type="file" className="hidden" multiple />
-                            </div>
-                            <FormDescription className="mt-2">You can upload multiple images on the edit product page after creation.</FormDescription>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Publishing</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <FormField
-                                control={form.control}
-                                name="status"
-                                render={({ field }) => (
-                                <FormItem className="flex items-center justify-between">
-                                    <div>
-                                        <FormLabel>Status</FormLabel>
-                                        <p className="text-sm text-muted-foreground">Set product visibility.</p>
-                                    </div>
-                                    <FormControl>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <SelectTrigger className="w-[180px]">
-                                                <SelectValue placeholder="Status" />
+                                        <FormLabel>Category</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select a category"} />
                                             </SelectTrigger>
+                                            </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="Published">Published</SelectItem>
-                                                <SelectItem value="Draft">Draft</SelectItem>
+                                                {categories?.map(category => (
+                                                    <SelectItem key={category.id} value={category.id}>
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
-                                    </FormControl>
-                                </FormItem>
-                                )}
-                            />
-                            <Separator />
-                            <FormField
-                                control={form.control}
-                                name="featured"
-                                render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                    <FormLabel className="text-base">
-                                        Featured Product
-                                    </FormLabel>
-                                    <FormDescription>
-                                        Display this product on the homepage.
-                                    </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                    <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                    />
-                                    </FormControl>
-                                </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                    </Card>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="description"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Description</FormLabel>
+                                            <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Publishing</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                    <FormItem className="flex items-center justify-between">
+                                        <div>
+                                            <FormLabel>Status</FormLabel>
+                                            <p className="text-sm text-muted-foreground">Set product visibility.</p>
+                                        </div>
+                                        <FormControl>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <SelectTrigger className="w-[180px]">
+                                                    <SelectValue placeholder="Status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Published">Published</SelectItem>
+                                                    <SelectItem value="Draft">Draft</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                    </FormItem>
+                                    )}
+                                />
+                                <Separator />
+                                <FormField
+                                    control={form.control}
+                                    name="featured"
+                                    render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                        <div className="space-y-0.5">
+                                        <FormLabel className="text-base">
+                                            Featured Product
+                                        </FormLabel>
+                                        <FormDescription>
+                                            Display this product on the homepage.
+                                        </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                        </FormControl>
+                                    </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                     <div className="space-y-8">
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Media</CardTitle>
+                                <CardDescription>Manage product images (min 1, max 6).</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-3 gap-2">
+                                     {fields.map((field, index) => (
+                                        <div key={field.id} className="relative aspect-square group">
+                                            <Image
+                                                src={field.value}
+                                                alt={`Product image ${index + 1}`}
+                                                fill
+                                                className="object-cover rounded-md"
+                                            />
+                                            <Button 
+                                                type="button"
+                                                variant="destructive" 
+                                                size="icon" 
+                                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => remove(index)}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                     ))}
+                                     {fields.length === 0 && (
+                                         <div className="col-span-3 aspect-video relative rounded-md border bg-muted flex flex-col items-center justify-center text-muted-foreground">
+                                            <ImageIcon className="w-12 h-12" />
+                                            <p className="text-sm mt-2">No images added</p>
+                                        </div>
+                                     )}
+                                </div>
+                                
+                                <FormField
+                                    control={form.control}
+                                    name="imageUrls"
+                                    render={() => (
+                                        <FormItem>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <Tabs defaultValue="upload">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
+                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="upload" className="pt-2">
+                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} />
+                                        <FormDescription className="text-xs mt-2">
+                                            For demonstration, this adds placeholder images.
+                                        </FormDescription>
+                                    </TabsContent>
+                                     <TabsContent value="url" className="pt-2">
+                                         <div className="flex gap-2">
+                                            <Input 
+                                                id="imageUrlInput"
+                                                placeholder="https://..." 
+                                                disabled={fields.length >= 6}
+                                            />
+                                            <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
+                                         </div>
+                                    </TabsContent>
+                                </Tabs>
+                            </CardContent>
+                        </Card>
+                    </div>
+
                 </div>
             </form>
         </Form>
     );
 }
+
+    
