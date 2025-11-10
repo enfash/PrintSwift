@@ -42,7 +42,6 @@ const slugify = (str: string) =>
     .replace(/^-+|-+$/g, '');
 
 export default function ProductEditPage({ params }: { params: { slug: string } }) {
-    // Note: The parameter is named 'slug' to match the file name, but it holds the product ID.
     const { slug: productId } = params; 
     const firestore = useFirestore();
     const router = useRouter();
@@ -92,7 +91,6 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
         
         try {
             const productDocRef = doc(firestore, 'products', product.id);
-            // Ensure the `id` field is not overwritten if it exists in `values`
             const { ...updateData } = values;
             await updateDocumentNonBlocking(productDocRef, updateData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
@@ -187,7 +185,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Slug</FormLabel>
-                                            <FormControl><Input placeholder="e.g., custom-mugs" {...field} /></FormControl>
+                                            <FormControl><Input placeholder="e.g., custom-mugs" {...field} value={field.value || ''} /></FormControl>
                                             <FormDescription>The user-friendly URL for the product page.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -223,7 +221,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Description</FormLabel>
-                                            <FormControl><Textarea placeholder="A brief summary of the product." {...field} /></FormControl>
+                                            <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -296,12 +294,18 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                                 <div className="grid grid-cols-3 gap-2">
                                      {fields.map((field, index) => (
                                         <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
-                                            <Image
-                                                src={field.value}
-                                                alt={`Product image ${index + 1}`}
-                                                fill
-                                                className="object-cover rounded-md"
-                                            />
+                                            {field.value ? (
+                                                <Image
+                                                    src={field.value}
+                                                    alt={`Product image ${index + 1}`}
+                                                    fill
+                                                    className="object-cover rounded-md"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-muted rounded-md flex items-center justify-center">
+                                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                                </div>
+                                            )}
                                             {mainImageIndex === index && (
                                                 <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>
                                             )}
