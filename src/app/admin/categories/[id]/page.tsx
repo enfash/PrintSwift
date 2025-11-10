@@ -33,11 +33,18 @@ export default function CategoryEditPage({ params: { id } }: { params: { id: str
 
     const form = useForm<z.infer<typeof categorySchema>>({
         resolver: zodResolver(categorySchema),
+        defaultValues: {
+            name: '',
+            description: '',
+        }
     });
 
     useEffect(() => {
         if (category) {
-            form.reset(category);
+            form.reset({
+                ...category,
+                description: category.description || '', // Ensure description is not undefined
+            });
         }
     }, [category, form]);
     
