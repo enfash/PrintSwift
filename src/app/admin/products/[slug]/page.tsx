@@ -33,14 +33,6 @@ const productSchema = z.object({
   mainImageIndex: z.number().min(0).default(0),
 });
 
-const slugify = (str: string) =>
-  str
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
 export default function ProductEditPage({ params }: { params: { slug: string } }) {
     const { slug: productId } = params; 
     const firestore = useFirestore();
@@ -91,7 +83,18 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
         
         try {
             const productDocRef = doc(firestore, 'products', product.id);
-            const { ...updateData } = values;
+            // In a real application, you would upload files to storage first
+            // and get the actual URLs. Here we're assuming the URLs are either
+            // placeholders or direct links that are already in the form state.
+            const finalImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
+            const placeholderUrls = Array.from({ length: values.imageUrls.length - finalImageUrls.length }, (_, i) => `https://picsum.photos/seed/${product.id}-${i}/${600}/${400}`);
+            const allUrls = [...finalImageUrls, ...placeholderUrls];
+
+            const updateData = {
+                ...values,
+                imageUrls: allUrls
+            };
+            
             await updateDocumentNonBlocking(productDocRef, updateData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             router.push('/admin/products');
@@ -109,11 +112,10 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                 return;
             }
             Array.from(files).forEach(file => {
-                const tempPreviewUrl = `https://picsum.photos/seed/${Math.random()}/600/400`;
+                const tempPreviewUrl = URL.createObjectURL(file);
                 append(tempPreviewUrl);
             })
-
-            toast({ title: "Image Added", description: "This is a placeholder. Save the product to make it permanent."})
+            toast({ title: "Image Added", description: "This is a local preview. Save the product to upload the image."})
         }
     };
 
@@ -346,7 +348,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                                     <TabsContent value="upload" className="pt-2">
                                         <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} multiple />
                                         <FormDescription className="text-xs mt-2">
-                                            For demonstration, this adds placeholder images.
+                                            Local previews are temporary. Save to upload.
                                         </FormDescription>
                                     </TabsContent>
                                      <TabsContent value="url" className="pt-2">
@@ -369,5 +371,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
         </Form>
     );
 }
+
+    
 
     

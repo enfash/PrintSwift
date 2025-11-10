@@ -17,7 +17,7 @@ import { collection, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -86,9 +86,17 @@ export default function ProductFormPage() {
         const productsCollectionRef = collection(firestore, 'products');
         const newProductRef = doc(productsCollectionRef);
 
+        // In a real application, you would upload files to storage first
+        // and get the actual URLs. Here we're using placeholder URLs for
+        // blobs, which you'd replace with real ones post-upload.
+        const finalImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
+        const placeholderUrls = Array.from({ length: values.imageUrls.length - finalImageUrls.length }, (_, i) => `https://picsum.photos/seed/${newProductRef.id}-${i}/${600}/${400}`);
+        const allUrls = [...finalImageUrls, ...placeholderUrls];
+
         const finalProductData = {
             id: newProductRef.id,
             ...values,
+            imageUrls: allUrls,
             pricing: { // Default pricing structure
                 baseCost: 0,
                 tax: 7.5,
@@ -98,7 +106,7 @@ export default function ProductFormPage() {
         }
 
         try {
-            await addDocumentNonBlocking(productsCollectionRef, finalProductData, { id: newProductRef.id });
+            await addDocumentNonBlocking(collection(firestore, 'products'), finalProductData, { id: finalProductData.id });
             toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
             router.push('/admin/products');
         } catch (error) {
@@ -108,7 +116,6 @@ export default function ProductFormPage() {
         }
     };
     
-    // This is a placeholder for a real file upload implementation
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
@@ -116,14 +123,11 @@ export default function ProductFormPage() {
                 toast({ variant: 'destructive', title: "Too many images", description: "You can upload a maximum of 6 images."});
                 return;
             }
-            // In a real app, you'd upload this file to Firebase Storage
-            // and get a URL back. For now, we'll use a placeholder URL.
-             Array.from(files).forEach(file => {
-                const tempPreviewUrl = `https://picsum.photos/seed/${Math.random()}/600/400`;
+            Array.from(files).forEach(file => {
+                const tempPreviewUrl = URL.createObjectURL(file);
                 append(tempPreviewUrl);
-             })
-
-            toast({ title: "Image Added", description: "This is a placeholder. Save the product to make it permanent."})
+            })
+            toast({ title: "Image Added", description: "This is a local preview. Save the product to upload the image."})
         }
     };
 
@@ -344,7 +348,7 @@ export default function ProductFormPage() {
                                     <TabsContent value="upload" className="pt-2">
                                         <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} multiple />
                                         <FormDescription className="text-xs mt-2">
-                                            For demonstration, this adds placeholder images.
+                                            Local previews are temporary. Save to upload.
                                         </FormDescription>
                                     </TabsContent>
                                      <TabsContent value="url" className="pt-2">
@@ -367,3 +371,5 @@ export default function ProductFormPage() {
         </Form>
     );
 }
+
+    
