@@ -47,7 +47,6 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', productId) : null, [firestore, productId]);
     const { data: product, isLoading: isLoadingProduct } = useDoc<z.infer<typeof productSchema> & { id: string }>(productRef);
@@ -58,8 +57,13 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
     const form = useForm<z.infer<typeof productSchema>>({
         resolver: zodResolver(productSchema),
         defaultValues: {
+            slug: '',
+            name: '',
+            description: '',
             imageUrls: [],
             mainImageIndex: 0,
+            featured: false,
+            status: 'Draft',
         }
     });
 
@@ -71,9 +75,12 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
     useEffect(() => {
         if (product) {
             form.reset({
-                ...product,
+                name: product.name || '',
                 slug: product.slug || '',
+                categoryId: product.categoryId || '',
                 description: product.description || '',
+                status: product.status || 'Draft',
+                featured: product.featured || false,
                 imageUrls: product.imageUrls || [],
                 mainImageIndex: product.mainImageIndex || 0,
             });
@@ -82,19 +89,17 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
     
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
         if (!firestore || !product) return;
-        setIsSubmitting(true);
         
         try {
             const productDocRef = doc(firestore, 'products', product.id);
             // Ensure the `id` field is not overwritten if it exists in `values`
             const { ...updateData } = values;
-            updateDocumentNonBlocking(productDocRef, updateData);
+            await updateDocumentNonBlocking(productDocRef, updateData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             router.push('/admin/products');
         } catch (error) {
             console.error("Error updating product:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update the product.' });
-            setIsSubmitting(false);
         }
     };
     
@@ -134,6 +139,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
     };
 
     const mainImageIndex = form.watch('mainImageIndex');
+    const isSubmitting = form.formState.isSubmitting;
 
     if (isLoadingProduct) {
         return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
@@ -217,7 +223,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Description</FormLabel>
-                                            <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
+                                            <FormControl><Textarea placeholder="A brief summary of the product." {...field} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -359,3 +365,5 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
         </Form>
     );
 }
+
+    
