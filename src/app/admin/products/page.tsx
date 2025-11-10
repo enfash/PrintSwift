@@ -107,7 +107,10 @@ export default function ProductsPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : products && products.length > 0 ? products.map(product => {
-                                const slug = product.id;
+                                const mainImageUrl = product.imageUrls && product.imageUrls.length > 0 
+                                    ? product.imageUrls[product.mainImageIndex || 0] 
+                                    : 'https://placehold.co/40x40';
+
                                 return (
                                 <TableRow key={product.id}>
                                     <TableCell className="hidden sm:table-cell">
@@ -115,7 +118,7 @@ export default function ProductsPage() {
                                             alt={product.name}
                                             className="aspect-square rounded-md object-cover"
                                             height="40"
-                                            src={product.imageUrl || 'https://placehold.co/40x40'}
+                                            src={mainImageUrl}
                                             width="40"
                                         />
                                     </TableCell>
@@ -138,7 +141,7 @@ export default function ProductsPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem asChild>
-                                                        <Link href={`/admin/products/${slug}`}>Edit</Link>
+                                                        <Link href={`/admin/products/${product.id}`}>Edit</Link>
                                                     </DropdownMenuItem>
                                                     <AlertDialogTrigger asChild>
                                                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>

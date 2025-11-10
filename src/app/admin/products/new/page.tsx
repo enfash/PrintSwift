@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,26 +12,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UploadCloud, LoaderCircle, Image as ImageIcon, Link2, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
 
 
 const productSchema = z.object({
-  id: z.string().min(3, 'Slug/ID must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
+  slug: z.string().min(3, 'Slug must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
   categoryId: z.string({ required_error: 'Please select a category.' }),
   description: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
   featured: z.boolean().default(false),
   imageUrls: z.array(z.string().url()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
+  mainImageIndex: z.number().min(0).default(0),
 });
 
+const slugify = (str: string) =>
+  str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 export default function ProductFormPage() {
     const firestore = useFirestore();
@@ -45,12 +54,13 @@ export default function ProductFormPage() {
     const form = useForm<z.infer<typeof productSchema>>({
         resolver: zodResolver(productSchema),
         defaultValues: {
-            id: '',
+            slug: '',
             name: '',
             description: '',
             status: 'Draft',
             featured: false,
             imageUrls: [],
+            mainImageIndex: 0,
         },
     });
 
@@ -58,15 +68,27 @@ export default function ProductFormPage() {
         control: form.control,
         name: "imageUrls"
     });
+    
+    const watchName = form.watch('name');
+    const isSlugManuallyEdited = useRef(false);
+
+    useEffect(() => {
+        if (!isSlugManuallyEdited.current && watchName) {
+            const newSlug = slugify(watchName);
+            form.setValue('slug', newSlug);
+        }
+    }, [watchName, form]);
 
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
         if (!firestore) return;
         setIsSubmitting(true);
         
-        const { id, ...productData } = values;
+        const productsCollectionRef = collection(firestore, 'products');
+        const newProductRef = doc(productsCollectionRef);
 
         const finalProductData = {
-            ...productData,
+            id: newProductRef.id,
+            ...values,
             pricing: { // Default pricing structure
                 baseCost: 0,
                 tax: 7.5,
@@ -76,13 +98,12 @@ export default function ProductFormPage() {
         }
 
         try {
-            const productDocRef = doc(firestore, 'products', id);
-            await setDocumentNonBlocking(productDocRef, finalProductData, {});
+            await addDocumentNonBlocking(productsCollectionRef, finalProductData, { id: newProductRef.id });
             toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
             router.push('/admin/products');
         } catch (error) {
             console.error("Error saving product:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the product. The ID might already exist.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the product.' });
             setIsSubmitting(false);
         }
     };
@@ -121,6 +142,11 @@ export default function ProductFormPage() {
         }
     }
 
+    const setMainImage = (index: number) => {
+        form.setValue('mainImageIndex', index);
+    };
+
+    const mainImageIndex = form.watch('mainImageIndex');
 
     return (
         <Form {...form}>
@@ -156,12 +182,15 @@ export default function ProductFormPage() {
                                 />
                                  <FormField
                                     control={form.control}
-                                    name="id"
+                                    name="slug"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Slug / ID</FormLabel>
-                                            <FormControl><Input placeholder="e.g., custom-mugs" {...field} /></FormControl>
-                                            <FormDescription>This will be the product's URL. Use lowercase letters, numbers, and hyphens only.</FormDescription>
+                                            <FormLabel>Slug</FormLabel>
+                                            <FormControl><Input placeholder="e.g., custom-mugs" {...field} onChange={(e) => {
+                                                isSlugManuallyEdited.current = true;
+                                                field.onChange(e);
+                                            }} /></FormControl>
+                                            <FormDescription>This will be the product's URL. It's auto-generated from the name but can be edited.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -196,7 +225,7 @@ export default function ProductFormPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Description</FormLabel>
-                                            <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
+                                            <FormControl><Textarea placeholder="A brief summary of the product." {...field} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -268,19 +297,22 @@ export default function ProductFormPage() {
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 gap-2">
                                      {fields.map((field, index) => (
-                                        <div key={field.id} className="relative aspect-square group">
+                                        <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
                                             <Image
                                                 src={field.value}
                                                 alt={`Product image ${index + 1}`}
                                                 fill
                                                 className="object-cover rounded-md"
                                             />
+                                            {mainImageIndex === index && (
+                                                <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>
+                                            )}
                                             <Button 
                                                 type="button"
                                                 variant="destructive" 
                                                 size="icon" 
                                                 className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={() => remove(index)}
+                                                onClick={(e) => { e.stopPropagation(); remove(index); }}
                                             >
                                                 <X className="h-4 w-4" />
                                             </Button>
@@ -310,7 +342,7 @@ export default function ProductFormPage() {
                                         <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="upload" className="pt-2">
-                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} />
+                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} multiple />
                                         <FormDescription className="text-xs mt-2">
                                             For demonstration, this adds placeholder images.
                                         </FormDescription>
@@ -335,5 +367,3 @@ export default function ProductFormPage() {
         </Form>
     );
 }
-
-    

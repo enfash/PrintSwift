@@ -1,6 +1,6 @@
 
 'use client';
-import { use, useEffect } from 'react';
+import { use, useEffect, useState } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Package, LoaderCircle, DollarSign } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 function calculateCustomerPrice(tier: any) {
@@ -25,37 +25,54 @@ function calculateCustomerPrice(tier: any) {
     };
 };
 
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const resolvedParams = use(params);
-  const { slug } = resolvedParams;
-  const firestore = useFirestore();
-  const router = useRouter();
-  
-  const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', slug) : null, [firestore, slug]);
-  const { data: product, isLoading, error } = useDoc<any>(productRef);
+async function getProductBySlug(firestore: any, slug: string) {
+    if (!firestore || !slug) return null;
+    const productsRef = collection(firestore, 'products');
+    const q = query(productsRef, where("slug", "==", slug), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+        return null;
+    }
+    const productDoc = querySnapshot.docs[0];
+    return { ...productDoc.data(), id: productDoc.id };
+}
 
-  const categoryRef = useMemoFirebase(() => {
-    if (!firestore || !product?.categoryId) return null;
-    return doc(firestore, 'product_categories', product.categoryId);
-  }, [firestore, product?.categoryId]);
-  const { data: category } = useDoc<any>(categoryRef);
+export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const { slug } = use(params);
+  const firestore = useFirestore();
+  const [product, setProduct] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
+  const { data: categories } = useCollection<any>(categoriesRef);
 
   useEffect(() => {
-    if (!isLoading && !product) {
-      notFound();
+    async function fetchProduct() {
+      setIsLoading(true);
+      const productData = await getProductBySlug(firestore, slug);
+      if (!productData) {
+        notFound();
+      } else {
+        setProduct(productData);
+      }
+      setIsLoading(false);
     }
-  }, [isLoading, product]);
+
+    if (firestore && slug) {
+      fetchProduct();
+    }
+  }, [firestore, slug]);
+
 
   if (isLoading || !product) {
     return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
   }
   
-  if (error) {
-    // This can be a more specific error page if needed
-    return <div className="flex h-96 items-center justify-center"><p>Error loading product.</p></div>;
-  }
-  
   const hasPricingTiers = product.pricing?.tiers && product.pricing.tiers.length > 0;
+  const category = categories?.find(c => c.id === product.categoryId);
+  const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
+    ? product.imageUrls[product.mainImageIndex || 0]
+    : 'https://placehold.co/600x400';
 
   return (
     <div className="bg-background">
@@ -65,9 +82,9 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           <div>
             <Card className="overflow-hidden sticky top-24">
               <div className="aspect-[4/3] relative">
-                {product.imageUrl ? (
+                {mainImageUrl ? (
                   <Image
-                    src={product.imageUrl}
+                    src={mainImageUrl}
                     alt={product.name}
                     fill
                     className="object-cover"

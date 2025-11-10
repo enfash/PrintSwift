@@ -57,6 +57,7 @@ export async function seedDatabase(db: Firestore) {
   }
 
   const batch = writeBatch(db);
+  const productsCollectionRef = collection(db, 'products');
 
   // Seed Categories
   categories.forEach(category => {
@@ -67,19 +68,24 @@ export async function seedDatabase(db: Firestore) {
   // Seed Products
   products.forEach(product => {
     const slug = product.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+    
+    // Create a doc ref with an auto-generated ID
+    const productDocRef = doc(productsCollectionRef); 
+
     const productData = {
+      id: productDocRef.id,
+      slug: slug,
       name: product.name,
       categoryId: product.categoryId,
       description: product.description || `High-quality ${product.name}.`,
       imageUrls: [`https://picsum.photos/seed/${slug}/600/400`],
+      mainImageIndex: 0,
       status: 'Published',
       featured: product.featured || false,
       pricing: product.pricing || { baseCost: 0, tax: 7.5, addons: [], tiers: [] }
     };
     
-    // Create a doc ref with the custom slug ID
-    const productDocRef = doc(db, 'products', slug);
-    batch.set(productDocRef, productData, { merge: true });
+    batch.set(productDocRef, productData);
   });
 
   // Commit the batch

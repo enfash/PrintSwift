@@ -195,15 +195,17 @@ function ProductsComponent() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredAndSortedProducts.map((product) => {
                                 const startingPrice = calculateStartingPrice(product);
-                                const slug = product.id;
+                                const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
+                                    ? product.imageUrls[product.mainImageIndex || 0]
+                                    : 'https://placehold.co/600x400';
                                 return (
-                                    <Link key={product.id} href={`/products/${slug}`} className="block">
+                                    <Link key={product.id} href={`/products/${product.slug}`} className="block">
                                         <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col">
                                             <div className="overflow-hidden">
                                                 <div className="aspect-[4/3] relative">
-                                                    {product.imageUrl ? (
+                                                    {mainImageUrl ? (
                                                         <Image
-                                                            src={product.imageUrl}
+                                                            src={mainImageUrl}
                                                             alt={product.name}
                                                             fill
                                                             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"

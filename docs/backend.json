@@ -34,7 +34,11 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the product."
+          "description": "Unique, auto-generated identifier for the product."
+        },
+        "slug": {
+          "type": "string",
+          "description": "User-editable, URL-friendly identifier for the product."
         },
         "name": {
           "type": "string",
@@ -51,6 +55,10 @@
             "type": "string",
             "format": "uri"
           }
+        },
+        "mainImageIndex": {
+          "type": "number",
+          "description": "Index of the main image in the imageUrls array."
         },
         "categoryId": {
           "type": "string",
@@ -100,9 +108,11 @@
       },
       "required": [
         "id",
+        "slug",
         "name",
         "description",
         "imageUrls",
+        "mainImageIndex",
         "categoryId"
       ]
     },

@@ -17,28 +17,39 @@ import { collection, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 const productSchema = z.object({
+  slug: z.string().min(3, 'Slug must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
   categoryId: z.string({ required_error: 'Please select a category.' }),
   description: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
   featured: z.boolean().default(false),
   imageUrls: z.array(z.string().url()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
+  mainImageIndex: z.number().min(0).default(0),
 });
 
+const slugify = (str: string) =>
+  str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
-export default function ProductFormPage({ params }: { params: { slug: string } }) {
-    const { slug } = params;
+export default function ProductEditPage({ params }: { params: { slug: string } }) {
+    // Note: The parameter is named 'slug' to match the file name, but it holds the product ID.
+    const { slug: productId } = params; 
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', slug) : null, [firestore, slug]);
+    const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', productId) : null, [firestore, productId]);
     const { data: product, isLoading: isLoadingProduct } = useDoc<z.infer<typeof productSchema> & { id: string }>(productRef);
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
@@ -48,6 +59,7 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         resolver: zodResolver(productSchema),
         defaultValues: {
             imageUrls: [],
+            mainImageIndex: 0,
         }
     });
 
@@ -60,8 +72,10 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         if (product) {
             form.reset({
                 ...product,
+                slug: product.slug || '',
                 description: product.description || '',
                 imageUrls: product.imageUrls || [],
+                mainImageIndex: product.mainImageIndex || 0,
             });
         }
     }, [product, form]);
@@ -72,7 +86,9 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         
         try {
             const productDocRef = doc(firestore, 'products', product.id);
-            updateDocumentNonBlocking(productDocRef, values);
+            // Ensure the `id` field is not overwritten if it exists in `values`
+            const { ...updateData } = values;
+            updateDocumentNonBlocking(productDocRef, updateData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             router.push('/admin/products');
         } catch (error) {
@@ -113,6 +129,11 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         }
     }
 
+    const setMainImage = (index: number) => {
+        form.setValue('mainImageIndex', index);
+    };
+
+    const mainImageIndex = form.watch('mainImageIndex');
 
     if (isLoadingProduct) {
         return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
@@ -154,11 +175,18 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                                         </FormItem>
                                     )}
                                 />
-                                <FormItem>
-                                    <FormLabel>Slug / ID</FormLabel>
-                                    <FormControl><Input value={slug} disabled /></FormControl>
-                                    <FormDescription>The slug cannot be changed after creation.</FormDescription>
-                                </FormItem>
+                                <FormField
+                                    control={form.control}
+                                    name="slug"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Slug</FormLabel>
+                                            <FormControl><Input placeholder="e.g., custom-mugs" {...field} /></FormControl>
+                                            <FormDescription>The user-friendly URL for the product page.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                 <FormField
                                     control={form.control}
                                     name="categoryId"
@@ -261,19 +289,22 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 gap-2">
                                      {fields.map((field, index) => (
-                                        <div key={field.id} className="relative aspect-square group">
+                                        <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
                                             <Image
                                                 src={field.value}
                                                 alt={`Product image ${index + 1}`}
                                                 fill
                                                 className="object-cover rounded-md"
                                             />
+                                            {mainImageIndex === index && (
+                                                <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>
+                                            )}
                                             <Button 
                                                 type="button"
                                                 variant="destructive" 
                                                 size="icon" 
                                                 className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={() => remove(index)}
+                                                onClick={(e) => { e.stopPropagation(); remove(index); }}
                                             >
                                                 <X className="h-4 w-4" />
                                             </Button>
@@ -303,7 +334,7 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                                         <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="upload" className="pt-2">
-                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} />
+                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} multiple />
                                         <FormDescription className="text-xs mt-2">
                                             For demonstration, this adds placeholder images.
                                         </FormDescription>
@@ -328,5 +359,3 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         </Form>
     );
 }
-
-    
