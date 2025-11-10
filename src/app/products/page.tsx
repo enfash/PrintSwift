@@ -75,7 +75,9 @@ function ProductsComponent() {
 
     const filteredAndSortedProducts = useMemo(() => {
         if (!allProducts) return [];
-        let products = allProducts;
+        
+        // Filter by status first
+        let products = allProducts.filter(p => p.status === 'Published');
 
         // Filter by search term
         if (searchTerm) {
@@ -170,7 +172,7 @@ function ProductsComponent() {
                 <main className="lg:col-span-3">
                     <div className="flex justify-between items-center mb-6">
                         <p className="text-sm text-muted-foreground">
-                            {isLoadingProducts ? 'Loading...' : `Showing ${filteredAndSortedProducts.length} of ${allProducts?.length || 0} products`}
+                            {isLoadingProducts ? 'Loading...' : `Showing ${filteredAndSortedProducts.length} products`}
                         </p>
                         <div className="flex items-center gap-2">
                             <Label htmlFor="sort-by" className="text-sm">Sort by:</Label>

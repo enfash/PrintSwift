@@ -63,7 +63,7 @@ export default function Home() {
   const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
   const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
 
-  const featuredProductsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('featured', '==', true), limit(4)) : null, [firestore]);
+  const featuredProductsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('featured', '==', true), where('status', '==', 'Published'), limit(4)) : null, [firestore]);
   const { data: featuredProducts, isLoading: isLoadingProducts } = useCollection<any>(featuredProductsRef);
 
   return (
@@ -138,20 +138,21 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {featuredProducts?.map((product) => {
+                const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
+                    ? product.imageUrls[product.mainImageIndex || 0]
+                    : 'https://placehold.co/600x400';
                 return (
-                  <Link key={product.id} href={`/products/${product.id}`}>
+                  <Link key={product.id} href={`/products/${product.slug}`}>
                     <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full">
                       <div className="overflow-hidden">
                         <div className="aspect-[4/3] relative">
-                          {product.imageUrl ? (
                             <Image
-                              src={product.imageUrl}
+                              src={mainImageUrl}
                               alt={product.name}
                               fill
                               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                               data-ai-hint="product image"
                             />
-                          ) : <div className="w-full h-full bg-muted" />}
                         </div>
                       </div>
                       <CardContent className="p-4">
