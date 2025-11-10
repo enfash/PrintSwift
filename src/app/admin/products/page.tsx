@@ -42,7 +42,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
-
+import { useState, useMemo } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function ProductsPage() {
     const firestore = useFirestore();
@@ -52,6 +54,10 @@ export default function ProductsPage() {
     
     const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
+
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterCategory, setFilterCategory] = useState('all');
+    const [sortOption, setSortOption] = useState('updatedAt-desc');
 
     const getCategoryName = (categoryId: string) => {
         return categories?.find(c => c.id === categoryId)?.name || 'N/A';
@@ -66,6 +72,43 @@ export default function ProductsPage() {
             description: 'The product has been successfully deleted.',
         });
     }
+
+    const filteredAndSortedProducts = useMemo(() => {
+        if (!products) return [];
+        let filtered = [...products];
+
+        // Filter by status
+        if (filterStatus !== 'all') {
+            filtered = filtered.filter(p => (p.status || 'Draft') === filterStatus);
+        }
+
+        // Filter by category
+        if (filterCategory !== 'all') {
+            filtered = filtered.filter(p => p.categoryId === filterCategory);
+        }
+
+        // Sort products
+        filtered.sort((a, b) => {
+            const [key, order] = sortOption.split('-');
+            
+            if (!a[key] || !b[key]) return 0;
+            
+            let comparison = 0;
+            if (key === 'updatedAt' || key === 'createdAt') {
+                const dateA = a[key]?.toDate() || 0;
+                const dateB = b[key]?.toDate() || 0;
+                comparison = dateA - dateB;
+            } else if (typeof a[key] === 'string') {
+                comparison = a[key].localeCompare(b[key]);
+            } else {
+                comparison = a[key] - b[key];
+            }
+            
+            return order === 'desc' ? -comparison : comparison;
+        });
+
+        return filtered;
+    }, [products, filterStatus, filterCategory, sortOption]);
 
     const isLoading = isLoadingProducts || isLoadingCategories;
 
@@ -85,6 +128,39 @@ export default function ProductsPage() {
                     <CardDescription>Manage your store's products here.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <div className="flex items-center gap-2 mb-4 p-4 bg-muted/50 rounded-lg">
+                        <Select value={filterStatus} onValueChange={setFilterStatus}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Filter by status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="Published">Published</SelectItem>
+                                <SelectItem value="Draft">Draft</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={filterCategory} onValueChange={setFilterCategory}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Filter by category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Categories</SelectItem>
+                                {categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <div className="flex-grow" />
+                        <Select value={sortOption} onValueChange={setSortOption}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="updatedAt-desc">Last Modified</SelectItem>
+                                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                                <SelectItem value="status-asc">Status</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -94,6 +170,7 @@ export default function ProductsPage() {
                                 <TableHead>Name</TableHead>
                                 <TableHead>Category</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Last Modified</TableHead>
                                 <TableHead>
                                     <span className="sr-only">Actions</span>
                                 </TableHead>
@@ -102,11 +179,11 @@ export default function ProductsPage() {
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
+                                    <TableCell colSpan={6} className="h-24 text-center">
                                         <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
                                     </TableCell>
                                 </TableRow>
-                            ) : products && products.length > 0 ? products.map(product => {
+                            ) : filteredAndSortedProducts && filteredAndSortedProducts.length > 0 ? filteredAndSortedProducts.map(product => {
                                 const mainImageUrl = product.imageUrls && product.imageUrls.length > 0 
                                     ? product.imageUrls[product.mainImageIndex || 0] 
                                     : 'https://placehold.co/40x40';
@@ -129,6 +206,9 @@ export default function ProductsPage() {
                                             {product.status || 'Draft'}
                                         </Badge>
                                     </TableCell>
+                                    <TableCell className="text-muted-foreground text-xs">
+                                        {product.updatedAt ? `${formatDistanceToNow(product.updatedAt.toDate())} ago` : 'N/A'}
+                                    </TableCell>
                                     <TableCell>
                                         <AlertDialog>
                                             <DropdownMenu>
@@ -141,7 +221,7 @@ export default function ProductsPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem asChild>
-                                                        <Link href={`/admin/products/${product.id}`}>Edit</Link>
+                                                        <Link href={`/admin/products/${product.slug}`}>Edit</Link>
                                                     </DropdownMenuItem>
                                                     <AlertDialogTrigger asChild>
                                                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
@@ -169,8 +249,8 @@ export default function ProductsPage() {
                                 );
                             }) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
-                                        No products found. Seed the database from the dashboard.
+                                    <TableCell colSpan={6} className="h-24 text-center">
+                                        No products found. Try adjusting your filters.
                                     </TableCell>
                                 </TableRow>
                             )}

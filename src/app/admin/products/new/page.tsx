@@ -13,7 +13,7 @@ import { UploadCloud, LoaderCircle, Image as ImageIcon, Link2, X } from 'lucide-
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -86,11 +86,10 @@ export default function ProductFormPage() {
         const productsCollectionRef = collection(firestore, 'products');
         const newProductRef = doc(productsCollectionRef);
 
-        // Filter out temporary blob URLs before submitting to Firestore.
         const persistentImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
 
-        if (persistentImageUrls.length === 0 && values.imageUrls.length > 0) {
-            toast({ variant: 'destructive', title: 'Upload in Progress', description: "Please replace temporary image previews with permanent links or wait for uploads to complete."});
+        if (persistentImageUrls.length !== values.imageUrls.length) {
+            toast({ variant: 'destructive', title: 'Temporary Images Detected', description: "Please replace local image previews with permanent links before saving. The save operation was cancelled."});
             setIsSubmitting(false);
             return;
         }
@@ -99,7 +98,9 @@ export default function ProductFormPage() {
             id: newProductRef.id,
             ...values,
             imageUrls: persistentImageUrls,
-            pricing: { // Default pricing structure
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            pricing: {
                 baseCost: 0,
                 tax: 7.5,
                 addons: [],
@@ -108,7 +109,7 @@ export default function ProductFormPage() {
         }
 
         try {
-            await addDocumentNonBlocking(collection(firestore, 'products'), finalProductData, { id: finalProductData.id });
+            await addDocumentNonBlocking(productsCollectionRef, finalProductData, { id: finalProductData.id });
             toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
             router.push('/admin/products');
         } catch (error) {
@@ -129,7 +130,7 @@ export default function ProductFormPage() {
                 const tempPreviewUrl = URL.createObjectURL(file);
                 append(tempPreviewUrl);
             })
-            toast({ title: "Image Added", description: "This is a local preview. Save the product to upload the image."})
+            toast({ title: "Image Added", description: "This is a local preview. To save, replace it with a permanent URL using the Link tab."})
         }
     };
 
@@ -304,12 +305,18 @@ export default function ProductFormPage() {
                                 <div className="grid grid-cols-3 gap-2">
                                      {fields.map((field, index) => (
                                         <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
-                                            <Image
-                                                src={field.value}
-                                                alt={`Product image ${index + 1}`}
-                                                fill
-                                                className="object-cover rounded-md"
-                                            />
+                                            {field.value ? (
+                                                <Image
+                                                    src={field.value}
+                                                    alt={`Product image ${index + 1}`}
+                                                    fill
+                                                    className="object-cover rounded-md"
+                                                />
+                                            ) : (
+                                                 <div className="w-full h-full bg-muted rounded-md flex items-center justify-center">
+                                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                                </div>
+                                            )}
                                             {mainImageIndex === index && (
                                                 <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>
                                             )}
@@ -350,7 +357,7 @@ export default function ProductFormPage() {
                                     <TabsContent value="upload" className="pt-2">
                                         <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} multiple />
                                         <FormDescription className="text-xs mt-2">
-                                            Local previews are temporary. Save to upload.
+                                            Local previews must be replaced with a permanent URL before saving.
                                         </FormDescription>
                                     </TabsContent>
                                      <TabsContent value="url" className="pt-2">

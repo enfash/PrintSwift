@@ -13,11 +13,11 @@ import { LoaderCircle, UploadCloud, Image as ImageIcon, Link2, X } from 'lucide-
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -83,12 +83,17 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
         
         try {
             const productDocRef = doc(firestore, 'products', product.id);
-            // Filter out temporary blob URLs before submitting to Firestore.
+
             const persistentImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
+            if (persistentImageUrls.length !== values.imageUrls.length) {
+                toast({ variant: 'destructive', title: 'Temporary Images Detected', description: "Please replace local image previews with permanent links before saving. The save operation was cancelled."});
+                return;
+            }
             
             const updateData = {
                 ...values,
-                imageUrls: persistentImageUrls
+                imageUrls: persistentImageUrls,
+                updatedAt: serverTimestamp()
             };
             
             await updateDocumentNonBlocking(productDocRef, updateData);
@@ -111,7 +116,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                 const tempPreviewUrl = URL.createObjectURL(file);
                 append(tempPreviewUrl);
             })
-            toast({ title: "Image Added", description: "This is a local preview. Save the product to upload the image."})
+            toast({ title: "Image Added", description: "This is a local preview. To save, replace it with a permanent URL using the Link tab."})
         }
     };
 
@@ -344,7 +349,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                                     <TabsContent value="upload" className="pt-2">
                                         <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} multiple />
                                         <FormDescription className="text-xs mt-2">
-                                            Local previews are temporary. Save to upload.
+                                            Local previews must be replaced with a permanent URL before saving.
                                         </FormDescription>
                                     </TabsContent>
                                      <TabsContent value="url" className="pt-2">
