@@ -68,10 +68,10 @@ export async function seedDatabase(db: Firestore) {
   products.forEach(product => {
     const slug = product.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
     const productData = {
-      ...product,
-      id: slug, // Use the generated slug as the ID
+      name: product.name,
+      categoryId: product.categoryId,
       description: product.description || `High-quality ${product.name}.`,
-      imageUrl: `https://picsum.photos/seed/${slug}/600/400`,
+      imageUrls: [`https://picsum.photos/seed/${slug}/600/400`],
       status: 'Published',
       featured: product.featured || false,
       pricing: product.pricing || { baseCost: 0, tax: 7.5, addons: [], tiers: [] }

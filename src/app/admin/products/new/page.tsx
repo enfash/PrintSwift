@@ -12,14 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UploadCloud, LoaderCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useState } from 'react';
 
 const productSchema = z.object({
+  id: z.string().min(3, 'Slug/ID must be at least 3 characters. Use lowercase and dashes (e.g., "new-product").').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
   categoryId: z.string({ required_error: 'Please select a category.' }),
   description: z.string().optional(),
@@ -40,6 +41,7 @@ export default function ProductFormPage() {
     const form = useForm<z.infer<typeof productSchema>>({
         resolver: zodResolver(productSchema),
         defaultValues: {
+            id: '',
             name: '',
             categoryId: '',
             description: '',
@@ -53,8 +55,12 @@ export default function ProductFormPage() {
         setIsSubmitting(true);
         
         const productData = {
-            ...values,
-            imageUrl: `https://picsum.photos/seed/${values.name.replace(/\s+/g, '-')}/600/400`,
+            name: values.name,
+            categoryId: values.categoryId,
+            description: values.description,
+            status: values.status,
+            featured: values.featured,
+            imageUrls: [`https://picsum.photos/seed/${values.id}/600/400`], // Start with one image
             pricing: { // Default pricing structure
                 baseCost: 0,
                 tax: 7.5,
@@ -64,13 +70,14 @@ export default function ProductFormPage() {
         };
 
         try {
-            const productsCollection = collection(firestore, 'products');
-            await addDocumentNonBlocking(productsCollection, productData);
+            const productDocRef = doc(firestore, 'products', values.id);
+            // Use setDoc to create a document with a specific ID
+            await setDocumentNonBlocking(productDocRef, productData, {});
             toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
             router.push('/admin/products');
         } catch (error) {
             console.error("Error saving product:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the product.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the product. The ID might already exist.' });
             setIsSubmitting(false);
         }
     };
@@ -103,6 +110,18 @@ export default function ProductFormPage() {
                                     <FormItem>
                                         <FormLabel>Product Title</FormLabel>
                                         <FormControl><Input placeholder="e.g., Custom Mugs" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Slug / ID</FormLabel>
+                                        <FormControl><Input placeholder="e.g., custom-mugs" {...field} /></FormControl>
+                                        <FormDescription>This will be the product's URL. Use lowercase letters, numbers, and hyphens only.</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -158,6 +177,7 @@ export default function ProductFormPage() {
                                 </div>
                                 <Input type="file" className="hidden" multiple />
                             </div>
+                            <FormDescription className="mt-2">You can upload multiple images on the edit product page after creation.</FormDescription>
                         </CardContent>
                     </Card>
 
@@ -219,5 +239,3 @@ export default function ProductFormPage() {
         </Form>
     );
 }
-
-    

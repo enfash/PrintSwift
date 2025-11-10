@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoaderCircle, UploadCloud, Image as ImageIcon, Link2 } from 'lucide-react';
+import { LoaderCircle, UploadCloud, Image as ImageIcon, Link2, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
@@ -27,7 +27,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
   featured: z.boolean().default(false),
-  imageUrl: z.string().url({ message: 'Please enter a valid URL.' }).optional(),
+  imageUrls: z.array(z.string().url()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
 });
 
 
@@ -47,16 +47,22 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
 
     const form = useForm<z.infer<typeof productSchema>>({
         resolver: zodResolver(productSchema),
+        defaultValues: {
+            imageUrls: [],
+        }
+    });
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "imageUrls"
     });
     
-    const imageUrl = form.watch('imageUrl');
-
     useEffect(() => {
         if (product) {
             form.reset({
                 ...product,
                 description: product.description || '',
-                imageUrl: product.imageUrl || '',
+                imageUrls: product.imageUrls || [],
             });
         }
     }, [product, form]);
@@ -81,15 +87,35 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
     
     // This is a placeholder for a real file upload implementation
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
+        const files = event.target.files;
+        if (files) {
+            if (fields.length + files.length > 6) {
+                toast({ variant: 'destructive', title: "Too many images", description: "You can upload a maximum of 6 images."});
+                return;
+            }
             // In a real app, you'd upload this file to Firebase Storage
             // and get a URL back. For now, we'll use a placeholder URL.
-            const tempPreviewUrl = URL.createObjectURL(file);
-            form.setValue('imageUrl', tempPreviewUrl, { shouldValidate: true });
+             Array.from(files).forEach(file => {
+                const tempPreviewUrl = URL.createObjectURL(file);
+                append(tempPreviewUrl);
+             })
+
             toast({ title: "Image Uploaded", description: "This is a preview. Save the product to make it permanent. Note: Real upload is not implemented."})
         }
     };
+
+    const handleAddImageUrl = (url: string) => {
+        if (fields.length >= 6) {
+            toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
+            return;
+        }
+        try {
+            z.string().url().parse(url);
+            append(url);
+        } catch {
+            toast({ variant: 'destructive', title: "Invalid URL", description: "Please enter a valid image URL."});
+        }
+    }
 
 
     if (isLoadingProduct) {
@@ -229,50 +255,67 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
                          <Card>
                             <CardHeader>
                                 <CardTitle>Media</CardTitle>
-                                <CardDescription>Manage product image.</CardDescription>
+                                <CardDescription>Manage product images (up to 6).</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="aspect-video relative rounded-md border bg-muted overflow-hidden">
-                                     {imageUrl ? (
-                                        <Image
-                                            src={imageUrl}
-                                            alt={product.name}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+                                <div className="grid grid-cols-3 gap-2">
+                                     {fields.map((field, index) => (
+                                        <div key={field.id} className="relative aspect-square group">
+                                            <Image
+                                                src={field.value}
+                                                alt={`Product image ${index + 1}`}
+                                                fill
+                                                className="object-cover rounded-md"
+                                            />
+                                            <Button 
+                                                type="button"
+                                                variant="destructive" 
+                                                size="icon" 
+                                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => remove(index)}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                     ))}
+                                     {fields.length === 0 && (
+                                         <div className="col-span-3 aspect-video relative rounded-md border bg-muted flex flex-col items-center justify-center text-muted-foreground">
                                             <ImageIcon className="w-12 h-12" />
                                             <p className="text-sm mt-2">No image set</p>
                                         </div>
-                                    )}
+                                     )}
                                 </div>
                                 
-                                <Tabs defaultValue="url">
+                                <FormField
+                                    control={form.control}
+                                    name="imageUrls"
+                                    render={() => (
+                                        <FormItem>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <Tabs defaultValue="upload">
                                     <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
                                         <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
+                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
                                     </TabsList>
-                                    <TabsContent value="url" className="pt-2">
-                                         <FormField
-                                            control={form.control}
-                                            name="imageUrl"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="sr-only">Image URL</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="https://..." {...field} value={field.value || ''} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </TabsContent>
                                     <TabsContent value="upload" className="pt-2">
-                                        <Input type="file" onChange={handleFileUpload} accept="image/*" />
+                                        <Input type="file" onChange={handleFileUpload} accept="image/*" multiple disabled={fields.length >= 6} />
                                         <FormDescription className="text-xs mt-2">
-                                            For demonstration purposes. A real implementation would upload to cloud storage.
+                                            For demonstration purposes. Real upload is not implemented.
                                         </FormDescription>
+                                    </TabsContent>
+                                     <TabsContent value="url" className="pt-2">
+                                         <div className="flex gap-2">
+                                            <Input 
+                                                id="imageUrlInput"
+                                                placeholder="https://..." 
+                                                disabled={fields.length >= 6}
+                                            />
+                                            <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
+                                         </div>
                                     </TabsContent>
                                 </Tabs>
                             </CardContent>
@@ -284,5 +327,3 @@ export default function ProductFormPage({ params }: { params: { slug: string } }
         </Form>
     );
 }
-
-    
