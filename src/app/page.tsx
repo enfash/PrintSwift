@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -24,7 +23,7 @@ import { collection, query, where, limit } from 'firebase/firestore';
 const categoryIcons: { [key: string]: React.ReactElement } = {
   'Marketing & Business Prints': <Briefcase className="w-8 h-8" />,
   'Corporate Gifts': <Gift className="w-8 h-8" />,
-  'Large Format & Outdoor Prints': <Printer className="w-8 h-8" />,
+  'Large Format & Outdoor': <Printer className="w-8 h-8" />,
   'Packaging Prints': <Box className="w-8 h-8" />,
   'Apparel & Textile Printing': <Shirt className="w-8 h-8" />,
   'Signage & Display Systems': <MonitorPlay className="w-8 h-8" />,
@@ -69,19 +68,18 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center">
+      <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center bg-primary">
         {heroImage && (
           <Image
             src={heroImage.imageUrl}
             alt={heroImage.description}
             fill
-            className="object-cover"
+            className="object-cover opacity-20"
             priority
             data-ai-hint={heroImage.imageHint}
           />
         )}
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="relative z-10 max-w-4xl mx-auto px-4 text-white">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 text-primary-foreground">
           <h1 className="text-4xl md:text-6xl font-extrabold font-headline tracking-tight">
             Affordable Custom Branding, Delivered Fast
           </h1>
@@ -90,10 +88,10 @@ export default function Home() {
             we bring your vision to life.
           </p>
           <div className="mt-8 flex justify-center gap-4 flex-wrap">
-            <Button asChild size="lg" className="font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button asChild size="lg" variant="secondary" className="font-semibold">
               <Link href="/products">Shop All Products</Link>
             </Button>
-            <Button asChild size="lg" variant="secondary" className="font-semibold">
+            <Button asChild size="lg" className="font-semibold bg-accent text-accent-foreground hover:bg-accent/90">
               <Link href="/quote">Get a Quote</Link>
             </Button>
           </div>
