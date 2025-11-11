@@ -37,7 +37,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     match /products {
-      allow list: if true; // Let client filter published
+      allow list: if isAdmin();
     }
     
     // Testimonials
@@ -47,7 +47,7 @@ service cloud.firestore {
     }
     
     match /testimonials {
-        allow list: if isAdmin();
+        allow list: if true;
     }
 
     // --- User-Specific Collections ---

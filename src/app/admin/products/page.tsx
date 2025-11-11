@@ -28,7 +28,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import {
   AlertDialog,
@@ -46,14 +46,14 @@ import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 
-export default function ProductsPage() {
+const ProductsList = () => {
     const firestore = useFirestore();
     const { toast } = useToast();
     const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     
-    const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
-    const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
+    const { data: products, isLoading: isLoadingProducts, error: productsError } = useCollection<any>(productsRef);
+    const { data: categories, isLoading: isLoadingCategories, error: categoriesError } = useCollection<any>(categoriesRef);
 
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterCategory, setFilterCategory] = useState('all');
@@ -111,6 +111,11 @@ export default function ProductsPage() {
     }, [products, filterStatus, filterCategory, sortOption]);
 
     const isLoading = isLoadingProducts || isLoadingCategories;
+    const error = productsError || categoriesError;
+
+    if (error) {
+        return <p>Error: {error.message}</p>;
+    }
 
     return (
         <>
@@ -260,4 +265,27 @@ export default function ProductsPage() {
             </Card>
         </>
     );
+}
+
+export default function ProductsPage() {
+    const { user, isUserLoading, userError } = useUser();
+
+    if (isUserLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <LoaderCircle className="h-8 w-8 animate-spin" />
+                <p className="ml-2">Loading user authentication...</p>
+            </div>
+        );
+    }
+
+    if (userError) {
+        return <p>Error: {userError.message}</p>;
+    }
+
+    if (!user) {
+        return <p>Please log in to view products.</p>;
+    }
+
+    return <ProductsList />;
 }

@@ -1,37 +1,16 @@
 {
+  "registries": {
+    "@acme": "https://acme.com/r/{name}.json"
+  },
   "mcpServers": {
-    "filesystem": {
+    "firebase": {
       "command": "npx",
       "args": [
-        "@modelcontextprotocol/server-filesystem",
-        "--root",
-        "."
-      ]
-    },
-    "exec": {
-      "command": "npx",
-      "args": [
-        "@modelcontextprotocol/server-exec"
-      ]
-    },
-    "git": {
-      "command": "npx",
-      "args": [
-        "@modelcontextprotocol/server-git"
-      ]
-    },
-    "browser": {
-      "command": "npx",
-      "args": [
-        "@modelcontextprotocol/server-browser"
-      ]
-    },
-    "servss": {
-      "command": "npx",
-      "args": [
-        "-",
-        "y",
-        "myorg/server"
+        "-y",
+        "firebase-tools@latest",
+        "experimental:mcp",
+        "--only",
+        "auth,firestore"
       ]
     }
   }
