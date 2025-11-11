@@ -28,7 +28,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     match /product_categories {
-      allow list: if true; // Changed from isAdmin() to true for public access
+      allow list: if true;
     }
 
     // Products
