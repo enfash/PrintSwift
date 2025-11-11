@@ -53,27 +53,6 @@ const howItWorksSteps = [
   },
 ];
 
-const testimonials = [
-  {
-    quote: "PrintSwift delivered our marketing materials with incredible speed and quality. Their attention to detail is unmatched.",
-    name: "Tunde Adeyemi",
-    company: "Lagos Tech Hub",
-    rating: 5,
-  },
-  {
-    quote: "The custom packaging they created for us has been a game-changer. Our branding has never looked better!",
-    name: "Chioma Okoro",
-    company: "Ada Ventures",
-    rating: 5,
-  },
-  {
-    quote: "A reliable partner for all our printing needs. Fast, affordable, and always professional.",
-    name: "Jide Balogun",
-    company: "Jide Stores",
-    rating: 5,
-  }
-];
-
 function findImage(id: string) {
   return PlaceHolderImages.find((img) => img.id === id);
 }
@@ -100,6 +79,9 @@ export default function Home() {
 
   const featuredProductsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('featured', '==', true), where('status', '==', 'Published'), limit(4)) : null, [firestore]);
   const { data: featuredProducts, isLoading: isLoadingProducts } = useCollection<any>(featuredProductsRef);
+
+  const testimonialsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'testimonials'), where('visible', '==', true), limit(3)) : null, [firestore]);
+  const { data: testimonials, isLoading: isLoadingTestimonials } = useCollection<any>(testimonialsRef);
 
   return (
     <>
@@ -243,20 +225,24 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-headline">What Our Clients Say</h2>
             <p className="mt-3 text-lg text-muted-foreground">We're trusted by businesses across Nigeria</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial) => (
-              <Card key={testimonial.name} className="flex flex-col justify-between">
-                <CardContent className="pt-6">
-                  <StarRating rating={testimonial.rating} className="mb-4" />
-                  <p className="text-muted-foreground mb-4">"{testimonial.quote}"</p>
-                </CardContent>
-                <div className="p-6 pt-0">
-                  <h4 className="font-semibold">{testimonial.name}</h4>
-                  <p className="text-sm text-muted-foreground">{testimonial.company}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
+          {isLoadingTestimonials ? (
+             <div className="flex justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {testimonials?.map((testimonial) => (
+                <Card key={testimonial.id} className="flex flex-col justify-between">
+                  <CardContent className="pt-6">
+                    <StarRating rating={testimonial.rating} className="mb-4" />
+                    <p className="text-muted-foreground mb-4">"{testimonial.quote}"</p>
+                  </CardContent>
+                  <div className="p-6 pt-0">
+                    <h4 className="font-semibold">{testimonial.name}</h4>
+                    <p className="text-sm text-muted-foreground">{testimonial.company}</p>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>

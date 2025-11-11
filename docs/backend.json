@@ -166,6 +166,43 @@
         "productId",
         "submissionDate"
       ]
+    },
+    "Testimonial": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Testimonial",
+      "type": "object",
+      "description": "Represents a customer testimonial or review.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the testimonial."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the person giving the testimonial."
+        },
+        "company": {
+          "type": "string",
+          "description": "Company of the person (optional)."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location of the person (e.g., 'Lagos')."
+        },
+        "quote": {
+          "type": "string",
+          "description": "The content of the testimonial."
+        },
+        "rating": {
+          "type": "number",
+          "description": "Star rating from 1 to 5."
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Controls whether the testimonial is visible on the public website."
+        }
+      },
+      "required": ["id", "name", "quote", "rating", "visible"]
     }
   },
   "auth": {
@@ -236,6 +273,22 @@
             {
               "name": "quoteRequestId",
               "description": "Unique identifier for the quote request."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/testimonials/{testimonialId}",
+        "definition": {
+          "entityName": "Testimonial",
+          "schema": {
+            "$ref": "#/backend/entities/Testimonial"
+          },
+          "description": "Collection to store customer testimonials. Publicly readable if visible, writeable by admins.",
+          "params": [
+            {
+              "name": "testimonialId",
+              "description": "Unique identifier for the testimonial."
             }
           ]
         }

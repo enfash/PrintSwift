@@ -23,21 +23,31 @@ service cloud.firestore {
     // and 'get' requests match different path patterns.
 
     // Categories
-    match /categories/{categoryId} {
+    match /product_categories/{categoryId} {
       allow get: if true;
       allow write: if isAdmin();
     }
-    match /categories {
+    match /product_categories {
       allow list: if true;
     }
 
     // Products
     match /products/{productId} {
-      allow get: if true;
+      allow get: if resource.data.status == 'Published';
       allow write: if isAdmin();
     }
     match /products {
-      allow list: if true;
+      allow list: if true; // Let client filter published
+    }
+    
+    // Testimonials
+    match /testimonials/{testimonialId} {
+      allow get: if resource.data.visible == true;
+      allow write: if isAdmin();
+    }
+    
+    match /testimonials {
+        allow list: if true; // Let client filter visible
     }
 
     // --- User-Specific Collections ---
@@ -49,6 +59,7 @@ service cloud.firestore {
     // --- Admin & Role Management ---
     match /roles_admin/{userId} {
         allow create: if isSignedIn() && request.auth.uid == userId;
+        allow read, write: if isAdmin();
     }
   }
 }
