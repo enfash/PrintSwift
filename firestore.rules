@@ -42,12 +42,12 @@ service cloud.firestore {
     
     // Testimonials
     match /testimonials/{testimonialId} {
-      allow get: if resource.data.visible == true;
+      allow get: if resource.data.visible == true || isAdmin();
       allow write: if isAdmin();
     }
     
     match /testimonials {
-        allow list: if true; // Let client filter visible
+        allow list: if isAdmin();
     }
 
     // --- User-Specific Collections ---
