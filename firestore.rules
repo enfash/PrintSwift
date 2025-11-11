@@ -3,63 +3,56 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // --- Helper Functions ---
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      // User must have a verified email and an admin role document.
+      return request.auth.token.email_verified == true && 
+             exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    // --- Default Security Rule (Deny All) ---
-    // For safety, deny all reads and writes by default.
-    // Specific rules below will explicitly grant access.
+    // --- Default Security Rule (Deny All by Default) ---
     match /{path=**} {
         allow read, write: if false;
     }
 
-    // --- Public Collections ---
-    // Rules are broken down by operation (get, list, write) because 'list' 
-    // and 'get' requests match different path patterns.
-
-    // Categories
+    // --- Public Read Collections ---
+    
+    // Product Categories Collection
     match /product_categories/{categoryId} {
-      allow get: if true;
+      allow read: if true;
       allow write: if isAdmin();
     }
     match /product_categories {
       allow list: if true;
     }
-
-    // Products
+    
+    // Products Collection
     match /products/{productId} {
-      allow get: if resource.data.status == 'Published' || isAdmin();
+      allow read: if true;
       allow write: if isAdmin();
     }
     match /products {
+      allow list: if true;
+    }
+
+    // --- Other Collections ---
+    
+    // Testimonials Collection
+    match /testimonials/{testimonialId} {
+      allow write: if isAdmin();
+      allow read: if isAdmin() || resource.data.visible == true;
+    }
+    match /testimonials {
       allow list: if isAdmin();
     }
-    
-    // Testimonials
-    match /testimonials/{testimonialId} {
-      allow get: if resource.data.visible == true || isAdmin();
-      allow write: if isAdmin();
-    }
-    
-    match /testimonials {
-        allow list: if true;
+
+    // Quote Requests (Admin Only)
+    match /quote_requests/{quoteRequestId} {
+      allow read, write: if isAdmin();
     }
 
-    // --- User-Specific Collections ---
-    match /quote_requests/{quoteId} {
-        allow create: if true;
-        allow read, list: if isAdmin();
-    }
-
-    // --- Admin & Role Management ---
-    match /roles_admin/{userId} {
-        allow create: if isSignedIn() && request.auth.uid == userId;
-        allow read, write: if isAdmin();
+    // Admin Roles (Admin Only)
+    match /roles_admin/{uid} {
+      allow read, write: if isAdmin();
     }
   }
 }
