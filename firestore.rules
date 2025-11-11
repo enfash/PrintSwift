@@ -4,9 +4,8 @@ service cloud.firestore {
 
     // --- Helper Functions ---
     function isAdmin() {
-      // User must have a verified email and an admin role document.
-      return request.auth.token.email_verified == true && 
-             exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      // User must have an admin role document. Email verification is not required for this dev environment.
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     // --- Default Security Rule (Deny All by Default) ---
