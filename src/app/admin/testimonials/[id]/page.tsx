@@ -8,20 +8,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { LoaderCircle, Star } from 'lucide-react';
+import { LoaderCircle, Star, UploadCloud, Link2 } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+const MAX_QUOTE_LENGTH = 280;
 
 const testimonialSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
   company: z.string().optional(),
-  quote: z.string().min(10, 'Testimonial text is too short.'),
+  quote: z.string().min(10, 'Testimonial text is too short.').max(MAX_QUOTE_LENGTH, `Testimonial must be ${MAX_QUOTE_LENGTH} characters or less.`),
   rating: z.number().min(1).max(5),
   visible: z.boolean().default(true),
   imageUrl: z.string().url().optional().or(z.literal('')),
@@ -52,11 +55,18 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
     }, [testimonial, form]);
     
     const currentRating = form.watch('rating');
+    const quoteValue = form.watch('quote') || '';
 
     const onSubmit = async (values: z.infer<typeof testimonialSchema>) => {
         if (!firestore) return;
         setIsSubmitting(true);
         
+        if (values.imageUrl && values.imageUrl.startsWith('blob:')) {
+            toast({ variant: 'destructive', title: 'Temporary Image Detected', description: "Please replace the local image preview with a permanent URL before saving. The save operation was cancelled."});
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const testimonialDocRef = doc(firestore, 'testimonials', params.id);
             await updateDocumentNonBlocking(testimonialDocRef, values);
@@ -70,6 +80,27 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
             setIsSubmitting(false);
         }
     };
+    
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const tempPreviewUrl = URL.createObjectURL(file);
+            form.setValue('imageUrl', tempPreviewUrl);
+            toast({ title: "Image Added", description: "This is a local preview. To save, replace it with a permanent URL using the Link tab."})
+        }
+    };
+
+    const handleAddImageUrl = (url: string) => {
+        try {
+            z.string().url().parse(url);
+            form.setValue('imageUrl', url);
+            const input = document.getElementById('imageUrlInput') as HTMLInputElement;
+            if (input) input.value = '';
+        } catch {
+            toast({ variant: 'destructive', title: "Invalid URL", description: "Please enter a valid image URL."});
+        }
+    }
+
 
     if (isLoading) {
         return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
@@ -124,24 +155,59 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
                                     )}
                                 />
                             </div>
+                            
                             <FormField
                                 control={form.control}
                                 name="imageUrl"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Customer Image URL</FormLabel>
-                                        <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                                        <FormLabel>Customer Image</FormLabel>
+                                        <FormControl>
+                                            <Tabs defaultValue="url" className="w-full">
+                                                <TabsList className="grid w-full grid-cols-2">
+                                                    <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
+                                                    <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
+                                                </TabsList>
+                                                <TabsContent value="upload" className="pt-2">
+                                                    <Input type="file" onChange={handleFileUpload} accept="image/*" />
+                                                    <FormDescription className="text-xs mt-2">
+                                                        Local previews must be replaced with a permanent URL before saving.
+                                                    </FormDescription>
+                                                </TabsContent>
+                                                <TabsContent value="url" className="pt-2">
+                                                    <div className="flex gap-2">
+                                                        <Input 
+                                                            id="imageUrlInput"
+                                                            placeholder="https://..."
+                                                            defaultValue={field.value}
+                                                        />
+                                                        <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
+                                                    </div>
+                                                </TabsContent>
+                                            </Tabs>
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
+
                             <FormField
                                 control={form.control}
                                 name="quote"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Quote</FormLabel>
-                                        <FormControl><Textarea placeholder="The full testimonial text..." {...field} rows={5}/></FormControl>
+                                        <FormControl>
+                                            <Textarea 
+                                                placeholder="The full testimonial text..." 
+                                                {...field} 
+                                                rows={5}
+                                                maxLength={MAX_QUOTE_LENGTH}
+                                            />
+                                        </FormControl>
+                                        <FormDescription className="text-right">
+                                            {quoteValue.length} / {MAX_QUOTE_LENGTH}
+                                        </FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -200,4 +266,3 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
     );
 }
 
-    
