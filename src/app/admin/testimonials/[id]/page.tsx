@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoaderCircle, Star } from 'lucide-react';
-import { useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 
@@ -27,24 +27,29 @@ const testimonialSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
-export default function NewTestimonialPage() {
+export default function EditTestimonialPage({ params }: { params: { id: string } }) {
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hoverRating, setHoverRating] = useState(0);
 
+    const testimonialRef = useMemoFirebase(() => firestore ? doc(firestore, 'testimonials', params.id) : null, [firestore, params.id]);
+    const { data: testimonial, isLoading } = useDoc<z.infer<typeof testimonialSchema>>(testimonialRef);
+
     const form = useForm<z.infer<typeof testimonialSchema>>({
         resolver: zodResolver(testimonialSchema),
-        defaultValues: {
-            name: '',
-            company: '',
-            quote: '',
-            rating: 5,
-            visible: true,
-            imageUrl: '',
-        },
     });
+
+    useEffect(() => {
+        if (testimonial) {
+            form.reset({
+                ...testimonial,
+                company: testimonial.company || '',
+                imageUrl: testimonial.imageUrl || '',
+            });
+        }
+    }, [testimonial, form]);
     
     const currentRating = form.watch('rating');
 
@@ -53,31 +58,37 @@ export default function NewTestimonialPage() {
         setIsSubmitting(true);
         
         try {
-            const testimonialsCollection = collection(firestore, 'testimonials');
-            const newDocRef = doc(testimonialsCollection);
-            await addDocumentNonBlocking(testimonialsCollection, {...values, id: newDocRef.id});
+            const testimonialDocRef = doc(firestore, 'testimonials', params.id);
+            await updateDocumentNonBlocking(testimonialDocRef, values);
             
-            toast({ title: 'Testimonial Created', description: `The new testimonial has been added.` });
+            toast({ title: 'Testimonial Updated', description: `The testimonial has been successfully updated.` });
             router.push('/admin/testimonials');
 
         } catch (error) {
-            console.error("Error saving testimonial:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the testimonial.' });
+            console.error("Error updating testimonial:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update the testimonial.' });
             setIsSubmitting(false);
         }
     };
 
+    if (isLoading) {
+        return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
+    }
+
+    if (!testimonial) {
+        return <div className="flex h-96 items-center justify-center"><p>Testimonial not found.</p></div>;
+    }
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">Add New Testimonial</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Edit Testimonial</h1>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" type="button" onClick={() => router.push('/admin/testimonials')}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Testimonial
+                            Save Changes
                         </Button>
                     </div>
                 </div>
@@ -86,7 +97,7 @@ export default function NewTestimonialPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Testimonial Details</CardTitle>
-                            <CardDescription>Fill in the customer's feedback.</CardDescription>
+                            <CardDescription>Update the customer's feedback.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid sm:grid-cols-2 gap-6">

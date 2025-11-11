@@ -21,6 +21,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const categoryIcons: { [key: string]: React.ReactElement } = {
   'Marketing & Business Prints': <Briefcase className="w-8 h-8" />,
@@ -221,30 +222,34 @@ export default function Home() {
       {/* Testimonials Section */}
       <section className="py-16 md:py-24 bg-card">
         <div className="container mx-auto max-w-7xl px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline">What Our Clients Say</h2>
-            <p className="mt-3 text-lg text-muted-foreground">We're trusted by businesses across Nigeria</p>
-          </div>
-          {isLoadingTestimonials ? (
-             <div className="flex justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {testimonials?.map((testimonial) => (
-                <Card key={testimonial.id} className="flex flex-col justify-between">
-                  <CardContent className="pt-6">
-                    <StarRating rating={testimonial.rating} className="mb-4" />
-                    <p className="text-muted-foreground mb-4">"{testimonial.quote}"</p>
-                  </CardContent>
-                  <div className="p-6 pt-0">
-                    <h4 className="font-semibold">{testimonial.name}</h4>
-                    <p className="text-sm text-muted-foreground">{testimonial.company}</p>
-                  </div>
-                </Card>
-              ))}
+            <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold font-headline">What Our Clients Say</h2>
+                <p className="mt-3 text-lg text-muted-foreground">We're trusted by businesses across Nigeria</p>
             </div>
-          )}
+            {isLoadingTestimonials ? (
+                <div className="flex justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {testimonials?.map((testimonial) => (
+                        <Card key={testimonial.id} className="flex flex-col text-center">
+                            <CardContent className="pt-6 flex-grow flex flex-col items-center">
+                                <Avatar className="w-20 h-20 mb-4">
+                                    <AvatarImage src={testimonial.imageUrl || `https://picsum.photos/seed/${testimonial.id}/100`} alt={testimonial.name} />
+                                    <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <h4 className="font-semibold text-lg">{testimonial.name}</h4>
+                                <p className="text-sm text-muted-foreground mb-4">{testimonial.company}</p>
+                                <StarRating rating={testimonial.rating} className="mb-4" />
+                                <p className="text-muted-foreground italic">"{testimonial.quote}"</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
       </section>
     </>
   );
 }
+
+    

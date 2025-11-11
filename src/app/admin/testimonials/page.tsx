@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +41,7 @@ import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -105,7 +105,7 @@ export default function TestimonialsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>Customer</TableHead>
                 <TableHead>Rating</TableHead>
                 <TableHead>Quote</TableHead>
                 <TableHead>Visible</TableHead>
@@ -124,7 +124,15 @@ export default function TestimonialsPage() {
               ) : testimonials && testimonials.length > 0 ? (
                 testimonials.map((testimonial) => (
                   <TableRow key={testimonial.id}>
-                    <TableCell className="font-medium">{testimonial.name}<br/><span className="text-xs text-muted-foreground">{testimonial.company || testimonial.location}</span></TableCell>
+                    <TableCell className="font-medium flex items-center gap-3">
+                        <Avatar>
+                            <AvatarImage src={testimonial.imageUrl} alt={testimonial.name} />
+                            <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            {testimonial.name}<br/><span className="text-xs text-muted-foreground">{testimonial.company}</span>
+                        </div>
+                    </TableCell>
                     <TableCell>
                       <StarRating rating={testimonial.rating} />
                     </TableCell>
@@ -146,6 +154,9 @@ export default function TestimonialsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/admin/testimonials/${testimonial.id}`}>Edit</Link>
+                            </DropdownMenuItem>
                             <AlertDialogTrigger asChild>
                               <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                             </AlertDialogTrigger>
@@ -183,3 +194,5 @@ export default function TestimonialsPage() {
     </>
   );
 }
+
+    
