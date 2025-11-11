@@ -14,11 +14,13 @@ import {
     UploadCloud,
     Truck,
     ArrowRight,
-    LoaderCircle
+    LoaderCircle,
+    Star,
 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 const categoryIcons: { [key: string]: React.ReactElement } = {
   'Marketing & Business Prints': <Briefcase className="w-8 h-8" />,
@@ -51,8 +53,42 @@ const howItWorksSteps = [
   },
 ];
 
+const testimonials = [
+  {
+    quote: "PrintSwift delivered our marketing materials with incredible speed and quality. Their attention to detail is unmatched.",
+    name: "Tunde Adeyemi",
+    company: "Lagos Tech Hub",
+    rating: 5,
+  },
+  {
+    quote: "The custom packaging they created for us has been a game-changer. Our branding has never looked better!",
+    name: "Chioma Okoro",
+    company: "Ada Ventures",
+    rating: 5,
+  },
+  {
+    quote: "A reliable partner for all our printing needs. Fast, affordable, and always professional.",
+    name: "Jide Balogun",
+    company: "Jide Stores",
+    rating: 5,
+  }
+];
+
 function findImage(id: string) {
   return PlaceHolderImages.find((img) => img.id === id);
+}
+
+function StarRating({ rating, className }: { rating: number, className?: string }) {
+    return (
+        <div className={cn("flex items-center", className)}>
+            {[...Array(5)].map((_, i) => (
+                <Star
+                    key={i}
+                    className={`h-5 w-5 ${i < rating ? 'text-accent fill-accent' : 'text-muted-foreground/30'}`}
+                />
+            ))}
+        </div>
+    );
 }
 
 export default function Home() {
@@ -196,6 +232,30 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-16 md:py-24 bg-card">
+        <div className="container mx-auto max-w-7xl px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline">What Our Clients Say</h2>
+            <p className="mt-3 text-lg text-muted-foreground">We're trusted by businesses across Nigeria</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial) => (
+              <Card key={testimonial.name} className="flex flex-col justify-between">
+                <CardContent className="pt-6">
+                  <StarRating rating={testimonial.rating} className="mb-4" />
+                  <p className="text-muted-foreground mb-4">"{testimonial.quote}"</p>
+                </CardContent>
+                <div className="p-6 pt-0">
+                  <h4 className="font-semibold">{testimonial.name}</h4>
+                  <p className="text-sm text-muted-foreground">{testimonial.company}</p>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
