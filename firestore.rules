@@ -28,12 +28,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     match /product_categories {
-      allow list: if true;
+      allow list: if true; // Changed from isAdmin() to true for public access
     }
 
     // Products
     match /products/{productId} {
-      allow get: if resource.data.status == 'Published';
+      allow get: if resource.data.status == 'Published' || isAdmin();
       allow write: if isAdmin();
     }
     match /products {
