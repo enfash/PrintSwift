@@ -101,22 +101,37 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         try {
             const productDocRef = doc(firestore, 'products', product.id);
 
-            const updateData: { [key: string]: any } = { ...values };
-            // Remove undefined fields before sending to Firestore
-            Object.keys(updateData).forEach(key => {
-                if (updateData[key] === undefined) {
-                    delete updateData[key];
+            const updateData = { ...values };
+            // Sanitize data: remove undefined fields recursively
+            const cleanData = (obj: any): any => {
+                const newObj: any = {};
+                for (const key in obj) {
+                    if (obj[key] !== undefined) {
+                        if (Array.isArray(obj[key])) {
+                            newObj[key] = obj[key].map((item: any) => (typeof item === 'object' && item !== null ? cleanData(item) : item));
+                        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                            newObj[key] = cleanData(obj[key]);
+                        } else {
+                            newObj[key] = obj[key];
+                        }
+                    }
                 }
-            });
-
-            updateData.updatedAt = serverTimestamp();
+                return newObj;
+            };
             
-            await updateDocumentNonBlocking(productDocRef, updateData);
+            const sanitizedData = cleanData(updateData);
+            sanitizedData.updatedAt = serverTimestamp();
+            
+            await updateDocumentNonBlocking(productDocRef, sanitizedData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             router.push('/admin/products');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error updating product:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not update the product.' });
+            toast({ 
+                variant: 'destructive', 
+                title: 'Error', 
+                description: error.message || 'Could not update the product.' 
+            });
         }
     };
     
