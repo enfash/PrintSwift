@@ -5,76 +5,46 @@ service cloud.firestore {
 
     // --- Helper Functions ---
     function isAdmin() {
-      // User must have an admin role document. Email verification is not required for this dev environment.
-      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
-    // --- Default Security Rule (Deny All by Default) ---
-    match /{path=**} {
-        allow read, write: if false;
+      // User must be authenticated and have an admin role document.
+      return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     // --- Public Read Collections ---
+    match /product_categories/{category} {
+        allow read, write: if isAdmin();
+    }
     
-    // Product Categories Collection
-    match /product_categories/{categoryId} {
-      allow read: if true;
+    match /products/{product} {
+        allow read, write: if isAdmin();
+        // Allow public reads only for Published products
+        allow get: if resource.data.status == 'Published';
+        allow list: if request.query.get('status') == 'Published' || isAdmin();
+    }
+
+    match /testimonials/{testimonial} {
+      allow read: if resource.data.visible == true || isAdmin();
       allow write: if isAdmin();
     }
-    match /product_categories {
-      allow list: if true;
-    }
-    
-    // Products Collection
-    match /products/{productId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /products {
-      allow list: if true;
-    }
-    
-    // Promotions Collection
-    match /promos/{promoId} {
-        allow write: if isAdmin();
-        allow read: if isAdmin() || resource.data.active == true;
-    }
-    match /promos {
-      // Public users can only list promos that are active. Admins can list all.
-      allow list: if isAdmin() || (request.query.get("where") != null && request.query.where[0][2] == true);
+
+    match /promos/{promo} {
+        // Admins can do anything.
+        allow read, write: if isAdmin();
+        // Non-admins can ONLY list promos that are active.
+        // Date checks must be performed client-side.
+        allow list: if request.query.get('active') == true;
     }
 
-    // --- Other Collections ---
-    
-    // Testimonials Collection
-    match /testimonials/{testimonialId} {
-      allow write: if isAdmin();
-      allow read: if isAdmin() || resource.data.visible == true;
-    }
-    match /testimonials {
-      // Public users can only list testimonials that are marked as visible.
-      allow list: if isAdmin() || request.query.where.get("visible", false) == true;
+    // --- Admin-only Write/Read Collections ---
+    match /quote_requests/{request} {
+        allow read, write: if isAdmin();
     }
 
-    // Quote Requests (From Public Form)
-    match /quote_requests/{quoteRequestId} {
-      // Allow anyone to create a quote request, but only admins to read/update/delete.
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-    
-    // Quotes (Admin-Generated)
-    match /quotes/{quoteId} {
-      allow read, write: if isAdmin();
-    }
-     match /quotes {
-      allow list: if isAdmin();
+    match /quotes/{quote} {
+        allow read, write: if isAdmin();
     }
 
-
-    // Admin Roles (Admin Only)
     match /roles_admin/{uid} {
-      allow read, write: if isAdmin();
+        allow read, write: if isAdmin();
     }
   }
 }

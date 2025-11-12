@@ -18,22 +18,30 @@ export default function PromoPopup() {
     const activePromoQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
-        const now = Timestamp.now();
-        
         return query(
             collection(firestore, 'promos'),
             where('active', '==', true),
             where('placement', '==', 'popup'),
-            where('startDate', '<=', now),
             limit(1)
         );
     }, [firestore]);
     
     const { data: promos, isLoading } = useCollection<any>(activePromoQuery);
     
+    // Filter for date validity on the client-side after fetching active promos
     const validPromos = promos?.filter(p => {
+        const now = new Date();
+        const startDate = p.startDate?.toDate();
         const endDate = p.endDate?.toDate();
-        return !endDate || endDate >= new Date();
+        
+        // Promo is valid if:
+        // 1. Start date is not set OR start date is in the past
+        // AND
+        // 2. End date is not set OR end date is in the future
+        const isStarted = !startDate || startDate <= now;
+        const isNotExpired = !endDate || endDate >= now;
+        
+        return isStarted && isNotExpired;
     });
 
     const activePromo = validPromos && validPromos.length > 0 ? validPromos[0] : null;
