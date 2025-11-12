@@ -120,11 +120,7 @@ const ProductsList = () => {
     const isValidUrl = (url: string) => {
         try {
             new URL(url);
-            // Additionally check if it's not a google redirect url
-            if (new URL(url).hostname.includes('google.com')) {
-                return false;
-            }
-            return true;
+            return url.startsWith('http');
         } catch (_) {
             return false;
         }
@@ -204,7 +200,7 @@ const ProductsList = () => {
                             ) : filteredAndSortedProducts && filteredAndSortedProducts.length > 0 ? filteredAndSortedProducts.map(product => {
                                 const rawUrl = product.imageUrls && product.imageUrls.length > 0 
                                     ? product.imageUrls[product.mainImageIndex || 0] 
-                                    : 'https://placehold.co/40x40';
+                                    : '';
 
                                 const mainImageUrl = isValidUrl(rawUrl) ? rawUrl : `https://picsum.photos/seed/${product.id}/40/40`;
 

@@ -142,6 +142,16 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
         if (!firestore || !product) return;
         
+        // Prevent saving temporary blob URLs
+        if (values.imageUrls.some(url => url.startsWith('blob:'))) {
+            toast({
+                variant: 'destructive',
+                title: 'Temporary Image Preview',
+                description: 'Please use the "Link" tab to add permanent image URLs before saving.',
+            });
+            return;
+        }
+
         try {
             const productDocRef = doc(firestore, 'products', product.id);
 
@@ -191,6 +201,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
             Array.from(files).forEach(file => {
                 const tempPreviewUrl = URL.createObjectURL(file);
                 appendImage(tempPreviewUrl);
+                toast({ title: 'Image Preview Added', description: 'This is a temporary preview. Use the Link tab to add a permanent URL before saving.' });
             })
         }
     };
@@ -233,6 +244,16 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
     if (!product) {
         return <div className="flex h-96 items-center justify-center"><p>Product not found.</p></div>;
     }
+
+    const isValidUrl = (url: string) => {
+        try {
+            new URL(url);
+            return url.startsWith('http');
+        } catch (_) {
+            return false;
+        }
+    }
+
 
     return (
         <Form {...form}>
@@ -330,34 +351,40 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                                     {imageFields.map((field, index) => (
-                                        <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
-                                            {field.value && (field.value.startsWith('http') || field.value.startsWith('blob')) ? (
+                                     {imageFields.map((field, index) => {
+                                        const imageUrl = field.value;
+                                        const isBlob = imageUrl.startsWith('blob:');
+                                        const finalImageUrl = isValidUrl(imageUrl) ? imageUrl : `https://picsum.photos/seed/${product?.id || 'placeholder'}-${index}/100/100`;
+
+                                        return (
+                                            <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
                                                 <Image
-                                                    src={field.value}
+                                                    src={finalImageUrl}
                                                     alt={`Product image ${index + 1}`}
                                                     fill
                                                     className="object-cover rounded-md"
+                                                    onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product?.id || 'fallback'}-${index}/100/100`; }}
                                                 />
-                                            ) : (
-                                                <div className="w-full h-full bg-muted rounded-md flex items-center justify-center">
-                                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                                                </div>
-                                            )}
-                                            {mainImageIndex === index && (
-                                                <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>
-                                            )}
-                                            <Button 
-                                                type="button"
-                                                variant="destructive" 
-                                                size="icon" 
-                                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={(e) => { e.stopPropagation(); removeImage(index); }}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                     ))}
+                                                {isBlob && (
+                                                    <div className="absolute inset-0 bg-yellow-500/30 flex items-center justify-center text-center p-1">
+                                                        <p className="text-xs font-bold text-white">PREVIEW</p>
+                                                    </div>
+                                                )}
+                                                {mainImageIndex === index && !isBlob && (
+                                                    <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>
+                                                )}
+                                                <Button 
+                                                    type="button"
+                                                    variant="destructive" 
+                                                    size="icon" 
+                                                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={(e) => { e.stopPropagation(); removeImage(index); }}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        );
+                                     })}
                                      {imageFields.length === 0 && (
                                          <div className="col-span-full aspect-video relative rounded-md border bg-muted flex flex-col items-center justify-center text-muted-foreground">
                                             <ImageIcon className="w-12 h-12" />
@@ -376,19 +403,22 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                     )}
                                 />
 
-                                <Tabs defaultValue="upload">
+                                <Tabs defaultValue="url">
                                     <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
-                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
+                                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload (Preview)</TabsTrigger>
+                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Add URL</TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="upload" className="pt-2">
                                         <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={imageFields.length >= 6} multiple />
+                                         <FormDescription className="text-xs mt-2">
+                                            Upload for a temporary preview. You must add a permanent URL from the 'Add URL' tab to save the image.
+                                        </FormDescription>
                                     </TabsContent>
                                      <TabsContent value="url" className="pt-2">
                                          <div className="flex gap-2">
                                             <Input 
                                                 id="imageUrlInput"
-                                                placeholder="https://..." 
+                                                placeholder="https://example.com/image.png" 
                                                 disabled={imageFields.length >= 6}
                                             />
                                             <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
@@ -640,8 +670,3 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         </Form>
     );
 }
-
-    
-
-    
-

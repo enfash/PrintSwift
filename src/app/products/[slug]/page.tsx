@@ -6,9 +6,8 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LoaderCircle, UploadCloud, Minus, Plus, Star } from 'lucide-react';
+import { LoaderCircle, UploadCloud, Star } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { Label } from '@/components/ui/label';
@@ -30,50 +29,6 @@ async function getProductBySlug(firestore: any, slug: string) {
     return { ...productDoc.data(), id: productDoc.id };
 }
 
-function QuantityControl({ value, onChange, min, max }: { value: number, onChange: (value: number) => void, min?: number, max?: number }) {
-    const { toast } = useToast();
-    const increment = () => {
-        if (max !== undefined && value >= max) {
-            toast({ title: "Maximum Reached", description: `You cannot exceed the maximum quantity of ${max}.`});
-            return;
-        }
-        onChange(value + 1)
-    };
-    const decrement = () => {
-        if (min !== undefined && value <= min) {
-            toast({ title: "Minimum Reached", description: `The minimum quantity for this product is ${min}.`});
-            return;
-        }
-        onChange(Math.max(min || 0, value - 1));
-    }
-
-    return (
-        <div className="flex items-center">
-            <Button variant="outline" size="icon" className="h-10 w-10" onClick={decrement}>
-                <Minus className="h-4 w-4" />
-            </Button>
-            <Input
-                type="number"
-                className="w-20 h-10 text-center mx-2"
-                value={value}
-                onChange={(e) => {
-                    const newValue = parseInt(e.target.value, 10) || min || 1;
-                    if (min !== undefined && newValue < min) {
-                        onChange(min);
-                    } else if (max !== undefined && newValue > max) {
-                        onChange(max);
-                    } else {
-                        onChange(newValue);
-                    }
-                }}
-            />
-            <Button variant="outline" size="icon" className="h-10 w-10" onClick={increment}>
-                <Plus className="h-4 w-4" />
-            </Button>
-        </div>
-    )
-}
-
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {
   const slug = params.slug;
   const firestore = useFirestore();
@@ -92,7 +47,9 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     if (!product || !product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
       return 1;
     }
-    return product.pricing.tiers.reduce((min: number, tier: any) => Math.min(min, tier.minQty), Infinity);
+    const tiers = product.pricing.tiers.filter((t: any) => t.minQty > 0);
+    if (tiers.length === 0) return 1;
+    return tiers.reduce((min: number, tier: any) => Math.min(min, tier.minQty), Infinity);
   }, [product]);
 
   const calculatePrice = useCallback(() => {
@@ -161,13 +118,14 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 if (detail.type === 'number' && detail.placeholder) {
                     defaultOptions[detail.label] = detail.placeholder;
                 } else if (detail.type === 'number') {
-                  defaultOptions[detail.label] = '1';
+                  defaultOptions[detail.label] = (detail.min || 1).toString();
                 }
             });
         }
         setSelectedOptions(defaultOptions);
-        const minQty = productData.pricing?.tiers?.[0]?.minQty || 1;
-        setQuantity(minQty);
+        
+        const minQty = productData.pricing?.tiers?.filter((t: any) => t.minQty > 0).reduce((min: number, tier: any) => Math.min(min, tier.minQty), Infinity) || 1;
+        setQuantity(isFinite(minQty) ? minQty : 1);
       }
       setIsLoading(false);
     }
@@ -237,11 +195,20 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   }
   
   const category = categories?.find(c => c.id === product.categoryId);
-  const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
+  const minQty = getMinQuantity();
+
+  const isValidUrl = (url: string) => {
+    try {
+        new URL(url);
+        return url.startsWith('http');
+    } catch (_) {
+        return false;
+    }
+  }
+
+  const mainImageUrl = product.imageUrls && product.imageUrls.length > 0 && isValidUrl(product.imageUrls[selectedImage])
     ? product.imageUrls[selectedImage]
     : `https://picsum.photos/seed/${product.id}/600/600`;
-
-  const minQty = getMinQuantity();
 
   return (
     <div className="bg-background">
@@ -270,25 +237,28 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 />
             </div>
              <div className="grid grid-cols-5 gap-2">
-                {product.imageUrls.map((url: string, index: number) => (
-                    <button
-                        key={index}
-                        onClick={() => setSelectedImage(index)}
-                        className={cn(
-                            "aspect-square relative rounded-md border overflow-hidden transition",
-                            selectedImage === index ? "ring-2 ring-primary ring-offset-2" : "hover:opacity-80"
-                        )}
-                    >
-                         <Image
-                            src={url}
-                            alt={`${product.name} thumbnail ${index + 1}`}
-                            fill
-                            className="object-cover"
-                            sizes="20vw"
-                            onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}-${index}/100/100`; }}
-                        />
-                    </button>
-                ))}
+                {product.imageUrls?.map((url: string, index: number) => {
+                    const thumbnailUrl = isValidUrl(url) ? url : `https://picsum.photos/seed/${product.id}-${index}/100/100`;
+                    return (
+                        <button
+                            key={index}
+                            onClick={() => setSelectedImage(index)}
+                            className={cn(
+                                "aspect-square relative rounded-md border overflow-hidden transition",
+                                selectedImage === index ? "ring-2 ring-primary ring-offset-2" : "hover:opacity-80"
+                            )}
+                        >
+                            <Image
+                                src={thumbnailUrl}
+                                alt={`${product.name} thumbnail ${index + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="20vw"
+                                onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}-${index}/100/100`; }}
+                            />
+                        </button>
+                    )
+                })}
             </div>
           </div>
 
@@ -318,7 +288,11 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
                  <div className="grid gap-2">
                     <Label>Quantity</Label>
-                    <QuantityControl value={quantity} onChange={setQuantity} min={minQty} />
+                    <Counter 
+                        value={quantity} 
+                        setValue={setQuantity} 
+                        min={minQty}
+                    />
                 </div>
                 
                 <Button variant="outline" className="w-full h-12 text-base" onClick={() => toast({ title: "Feature coming soon!", description: "Artwork upload will be implemented in a future step."})}>
