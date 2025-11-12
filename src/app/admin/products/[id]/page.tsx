@@ -40,8 +40,8 @@ const productSchema = z.object({
   details: z.array(productDetailOptionSchema).optional(),
 });
 
-export default function ProductEditPage({ params }: { params: { slug: string } }) {
-    const { slug: productId } = params; 
+export default function ProductEditPage({ params }: { params: { id: string } }) {
+    const { id: productId } = params; 
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();

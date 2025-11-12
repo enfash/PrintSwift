@@ -226,7 +226,7 @@ const ProductsList = () => {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem asChild>
-                                                        <Link href={`/admin/products/${product.slug}`}>Edit</Link>
+                                                        <Link href={`/admin/products/${product.id}`}>Edit</Link>
                                                     </DropdownMenuItem>
                                                     <AlertDialogTrigger asChild>
                                                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
