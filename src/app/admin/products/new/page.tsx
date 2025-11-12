@@ -10,22 +10,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoaderCircle, Link2, X, PlusCircle, Trash2, UploadCloud } from 'lucide-react';
+import { LoaderCircle, X, PlusCircle, Trash2, UploadCloud } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useFirebaseApp } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
+import { useUpload } from '@/hooks/use-upload';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -80,8 +80,8 @@ const slugify = (str: string) =>
   str
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
+    .replace(/[^\\w\\s-]/g, '')
+    .replace(/[\\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
 const FileUploadProgress = ({ file, progress }: { file: File, progress: number }) => (
@@ -97,11 +97,9 @@ const FileUploadProgress = ({ file, progress }: { file: File, progress: number }
 
 export default function ProductFormPage() {
     const firestore = useFirestore();
-    const firebaseApp = useFirebaseApp();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState<Record<string, {file: File, progress: number}>>({});
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
@@ -130,6 +128,26 @@ export default function ProductFormPage() {
         control: form.control,
         name: "imageUrls"
     });
+    
+    const handleUploadComplete = useCallback((url: string) => {
+        if (imageFields.length < 6) {
+            appendImage(url);
+        } else {
+            toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
+        }
+    }, [appendImage, imageFields.length, toast]);
+
+    const { uploads, uploadFiles } = useUpload(handleUploadComplete);
+
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!event.target.files) return;
+        const files = Array.from(event.target.files);
+        if (imageFields.length + files.length > 6) {
+            toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
+            return;
+        }
+        uploadFiles(files);
+    };
 
     const { fields: detailFields, append: appendDetail, remove: removeDetail } = useFieldArray({
         control: form.control,
@@ -175,52 +193,6 @@ export default function ProductFormPage() {
             setIsSubmitting(false);
         }
     };
-    
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!event.target.files) return;
-        const files = Array.from(event.target.files);
-        
-        if (imageFields.length + files.length > 6) {
-            toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
-            return;
-        }
-
-        const storage = getStorage(firebaseApp);
-
-        files.forEach(file => {
-            const uniqueFileName = `${new Date().getTime()}-${file.name}`;
-            const productsStorageRef = storageRef(storage, `product-images/${uniqueFileName}`);
-            const uploadTask = uploadBytesResumable(productsStorageRef, file);
-            
-            setUploadProgress(prev => ({ ...prev, [uniqueFileName]: { file, progress: 0 }}));
-
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(prev => ({...prev, [uniqueFileName]: { file, progress }}));
-                },
-                (error) => {
-                    console.error("Upload failed:", error);
-                    toast({ variant: 'destructive', title: 'Upload Failed', description: `Could not upload ${file.name}.` });
-                    setUploadProgress(prev => {
-                        const newProgress = {...prev};
-                        delete newProgress[uniqueFileName];
-                        return newProgress;
-                    });
-                },
-                () => {
-                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                        appendImage(downloadURL);
-                        setUploadProgress(prev => {
-                            const newProgress = {...prev};
-                            delete newProgress[uniqueFileName];
-                            return newProgress;
-                        });
-                    });
-                }
-            );
-        });
-    }
 
     const setMainImage = (index: number) => {
         form.setValue('mainImageIndex', index);
@@ -344,7 +316,7 @@ export default function ProductFormPage() {
                                 </div>
                                 <FormField control={form.control} name="imageUrls" render={() => (<FormItem><FormMessage /></FormItem>)}/>
                                 
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <Label htmlFor="imageUpload" >Upload Images</Label>
                                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -357,13 +329,13 @@ export default function ProductFormPage() {
                                             className="hidden"
                                             multiple
                                             accept="image/*"
-                                            onChange={handleFileUpload}
-                                            disabled={imageFields.length >= 6}
+                                            onChange={handleFileSelect}
+                                            disabled={imageFields.length >= 6 || uploads.some(u => u.status === 'uploading')}
                                         />
                                     </label>
                                      <div className="space-y-2">
-                                        {Object.entries(uploadProgress).map(([key, {file, progress}]) => (
-                                            <FileUploadProgress key={key} file={file} progress={progress} />
+                                        {uploads.filter(u => u.status === 'uploading').map(upload => (
+                                            <FileUploadProgress key={upload.id} file={upload.file} progress={upload.progress} />
                                         ))}
                                     </div>
                                 </div>
@@ -416,10 +388,10 @@ export default function ProductFormPage() {
                                                     <div className="space-y-2">
                                                         <Label>Dropdown Options & Pricing</Label>
                                                         <Textarea
-                                                            placeholder={"Enter one value per line, e.g.,\nValue one\nValue two"}
-                                                            defaultValue={field.value?.map(v => v.value).join('\n')}
+                                                            placeholder={"Enter one value per line, e.g.,\\nValue one\\nValue two"}
+                                                            defaultValue={field.value?.map(v => v.value).join('\\n')}
                                                             onBlur={(e) => {
-                                                                const textValues = e.target.value.split('\n').filter(v => v.trim());
+                                                                const textValues = e.target.value.split('\\n').filter(v => v.trim());
                                                                 const newValues = textValues.map(tv => {
                                                                     const existing = field.value?.find(fv => fv.value === tv);
                                                                     return existing || { value: tv, cost: 0 };
