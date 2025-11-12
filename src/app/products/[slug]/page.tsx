@@ -16,6 +16,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Counter } from '@/components/ui/counter';
 
 async function getProductBySlug(firestore: any, slug: string) {
     if (!firestore || !slug) return null;
@@ -132,6 +133,8 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 }
                 if (detail.type === 'number' && detail.placeholder) {
                     defaultOptions[detail.label] = detail.placeholder;
+                } else if (detail.type === 'number') {
+                    defaultOptions[detail.label] = '1';
                 }
             });
         }
@@ -172,8 +175,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 </div>
             );
         case 'text':
-        case 'number':
-            return (
+             return (
                 <div key={detail.label} className="grid gap-2">
                     <Label htmlFor={`detail-${detail.label}`}>{detail.label}</Label>
                     <Input 
@@ -182,6 +184,16 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                         placeholder={detail.placeholder || ''}
                         value={selectedOptions[detail.label] || ''}
                         onChange={(e) => handleOptionChange(detail.label, e.target.value)}
+                    />
+                </div>
+            )
+        case 'number':
+            return (
+                 <div key={detail.label} className="grid gap-2">
+                    <Label htmlFor={`detail-${detail.label}`}>{detail.label}</Label>
+                    <Counter
+                        value={parseInt(selectedOptions[detail.label], 10) || 1}
+                        setValue={(value) => handleOptionChange(detail.label, value.toString())}
                     />
                 </div>
             )
@@ -313,5 +325,3 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     </div>
   );
 }
-
-    
