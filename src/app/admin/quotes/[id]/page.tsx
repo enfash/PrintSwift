@@ -69,6 +69,13 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema),
+    defaultValues: {
+        lineItems: [],
+        discount: 0,
+        delivery: 0,
+        vatRate: 7.5,
+        status: 'draft',
+    }
   });
 
   const { fields, append, remove, update } = useFieldArray({
@@ -81,6 +88,9 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
       form.reset({
         ...quote,
         dueDate: quote.dueDate ? quote.dueDate.toDate() : undefined,
+        discount: quote.discount || 0,
+        delivery: quote.delivery || 0,
+        vatRate: quote.vatRate || 7.5,
       });
     }
   }, [quote, form]);
