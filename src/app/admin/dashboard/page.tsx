@@ -12,15 +12,8 @@ import {
   Package,
   Tags,
   Megaphone,
-  Database,
-  LoaderCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { useFirestore } from '@/firebase';
-import { seedDatabase } from '@/lib/seed';
-import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
 
 const stats = [
   {
@@ -47,41 +40,11 @@ const recentActivity = [
 ];
 
 export default function Dashboard() {
-  const firestore = useFirestore();
-  const { toast } = useToast();
-  const [isSeeding, setIsSeeding] = useState(false);
-
-  const handleSeedDatabase = async () => {
-    if (!firestore) return;
-    setIsSeeding(true);
-    try {
-      await seedDatabase(firestore);
-      toast({
-        title: "Database Seeded",
-        description: "Your product catalog has been successfully loaded into Firestore.",
-      });
-    } catch (error) {
-      console.error("Seeding failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Seeding Failed",
-        description: "Could not seed the database. Check the console for details.",
-      });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
-
   return (
     <div className="space-y-8">
         <div>
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                <Button onClick={handleSeedDatabase} disabled={isSeeding}>
-                    {isSeeding ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                    Seed Database
-                </Button>
             </div>
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {stats.map((stat) => (
@@ -123,5 +86,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    
