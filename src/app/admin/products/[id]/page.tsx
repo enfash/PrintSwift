@@ -365,7 +365,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                                             placeholder="Enter one value per line, e.g.,&#10;16pt. Premium Matte&#10;14pt. Uncoated"
                                                             value={field.value.map(v => v.value).join('\n')}
                                                             onChange={(e) => {
-                                                                const valuesArray = e.target.value.split('\n').map(v => ({ value: v }));
+                                                                const valuesArray = e.target.value.split('\n').map(v => ({ value: v.trim() })).filter(v => v.value);
                                                                 field.onChange(valuesArray);
                                                             }}
                                                         />
@@ -443,7 +443,3 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         </Form>
     );
 }
-
-    
-
-    
