@@ -35,6 +35,8 @@ const productDetailOptionSchema = z.object({
   type: z.enum(["dropdown", "text", "number"]),
   placeholder: z.string().optional(),
   values: z.array(detailValueSchema).optional(),
+  min: z.coerce.number().optional(),
+  max: z.coerce.number().optional(),
 });
 
 const addonSchema = z.object({
@@ -357,7 +359,7 @@ export default function ProductFormPage() {
                                             </Button>
                                         </div>
 
-                                        { detailType === 'dropdown' ? (
+                                        {detailType === 'dropdown' && (
                                              <Controller
                                                 control={form.control}
                                                 name={`details.${index}.values`}
@@ -398,15 +400,54 @@ export default function ProductFormPage() {
                                                     </div>
                                                 )}
                                             />
-                                        ) : (
-                                            <FormField control={form.control} name={`details.${index}.placeholder`} render={({ field }) => (
-                                                <FormItem>
-                                                <FormLabel>Placeholder</FormLabel>
-                                                <FormControl><Input placeholder="e.g., 3.5" {...field} /></FormControl>
-                                                {detailType === 'number' && <FormDescription>This value will multiply the unit cost.</FormDescription>}
-                                                <FormMessage />
-                                                </FormItem>
-                                            )}/>
+                                        )}
+
+                                        {detailType === 'text' && (
+                                            <FormField
+                                                control={form.control}
+                                                name={`details.${index}.placeholder`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Placeholder</FormLabel>
+                                                        <FormControl><Input placeholder="e.g., Enter your text here" {...field} /></FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
+                                        
+                                        {detailType === 'number' && (
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`details.${index}.placeholder`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Placeholder</FormLabel>
+                                                            <FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`details.${index}.min`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Min Value</FormLabel>
+                                                            <FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`details.${index}.max`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Max Value</FormLabel>
+                                                            <FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
                                         )}
                                     </div>
                                 )})}
@@ -496,3 +537,4 @@ export default function ProductFormPage() {
 }
 
     
+

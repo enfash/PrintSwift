@@ -30,9 +30,22 @@ async function getProductBySlug(firestore: any, slug: string) {
     return { ...productDoc.data(), id: productDoc.id };
 }
 
-function QuantityControl({ value, onChange }: { value: number, onChange: (value: number) => void }) {
-    const increment = () => onChange(value + 1);
-    const decrement = () => onChange(Math.max(1, value - 1));
+function QuantityControl({ value, onChange, min, max }: { value: number, onChange: (value: number) => void, min?: number, max?: number }) {
+    const { toast } = useToast();
+    const increment = () => {
+        if (max !== undefined && value >= max) {
+            toast({ title: "Maximum Reached", description: `You cannot exceed the maximum quantity of ${max}.`});
+            return;
+        }
+        onChange(value + 1)
+    };
+    const decrement = () => {
+        if (min !== undefined && value <= min) {
+            toast({ title: "Minimum Reached", description: `The minimum quantity for this product is ${min}.`});
+            return;
+        }
+        onChange(Math.max(min || 0, value - 1));
+    }
 
     return (
         <div className="flex items-center">
@@ -43,7 +56,16 @@ function QuantityControl({ value, onChange }: { value: number, onChange: (value:
                 type="number"
                 className="w-20 h-10 text-center mx-2"
                 value={value}
-                onChange={(e) => onChange(parseInt(e.target.value, 10) || 1)}
+                onChange={(e) => {
+                    const newValue = parseInt(e.target.value, 10) || min || 1;
+                    if (min !== undefined && newValue < min) {
+                        onChange(min);
+                    } else if (max !== undefined && newValue > max) {
+                        onChange(max);
+                    } else {
+                        onChange(newValue);
+                    }
+                }}
             />
             <Button variant="outline" size="icon" className="h-10 w-10" onClick={increment}>
                 <Plus className="h-4 w-4" />
@@ -53,7 +75,7 @@ function QuantityControl({ value, onChange }: { value: number, onChange: (value:
 }
 
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const slug = use(params).slug;
+  const slug = params.slug;
   const firestore = useFirestore();
   const { toast } = useToast();
   const [product, setProduct] = useState<any>(null);
@@ -65,6 +87,13 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
   const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
   const { data: categories } = useCollection<any>(categoriesRef);
+
+  const getMinQuantity = useCallback(() => {
+    if (!product || !product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
+      return 1;
+    }
+    return product.pricing.tiers.reduce((min: number, tier: any) => Math.min(min, tier.minQty), Infinity);
+  }, [product]);
 
   const calculatePrice = useCallback(() => {
     if (!product || !product.pricing || !product.pricing.tiers) {
@@ -104,7 +133,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       }
     }
     
-    // Apply multiplier to unit cost
     unitCost *= numberInputMultiplier;
 
     const totalCost = setup + quantity * (unitCost + optionsCost);
@@ -124,7 +152,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
         setProduct(productData);
         setSelectedImage(productData.mainImageIndex || 0);
 
-        // Set default options
         const defaultOptions: Record<string, string> = {};
         if (productData.details) {
             productData.details.forEach((detail: any) => {
@@ -134,12 +161,13 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 if (detail.type === 'number' && detail.placeholder) {
                     defaultOptions[detail.label] = detail.placeholder;
                 } else if (detail.type === 'number') {
-                    defaultOptions[detail.label] = '1';
+                  defaultOptions[detail.label] = '1';
                 }
             });
         }
         setSelectedOptions(defaultOptions);
-        setQuantity(productData.pricing?.tiers?.[0]?.minQty || 1);
+        const minQty = productData.pricing?.tiers?.[0]?.minQty || 1;
+        setQuantity(minQty);
       }
       setIsLoading(false);
     }
@@ -192,8 +220,10 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                  <div key={detail.label} className="grid gap-2">
                     <Label htmlFor={`detail-${detail.label}`}>{detail.label}</Label>
                     <Counter
-                        value={parseInt(selectedOptions[detail.label], 10) || 1}
+                        value={parseInt(selectedOptions[detail.label], 10) || detail.min || 1}
                         setValue={(value) => handleOptionChange(detail.label, value.toString())}
+                        min={detail.min}
+                        max={detail.max}
                     />
                 </div>
             )
@@ -210,6 +240,8 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
     ? product.imageUrls[selectedImage]
     : `https://picsum.photos/seed/${product.id}/600/600`;
+
+  const minQty = getMinQuantity();
 
   return (
     <div className="bg-background">
@@ -286,7 +318,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
                  <div className="grid gap-2">
                     <Label>Quantity</Label>
-                    <QuantityControl value={quantity} onChange={setQuantity} />
+                    <QuantityControl value={quantity} onChange={setQuantity} min={minQty} />
                 </div>
                 
                 <Button variant="outline" className="w-full h-12 text-base" onClick={() => toast({ title: "Feature coming soon!", description: "Artwork upload will be implemented in a future step."})}>
