@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, use } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -55,7 +55,8 @@ const quoteSchema = z.object({
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
 
-export default function EditQuotePage({ params }: { params: { id: string } }) {
+export default function EditQuotePage({ params: paramsProp }: { params: { id: string } }) {
+  const params = use(paramsProp);
   const { toast } = useToast();
   const firestore = useFirestore();
   const router = useRouter();
