@@ -25,6 +25,7 @@ import {
   ShoppingCart,
   PanelLeft,
   Home,
+  FileQuestion,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -76,6 +77,7 @@ const menuItems = [
 ];
 
 const orderManagementItems = [
+    { href: '/admin/quote-requests', label: 'Quote Requests', icon: FileQuestion },
     { href: '/admin/quotes', label: 'Quotes', icon: FileText },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
 ]
