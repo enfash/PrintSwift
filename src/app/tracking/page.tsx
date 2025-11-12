@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -19,8 +20,8 @@ const OrderStatusDisplay = ({ status, orderId }: { status: OrderStatus, orderId:
                 <CardHeader className="flex-row items-center gap-4">
                     <AlertTriangle className="h-8 w-8 text-destructive" />
                     <div>
-                        <CardTitle>Order Not Found</CardTitle>
-                        <CardDescription>We couldn't find an order with the ID "{orderId}". Please check the ID and try again.</CardDescription>
+                        <CardTitle>Item Not Found</CardTitle>
+                        <CardDescription>We couldn't find an order or quote with the ID "{orderId}". Please check the ID and try again.</CardDescription>
                     </div>
                 </CardHeader>
             </Card>
@@ -28,7 +29,7 @@ const OrderStatusDisplay = ({ status, orderId }: { status: OrderStatus, orderId:
     }
     
     const statusInfo = {
-        pending: { label: 'Pending', description: 'Your order has been received and is awaiting processing.' },
+        pending: { label: 'Pending', description: 'Your request has been received and is awaiting review.' },
         in_production: { label: 'In Production', description: 'Your order is currently being printed and prepared.' },
         shipped: { label: 'Shipped', description: 'Your order has been dispatched and is on its way.' },
         delivered: { label: 'Delivered', description: 'Your order has been successfully delivered.' },
@@ -39,7 +40,7 @@ const OrderStatusDisplay = ({ status, orderId }: { status: OrderStatus, orderId:
     return (
         <Card className="mt-8">
             <CardHeader>
-                <CardTitle>Order Status for #{orderId}</CardTitle>
+                <CardTitle>Status for #{orderId}</CardTitle>
                 <CardDescription>Last updated: {new Date().toLocaleDateString()}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -54,10 +55,12 @@ const OrderStatusDisplay = ({ status, orderId }: { status: OrderStatus, orderId:
                 <div className="space-y-4">
                     <h4 className="font-semibold">Tracking History</h4>
                     <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li>Order placed - {new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleString()}</li>
-                        <li>Payment confirmed - {new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleString()}</li>
+                        <li>Request received - {new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleString()}</li>
                          { (status === 'in_production' || status === 'shipped' || status === 'delivered') &&
-                            <li>Entered production - {new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleString()}</li>
+                            <>
+                                <li>Quote approved - {new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleString()}</li>
+                                <li>Entered production - {new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleString()}</li>
+                            </>
                          }
                     </ul>
                 </div>
@@ -67,7 +70,7 @@ const OrderStatusDisplay = ({ status, orderId }: { status: OrderStatus, orderId:
 }
 
 
-export default function TrackOrderPage() {
+export default function TrackingPage() {
   const [orderId, setOrderId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<OrderStatus>(null);
@@ -88,7 +91,10 @@ export default function TrackOrderPage() {
         setStatus('in_production');
     } else if (orderId.includes('ship')) {
         setStatus('shipped');
-    } else {
+    } else if (orderId.includes('quote')) {
+        setStatus('pending');
+    }
+    else {
         setStatus('not_found');
     }
 
@@ -98,9 +104,9 @@ export default function TrackOrderPage() {
   return (
     <div className="container mx-auto max-w-2xl px-4 py-16 md:py-24">
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold font-headline">Track Your Order</h1>
+        <h1 className="text-4xl md:text-5xl font-bold font-headline">Track Your Job</h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Enter your order or quote ID below to see the latest status of your job.
+          Enter your order or quote ID below to see the latest status.
         </p>
       </div>
 
@@ -110,7 +116,7 @@ export default function TrackOrderPage() {
             type="text"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            placeholder="Enter your Order ID (e.g., prod-123)"
+            placeholder="Enter your Order or Quote ID (e.g., quote-123)"
             className="h-12 text-base"
           />
           <Button type="submit" size="lg" disabled={isLoading}>

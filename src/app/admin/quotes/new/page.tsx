@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,6 +39,7 @@ const lineItemSchema = z.object({
 });
 
 const quoteSchema = z.object({
+  id: z.string().optional(),
   customerId: z.string().optional(),
   company: z.string().optional(),
   email: z.string().email('Invalid email address'),
@@ -62,6 +63,16 @@ export default function NewQuotePage() {
 
   const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
+  
+  const uniqueProducts = useMemo(() => {
+    if (!products) return [];
+    const seen = new Set();
+    return products.filter(p => {
+        const duplicate = seen.has(p.id);
+        seen.add(p.id);
+        return !duplicate;
+    });
+  }, [products]);
   
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema),
@@ -154,7 +165,7 @@ export default function NewQuotePage() {
   };
   
   const handleProductChange = (index: number, productId: string) => {
-    const product = products?.find(p => p.id === productId);
+    const product = uniqueProducts?.find(p => p.id === productId);
     if (product) {
         const defaultOptions: {label: string, value: string}[] = [];
         if (product.details) {
@@ -215,8 +226,13 @@ export default function NewQuotePage() {
 
     form.setValue('status', status);
     const quoteData = form.getValues();
+    
+    const quotesCollection = collection(firestore, 'quotes');
+    const newDocRef = doc(quotesCollection);
+
     const finalData = {
       ...quoteData,
+      id: newDocRef.id, // Add the unique ID
       subtotal: summary.subtotal,
       vat: summary.vat,
       total: summary.total,
@@ -225,9 +241,7 @@ export default function NewQuotePage() {
     }
 
     try {
-        const quotesCollection = collection(firestore, 'quotes');
-        const newDocRef = doc(quotesCollection);
-        await addDocumentNonBlocking(quotesCollection, { ...finalData, id: newDocRef.id }, { id: newDocRef.id });
+        await addDocumentNonBlocking(quotesCollection, finalData, { id: finalData.id });
         
         toast({ title: `Quote ${status === 'draft' ? 'Saved as Draft' : 'Submitted'}`, description: `The quote has been successfully saved.` });
         router.push('/admin/quotes');
@@ -326,7 +340,7 @@ export default function NewQuotePage() {
                                   <SelectTrigger><SelectValue placeholder="Select product..."/></SelectTrigger>
                                   <SelectContent>
                                       {isLoadingProducts ? <LoaderCircle className="animate-spin" /> :
-                                          products?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
+                                          uniqueProducts?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
                                       }
                                   </SelectContent>
                               </Select>
