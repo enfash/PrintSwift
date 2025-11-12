@@ -78,7 +78,7 @@ export async function seedDatabase(db: Firestore) {
       name: product.name,
       categoryId: product.categoryId,
       description: product.description || `High-quality ${product.name}.`,
-      imageUrls: [`https://picsum.photos/seed/${slug}/600/400`],
+      imageUrls: [`https://placehold.co/600x400/e2e8f0/e2e8f0?text=${encodeURIComponent(product.name)}`],
       mainImageIndex: 0,
       status: 'Published',
       featured: product.featured || false,

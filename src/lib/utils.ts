@@ -5,8 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function getSafeImageUrl(url: string | undefined | null, seed: string): string {
-  const fallbackUrl = `https://picsum.photos/seed/${seed}/600/400`;
+export function getSafeImageUrl(url: string | undefined | null, seed?: string): string {
+  // Use a single, static, neutral placeholder for any invalid or missing URL.
+  const fallbackUrl = `https://placehold.co/600x400/e2e8f0/e2e8f0`;
   
   if (!url) {
     return fallbackUrl;

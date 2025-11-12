@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { useUpload } from '@/hooks/use-upload';
+import { getSafeImageUrl } from '@/lib/utils';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -225,15 +226,6 @@ export default function ProductFormPage() {
     const mainImageIndex = form.watch('mainImageIndex');
     const currentTiers = form.watch('pricing.tiers');
 
-    const isValidUrl = (url: string) => {
-        try {
-            new URL(url);
-            return url.startsWith('http');
-        } catch (_) {
-            return false;
-        }
-    }
-
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -310,8 +302,7 @@ export default function ProductFormPage() {
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
-                                         const imageUrl = field.value;
-                                         const finalImageUrl = isValidUrl(imageUrl) ? imageUrl : `https://picsum.photos/seed/placeholder-${index}/100/100`;
+                                         const finalImageUrl = getSafeImageUrl(field.value);
 
                                         return (
                                         <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
@@ -320,7 +311,7 @@ export default function ProductFormPage() {
                                                 alt={`Product image ${index + 1}`} 
                                                 fill 
                                                 className="object-cover rounded-md"
-                                                onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/fallback-${index}/100/100`; }}
+                                                onError={(e) => { e.currentTarget.srcset = getSafeImageUrl(null); }}
                                             />
                                             {mainImageIndex === index && (<Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>)}
                                             <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeImage(index); }}>
