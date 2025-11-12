@@ -24,11 +24,16 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 
+const detailValueSchema = z.object({
+  value: z.string().min(1, "Value is required."),
+  cost: z.coerce.number().default(0),
+});
+
 const productDetailOptionSchema = z.object({
   label: z.string().min(1, "Label is required."),
   type: z.enum(["dropdown", "text", "number"]),
   placeholder: z.string().optional(),
-  values: z.array(z.object({ value: z.string() })).optional(),
+  values: z.array(detailValueSchema).optional(),
 });
 
 const productSchema = z.object({
@@ -313,23 +318,45 @@ export default function ProductFormPage() {
                                         </div>
 
                                         { detailType === 'dropdown' ? (
-                                            <FormField control={form.control} name={`details.${index}.values`} render={({ field: { onChange, value } }) => (
-                                                <FormItem>
-                                                    <FormLabel>Dropdown Options</FormLabel>
-                                                    <FormControl>
+                                             <Controller
+                                                control={form.control}
+                                                name={`details.${index}.values`}
+                                                render={({ field }) => (
+                                                    <div className="space-y-2">
+                                                        <Label>Dropdown Options & Pricing</Label>
                                                         <Textarea
-                                                            placeholder="Enter one value per line, e.g.,&#10;16pt. Premium Matte&#10;14pt. Uncoated"
-                                                            defaultValue={value?.map(v => v.value).join('\n')}
+                                                            placeholder="Enter one value per line, e.g.,&#10;Value one&#10;Value two"
+                                                            defaultValue={field.value?.map(v => v.value).join('\n')}
                                                             onBlur={(e) => {
-                                                                const valuesArray = e.target.value.split('\n').map(v => ({ value: v.trim() })).filter(v => v.value);
-                                                                onChange(valuesArray);
+                                                                const textValues = e.target.value.split('\n').filter(v => v.trim());
+                                                                const newValues = textValues.map(tv => {
+                                                                    const existing = field.value?.find(fv => fv.value === tv);
+                                                                    return existing || { value: tv, cost: 0 };
+                                                                });
+                                                                field.onChange(newValues);
                                                             }}
                                                         />
-                                                    </FormControl>
-                                                    <FormDescription>Each line will be a separate option in the dropdown.</FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}/>
+                                                        {field.value?.map((v, vIndex) => (
+                                                            <div key={vIndex} className="flex items-center gap-2">
+                                                                <Input value={v.value} disabled className="flex-1"/>
+                                                                <Input 
+                                                                    type="number"
+                                                                    placeholder="Cost"
+                                                                    className="w-24"
+                                                                    defaultValue={v.cost}
+                                                                    onBlur={(e) => {
+                                                                        const newCost = parseFloat(e.target.value) || 0;
+                                                                        const updatedValues = [...field.value];
+                                                                        updatedValues[vIndex].cost = newCost;
+                                                                        field.onChange(updatedValues);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                        <FormDescription>Each line will be an option. Set cost adjustments for each.</FormDescription>
+                                                    </div>
+                                                )}
+                                            />
                                         ) : (
                                             <FormField control={form.control} name={`details.${index}.placeholder`} render={({ field }) => (
                                                 <FormItem>

@@ -46,7 +46,7 @@ const addonSchema = z.object({
 });
 
 const tierSchema = z.object({
-  qty: z.coerce.number(),
+  minQty: z.coerce.number(),
   setup: z.coerce.number(),
   unitCost: z.coerce.number(),
   margin: z.coerce.number(),
@@ -131,16 +131,16 @@ export default function PricingEnginePage() {
         try {
             await updateDocumentNonBlocking(productDocRef, { pricing: data.pricing });
             toast({ title: "Pricing Updated", description: "Pricing rules have been saved."});
-        } catch(e) {
+        } catch(e: any) {
             console.error(e);
-            toast({ variant: 'destructive', title: "Error", description: "Failed to save pricing."});
+            toast({ variant: 'destructive', title: "Error", description: e.message || "Failed to save pricing."});
         }
     };
     
     const calculateCustomerPrice = (tier: any) => {
-        const { qty, setup, unitCost, margin } = tier;
-        if (!qty || !unitCost) return 0;
-        const totalCost = (setup || 0) + (qty * unitCost);
+        const { minQty, setup, unitCost, margin } = tier;
+        if (!minQty || !unitCost) return 0;
+        const totalCost = (setup || 0) + (minQty * unitCost);
         const finalPrice = totalCost / (1 - (margin || 0) / 100);
         return Math.round(finalPrice);
     };
@@ -282,7 +282,7 @@ export default function PricingEnginePage() {
                             <TableBody>
                                 {tierFields.map((field, index) => (
                                     <TableRow key={field.id}>
-                                        <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.qty`)} className="w-24"/></TableCell>
+                                        <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.minQty`)} className="w-24"/></TableCell>
                                         <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.setup`)} className="w-24"/></TableCell>
                                         <TableCell><Input type="number" step="0.01" {...form.register(`pricing.tiers.${index}.unitCost`)} className="w-24"/></TableCell>
                                         <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.margin`)} className="w-24"/></TableCell>
@@ -293,7 +293,7 @@ export default function PricingEnginePage() {
                             </TableBody>
                         </Table>
                         <div className="mt-4 flex gap-2">
-                            <Button type="button" variant="outline" onClick={() => appendTier({ qty: 0, setup: 0, unitCost: 0, margin: 0 })}>Add Tier</Button>
+                            <Button type="button" variant="outline" onClick={() => appendTier({ minQty: 0, setup: 0, unitCost: 0, margin: 0 })}>Add Tier</Button>
                         </div>
                     </CardContent>
                 </Card>
