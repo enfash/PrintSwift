@@ -116,6 +116,15 @@ const ProductsList = () => {
     if (error) {
         return <p>Error: {error.message}</p>;
     }
+    
+    const isValidUrl = (url: string) => {
+        try {
+            new URL(url);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
 
     return (
         <>
@@ -189,9 +198,11 @@ const ProductsList = () => {
                                     </TableCell>
                                 </TableRow>
                             ) : filteredAndSortedProducts && filteredAndSortedProducts.length > 0 ? filteredAndSortedProducts.map(product => {
-                                const mainImageUrl = product.imageUrls && product.imageUrls.length > 0 
+                                const rawUrl = product.imageUrls && product.imageUrls.length > 0 
                                     ? product.imageUrls[product.mainImageIndex || 0] 
                                     : 'https://placehold.co/40x40';
+
+                                const mainImageUrl = isValidUrl(rawUrl) ? rawUrl : 'https://placehold.co/40x40';
 
                                 return (
                                 <TableRow key={product.id}>
