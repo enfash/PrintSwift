@@ -19,8 +19,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+
 
 const lineItemOptionSchema = z.object({
   label: z.string(),
@@ -56,6 +58,7 @@ type QuoteFormValues = z.infer<typeof quoteSchema>;
 export default function NewQuotePage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const router = useRouter();
 
   const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
@@ -71,15 +74,17 @@ export default function NewQuotePage() {
     },
   });
 
-  const { fields, append, remove, copy } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: 'lineItems',
   });
 
-  const { lineItems, discount, vatRate, delivery } = form.watch();
+  const lineItems = form.watch('lineItems');
+  const discount = form.watch('discount');
+  const vatRate = form.watch('vatRate');
+  const delivery = form.watch('delivery');
 
   const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0 });
-  const [lineItemPrices, setLineItemPrices] = useState<number[]>([]);
 
   const calculateLineItemPrice = useCallback((item: any) => {
     if (!item.productDetails || !item.productDetails.pricing || !item.productDetails.pricing.tiers) {
@@ -122,18 +127,19 @@ export default function NewQuotePage() {
   }, []);
 
   const calculateSummary = useCallback(() => {
-    const newPrices = lineItems.map(item => calculateLineItemPrice(item));
-    setLineItemPrices(newPrices);
+    const lineItemPrices = lineItems.map(item => calculateLineItemPrice(item));
     
     const subtotal = lineItems.reduce((acc, item, index) => {
-      return acc + (item.qty * (newPrices[index] || 0));
+      const price = lineItemPrices[index] || 0;
+      update(index, { ...item, unitPrice: price });
+      return acc + (item.qty * price);
     }, 0);
     
     const discountedTotal = subtotal - discount;
     const vat = discountedTotal * (vatRate / 100);
     const total = discountedTotal + vat + delivery;
     setSummary({ subtotal, vat, total });
-  }, [lineItems, discount, vatRate, delivery, calculateLineItemPrice]);
+  }, [lineItems, discount, vatRate, delivery, calculateLineItemPrice, update]);
 
   useEffect(() => {
     calculateSummary();
@@ -143,13 +149,15 @@ export default function NewQuotePage() {
   const handleAddProduct = () => {
     append({ productId: '', productName: '', qty: 100, options: [], unitPrice: 0, productDetails: null });
   };
+
+  const handleDuplicateItem = (index: number) => {
+    const itemToDuplicate = form.getValues(`lineItems.${index}`);
+    append(itemToDuplicate);
+  };
   
   const handleProductChange = (index: number, productId: string) => {
     const product = products?.find(p => p.id === productId);
     if (product) {
-        form.setValue(`lineItems.${index}.productName`, product.name);
-        form.setValue(`lineItems.${index}.productDetails`, product);
-        
         const defaultOptions: {label: string, value: string}[] = [];
         if (product.details) {
             product.details.forEach((detail: any) => {
@@ -158,13 +166,22 @@ export default function NewQuotePage() {
                 }
                 if ((detail.type === 'number' || detail.type === 'text') && detail.placeholder) {
                     defaultOptions.push({label: detail.label, value: detail.placeholder});
+                } else if (detail.type === 'number') {
+                  defaultOptions.push({label: detail.label, value: '1'});
                 }
             });
         }
-        form.setValue(`lineItems.${index}.options`, defaultOptions);
         
         const firstTierQty = product.pricing?.tiers?.[0]?.minQty || 100;
-        form.setValue(`lineItems.${index}.qty`, firstTierQty);
+        
+        update(index, {
+            ...lineItems[index],
+            productId: product.id,
+            productName: product.name,
+            productDetails: product,
+            qty: firstTierQty,
+            options: defaultOptions,
+        });
     }
   };
   
@@ -177,7 +194,7 @@ export default function NewQuotePage() {
     } else {
         currentOptions.push({ label: optionLabel, value });
     }
-    form.setValue(`lineItems.${lineIndex}.options`, currentOptions);
+    update(lineIndex, { ...lineItems[lineIndex], options: currentOptions });
   };
   
   const showNotImplementedToast = (feature: string) => {
@@ -186,26 +203,43 @@ export default function NewQuotePage() {
         description: `${feature} functionality is not yet implemented.`
     });
   };
-  
-  const onSubmit = (data: QuoteFormValues) => {
-      // Before submitting, update the unitPrice in the form data
-      const finalData = {
-          ...data,
-          lineItems: data.lineItems.map((item, index) => ({
-              ...item,
-              unitPrice: lineItemPrices[index] || 0
-          }))
-      };
-      console.log('Quote Data:', finalData);
-      showNotImplementedToast('Saving quote');
+
+  const saveQuote = async (status: 'draft' | 'sent') => {
+    if (!firestore) return;
+
+    form.setValue('status', status);
+    const quoteData = form.getValues();
+    const finalData = {
+      ...quoteData,
+      subtotal: summary.subtotal,
+      vat: summary.vat,
+      total: summary.total,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }
+
+    try {
+        const quotesCollection = collection(firestore, 'quotes');
+        const newDocRef = doc(quotesCollection);
+        await addDocumentNonBlocking(quotesCollection, { ...finalData, id: newDocRef.id }, { id: newDocRef.id });
+        
+        toast({ title: `Quote ${status === 'draft' ? 'Saved as Draft' : 'Submitted'}`, description: `The quote has been successfully saved.` });
+        router.push('/admin/quotes');
+    } catch (error) {
+        console.error(`Error saving quote as ${status}:`, error);
+        toast({ variant: 'destructive', title: 'Error', description: `Could not save the quote.` });
+    }
   }
+  
+  const onSubmit = () => saveQuote('sent');
+  const onSaveDraft = () => saveQuote('draft');
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">New Quote</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" type="button" onClick={() => showNotImplementedToast('Save Draft')}>Save Draft</Button>
+          <Button variant="outline" type="button" onClick={onSaveDraft}>Save Draft</Button>
           <Button type="submit">Submit</Button>
         </div>
       </div>
@@ -276,7 +310,7 @@ export default function NewQuotePage() {
             <CardContent>
               <div className="space-y-4">
                 {fields.map((item, index) => (
-                  <div key={item.id} className="p-4 border rounded-lg">
+                  <div key={item.id} className="p-4 border rounded-lg relative">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <Controller
                           control={form.control}
@@ -335,11 +369,16 @@ export default function NewQuotePage() {
                     
                     <div className="flex justify-between items-center mt-4">
                          <div className="text-sm">
-                            Unit Price: ₦{(lineItemPrices[index] || 0).toFixed(2)} | Sum: ₦{((lineItems[index]?.qty || 0) * (lineItemPrices[index] || 0)).toFixed(2)}
+                            Unit Price: ₦{(item.unitPrice || 0).toFixed(2)} | Sum: ₦{((lineItems[index]?.qty || 0) * (item.unitPrice || 0)).toFixed(2)}
                         </div>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => handleDuplicateItem(index)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                     </div>
                   </div>
                 ))}
@@ -347,9 +386,6 @@ export default function NewQuotePage() {
               <div className="mt-4 flex items-center gap-2">
                 <Button variant="outline" size="sm" type="button" onClick={handleAddProduct}>
                   <PlusCircle className="mr-2 h-4 w-4" /> Add Product
-                </Button>
-                 <Button variant="ghost" size="sm" type="button" onClick={() => showNotImplementedToast('Duplicate item')}>
-                  <Copy className="mr-2 h-4 w-4" /> Duplicate
                 </Button>
               </div>
                {form.formState.errors.lineItems && <p className="text-sm font-medium text-destructive mt-2">{form.formState.errors.lineItems.message}</p>}
@@ -419,3 +455,5 @@ export default function NewQuotePage() {
     </form>
   );
 }
+
+    

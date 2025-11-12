@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -53,10 +54,21 @@ service cloud.firestore {
       allow list: if isAdmin();
     }
 
-    // Quote Requests (Admin Only)
+    // Quote Requests (From Public Form)
     match /quote_requests/{quoteRequestId} {
+      // Allow anyone to create a quote request, but only admins to read/update/delete.
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // Quotes (Admin-Generated)
+    match /quotes/{quoteId} {
       allow read, write: if isAdmin();
     }
+     match /quotes {
+      allow list: if isAdmin();
+    }
+
 
     // Admin Roles (Admin Only)
     match /roles_admin/{uid} {
@@ -64,3 +76,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
