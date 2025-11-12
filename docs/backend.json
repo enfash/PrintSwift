@@ -72,22 +72,64 @@
           "type": "boolean",
           "description": "Indicates if the product is featured."
         },
+        "details": {
+          "type": "array",
+          "description": "Customization options for the product, like paper type or finish.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "values": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "pricing": {
           "type": "object",
           "description": "Complex pricing rules for the product.",
           "properties": {
-            "baseCost": { "type": "number" },
-            "tax": { "type": "number" },
+            "baseCost": {
+              "type": "number"
+            },
+            "tax": {
+              "type": "number"
+            },
             "addons": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "option": { "type": "string" },
-                  "value": { "type": "string" },
-                  "type": { "type": "string", "enum": ["per_unit", "per_order", "multiplier"] },
-                  "cost": { "type": "number" },
-                  "active": { "type": "boolean" }
+                  "option": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "per_unit",
+                      "per_order",
+                      "multiplier"
+                    ]
+                  },
+                  "cost": {
+                    "type": "number"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
                 }
               }
             },
@@ -96,10 +138,18 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "qty": { "type": "number" },
-                  "setup": { "type": "number" },
-                  "unitCost": { "type": "number" },
-                  "margin": { "type": "number" }
+                  "qty": {
+                    "type": "number"
+                  },
+                  "setup": {
+                    "type": "number"
+                  },
+                  "unitCost": {
+                    "type": "number"
+                  },
+                  "margin": {
+                    "type": "number"
+                  }
                 }
               }
             }
@@ -207,7 +257,13 @@
           "description": "URL for the customer's avatar image (optional)."
         }
       },
-      "required": ["id", "name", "quote", "rating", "visible"]
+      "required": [
+        "id",
+        "name",
+        "quote",
+        "rating",
+        "visible"
+      ]
     }
   },
   "auth": {
@@ -282,7 +338,7 @@
           ]
         }
       },
-       {
+      {
         "path": "/testimonials/{testimonialId}",
         "definition": {
           "entityName": "Testimonial",

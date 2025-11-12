@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoaderCircle, UploadCloud, Image as ImageIcon, Link2, X } from 'lucide-react';
+import { LoaderCircle, UploadCloud, Image as ImageIcon, Link2, X, PlusCircle, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
@@ -21,6 +21,12 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+
+const productDetailOptionSchema = z.object({
+  label: z.string(),
+  values: z.array(z.object({ value: z.string() })),
+});
 
 const productSchema = z.object({
   slug: z.string().min(3, 'Slug must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
@@ -31,6 +37,7 @@ const productSchema = z.object({
   featured: z.boolean().default(false),
   imageUrls: z.array(z.string().url()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
   mainImageIndex: z.number().min(0).default(0),
+  details: z.array(productDetailOptionSchema).optional(),
 });
 
 export default function ProductEditPage({ params }: { params: { slug: string } }) {
@@ -55,14 +62,20 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
             mainImageIndex: 0,
             featured: false,
             status: 'Draft',
+            details: [],
         }
     });
 
-    const { fields, append, remove } = useFieldArray({
+    const { fields: imageFields, append: appendImage, remove: removeImage } = useFieldArray({
         control: form.control,
         name: "imageUrls"
     });
     
+    const { fields: detailFields, append: appendDetail, remove: removeDetail } = useFieldArray({
+        control: form.control,
+        name: "details"
+    });
+
     useEffect(() => {
         if (product) {
             form.reset({
@@ -74,6 +87,7 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                 featured: product.featured || false,
                 imageUrls: product.imageUrls || [],
                 mainImageIndex: product.mainImageIndex || 0,
+                details: product.details || [],
             });
         }
     }, [product, form]);
@@ -108,26 +122,26 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
-            if (fields.length + files.length > 6) {
+            if (imageFields.length + files.length > 6) {
                 toast({ variant: 'destructive', title: "Too many images", description: "You can upload a maximum of 6 images."});
                 return;
             }
             Array.from(files).forEach(file => {
                 const tempPreviewUrl = URL.createObjectURL(file);
-                append(tempPreviewUrl);
+                appendImage(tempPreviewUrl);
             })
             toast({ title: "Image Added", description: "This is a local preview. To save, replace it with a permanent URL using the Link tab."})
         }
     };
 
     const handleAddImageUrl = (url: string) => {
-        if (fields.length >= 6) {
+        if (imageFields.length >= 6) {
             toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
             return;
         }
         try {
             z.string().url().parse(url);
-            append(url);
+            appendImage(url);
             const input = document.getElementById('imageUrlInput') as HTMLInputElement;
             if (input) input.value = '';
         } catch {
@@ -164,8 +178,13 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-8">
+                <Tabs defaultValue="general">
+                    <TabsList>
+                        <TabsTrigger value="general">General</TabsTrigger>
+                        <TabsTrigger value="details">Details & Media</TabsTrigger>
+                        <TabsTrigger value="publishing">Publishing</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="general" className="pt-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Basic Info</CardTitle>
@@ -231,8 +250,141 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                                 />
                             </CardContent>
                         </Card>
+                    </TabsContent>
+                    <TabsContent value="details" className="pt-6 space-y-8">
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Media</CardTitle>
+                                <CardDescription>Manage product images (min 1, max 6).</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                                     {imageFields.map((field, index) => (
+                                        <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
+                                            {field.value ? (
+                                                <Image
+                                                    src={field.value}
+                                                    alt={`Product image ${index + 1}`}
+                                                    fill
+                                                    className="object-cover rounded-md"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-muted rounded-md flex items-center justify-center">
+                                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                                </div>
+                                            )}
+                                            {mainImageIndex === index && (
+                                                <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>
+                                            )}
+                                            <Button 
+                                                type="button"
+                                                variant="destructive" 
+                                                size="icon" 
+                                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={(e) => { e.stopPropagation(); removeImage(index); }}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                     ))}
+                                     {imageFields.length === 0 && (
+                                         <div className="col-span-full aspect-video relative rounded-md border bg-muted flex flex-col items-center justify-center text-muted-foreground">
+                                            <ImageIcon className="w-12 h-12" />
+                                            <p className="text-sm mt-2">No images added</p>
+                                        </div>
+                                     )}
+                                </div>
+                                
+                                <FormField
+                                    control={form.control}
+                                    name="imageUrls"
+                                    render={() => (
+                                        <FormItem>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                        <Card>
+                                <Tabs defaultValue="upload">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
+                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="upload" className="pt-2">
+                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={imageFields.length >= 6} multiple />
+                                        <FormDescription className="text-xs mt-2">
+                                            Local previews must be replaced with a permanent URL before saving.
+                                        </FormDescription>
+                                    </TabsContent>
+                                     <TabsContent value="url" className="pt-2">
+                                         <div className="flex gap-2">
+                                            <Input 
+                                                id="imageUrlInput"
+                                                placeholder="https://..." 
+                                                disabled={imageFields.length >= 6}
+                                            />
+                                            <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
+                                         </div>
+                                    </TabsContent>
+                                </Tabs>
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Customization Options</CardTitle>
+                                <CardDescription>Define dropdowns like "Paper Type" or "Finish" for customers.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {detailFields.map((field, index) => (
+                                    <div key={field.id} className="p-4 border rounded-md space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <Label>Option {index + 1}</Label>
+                                            <Button type="button" variant="ghost" size="icon" onClick={() => removeDetail(index)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </div>
+                                        <FormField
+                                            control={form.control}
+                                            name={`details.${index}.label`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                <FormLabel>Label</FormLabel>
+                                                <FormControl><Input placeholder="e.g., Paper Type" {...field} /></FormControl>
+                                                <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`details.${index}.values`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Values</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            placeholder="Enter one value per line, e.g.,&#10;16pt. Premium Matte&#10;14pt. Uncoated"
+                                                            value={field.value.map(v => v.value).join('\n')}
+                                                            onChange={(e) => {
+                                                                const valuesArray = e.target.value.split('\n').map(v => ({ value: v }));
+                                                                field.onChange(valuesArray);
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>Each line will be a separate option in the dropdown.</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                ))}
+                                <Button type="button" variant="outline" onClick={() => appendDetail({ label: '', values: [] })}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Option
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="publishing" className="pt-6">
+                         <Card>
                             <CardHeader>
                                 <CardTitle>Publishing</CardTitle>
                             </CardHeader>
@@ -285,90 +437,11 @@ export default function ProductEditPage({ params }: { params: { slug: string } }
                                 />
                             </CardContent>
                         </Card>
-                    </div>
-
-                    <div className="space-y-8">
-                         <Card>
-                            <CardHeader>
-                                <CardTitle>Media</CardTitle>
-                                <CardDescription>Manage product images (min 1, max 6).</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-3 gap-2">
-                                     {fields.map((field, index) => (
-                                        <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
-                                            {field.value ? (
-                                                <Image
-                                                    src={field.value}
-                                                    alt={`Product image ${index + 1}`}
-                                                    fill
-                                                    className="object-cover rounded-md"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-muted rounded-md flex items-center justify-center">
-                                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                                                </div>
-                                            )}
-                                            {mainImageIndex === index && (
-                                                <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>
-                                            )}
-                                            <Button 
-                                                type="button"
-                                                variant="destructive" 
-                                                size="icon" 
-                                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={(e) => { e.stopPropagation(); remove(index); }}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                     ))}
-                                     {fields.length === 0 && (
-                                         <div className="col-span-3 aspect-video relative rounded-md border bg-muted flex flex-col items-center justify-center text-muted-foreground">
-                                            <ImageIcon className="w-12 h-12" />
-                                            <p className="text-sm mt-2">No images added</p>
-                                        </div>
-                                     )}
-                                </div>
-                                
-                                <FormField
-                                    control={form.control}
-                                    name="imageUrls"
-                                    render={() => (
-                                        <FormItem>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <Tabs defaultValue="upload">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
-                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="upload" className="pt-2">
-                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={fields.length >= 6} multiple />
-                                        <FormDescription className="text-xs mt-2">
-                                            Local previews must be replaced with a permanent URL before saving.
-                                        </FormDescription>
-                                    </TabsContent>
-                                     <TabsContent value="url" className="pt-2">
-                                         <div className="flex gap-2">
-                                            <Input 
-                                                id="imageUrlInput"
-                                                placeholder="https://..." 
-                                                disabled={fields.length >= 6}
-                                            />
-                                            <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
-                                         </div>
-                                    </TabsContent>
-                                </Tabs>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                </div>
+                    </TabsContent>
+                </Tabs>
             </form>
         </Form>
     );
 }
+
+    
