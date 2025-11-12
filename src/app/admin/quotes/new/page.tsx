@@ -127,19 +127,17 @@ export default function NewQuotePage() {
   }, []);
 
   const calculateSummary = useCallback(() => {
-    const lineItemPrices = lineItems.map(item => calculateLineItemPrice(item));
-    
-    const subtotal = lineItems.reduce((acc, item, index) => {
-      const price = lineItemPrices[index] || 0;
-      update(index, { ...item, unitPrice: price });
+    const newSubtotal = lineItems.reduce((acc, item) => {
+      // We read the unit price directly from the form state if it exists, or calculate it.
+      const price = item.unitPrice || calculateLineItemPrice(item) || 0;
       return acc + (item.qty * price);
     }, 0);
-    
-    const discountedTotal = subtotal - discount;
+
+    const discountedTotal = newSubtotal - discount;
     const vat = discountedTotal * (vatRate / 100);
     const total = discountedTotal + vat + delivery;
-    setSummary({ subtotal, vat, total });
-  }, [lineItems, discount, vatRate, delivery, calculateLineItemPrice, update]);
+    setSummary({ subtotal: newSubtotal, vat, total });
+  }, [lineItems, discount, vatRate, delivery, calculateLineItemPrice]);
 
   useEffect(() => {
     calculateSummary();
@@ -173,20 +171,25 @@ export default function NewQuotePage() {
         }
         
         const firstTierQty = product.pricing?.tiers?.[0]?.minQty || 100;
-        
-        update(index, {
+
+        const updatedItem = {
             ...lineItems[index],
             productId: product.id,
             productName: product.name,
             productDetails: product,
             qty: firstTierQty,
             options: defaultOptions,
-        });
+            unitPrice: 0, // Reset unit price
+        };
+        const newUnitPrice = calculateLineItemPrice(updatedItem);
+        
+        update(index, { ...updatedItem, unitPrice: newUnitPrice });
     }
   };
   
   const handleOptionChange = (lineIndex: number, optionLabel: string, value: string) => {
-    const currentOptions = form.getValues(`lineItems.${lineIndex}.options`) || [];
+    const currentItem = form.getValues(`lineItems.${lineIndex}`);
+    const currentOptions = currentItem.options || [];
     const optionIndex = currentOptions.findIndex(o => o.label === optionLabel);
     
     if(optionIndex > -1) {
@@ -194,7 +197,10 @@ export default function NewQuotePage() {
     } else {
         currentOptions.push({ label: optionLabel, value });
     }
-    update(lineIndex, { ...lineItems[lineIndex], options: currentOptions });
+    
+    const updatedItem = { ...currentItem, options: currentOptions };
+    const newUnitPrice = calculateLineItemPrice(updatedItem);
+    update(lineIndex, { ...updatedItem, unitPrice: newUnitPrice });
   };
   
   const showNotImplementedToast = (feature: string) => {
@@ -455,5 +461,3 @@ export default function NewQuotePage() {
     </form>
   );
 }
-
-    
