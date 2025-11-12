@@ -79,7 +79,7 @@ export default function Home() {
   const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
   const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
 
-  const featuredProductsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('featured', '==', true), where('status', '==', 'Published'), limit(4)) : null, [firestore]);
+  const featuredProductsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('featured', '==', true), where('status', '==', 'Published'), limit(12)) : null, [firestore]);
   const { data: featuredProducts, isLoading: isLoadingProducts } = useCollection<any>(featuredProductsRef);
 
   const testimonialsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'testimonials'), where('visible', '==', true), limit(3)) : null, [firestore]);
