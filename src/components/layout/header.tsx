@@ -10,7 +10,7 @@ import React from 'react';
 
 const navLinks = [
   { href: '/products', label: 'Products' },
-  { href: '/design-options', label: 'Design Options' },
+  { href: '/track-order', label: 'Track Order' },
   { href: '/contact', label: 'Contact' },
 ];
 
