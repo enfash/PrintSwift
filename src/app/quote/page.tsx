@@ -41,11 +41,14 @@ const quoteFormSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   phone: z.string().min(10, { message: 'Please enter a valid phone number.'}),
   company: z.string().optional(),
+  productId: z.string({ required_error: 'Please select a product.' }),
   productName: z.string({ required_error: 'Please select a product.' }),
   quantity: z.coerce.number().min(1, { message: 'Quantity must be at least 1.' }),
   artwork: z.any().optional(),
   details: z.string().min(10, { message: 'Please provide at least a brief description.' }),
 });
+
+type QuoteFormData = z.infer<typeof quoteFormSchema>;
 
 function QuoteForm() {
   const searchParams = useSearchParams();
@@ -59,24 +62,27 @@ function QuoteForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState('');
 
-  const form = useForm<z.infer<typeof quoteFormSchema>>({
+  const form = useForm<QuoteFormData>({
     resolver: zodResolver(quoteFormSchema),
     defaultValues: {
       name: '',
       email: '',
       phone: '',
       company: '',
-      productName: productNameQuery || undefined,
       quantity: 1,
       details: '',
     },
   });
-
+  
   useEffect(() => {
-    if (productNameQuery) {
-        form.setValue('productName', productNameQuery);
+    if (productNameQuery && products) {
+        const product = products.find(p => p.name === productNameQuery);
+        if (product) {
+            form.setValue('productId', product.id);
+            form.setValue('productName', product.name);
+        }
     }
-  }, [productNameQuery, form]);
+  }, [productNameQuery, products, form]);
 
   async function onSubmit(values: z.infer<typeof quoteFormSchema>) {
     if (!firestore) {
@@ -90,12 +96,12 @@ function QuoteForm() {
 
     setIsSubmitting(true);
     const quoteRequestsRef = collection(firestore, 'quote_requests');
-    const selectedProduct = products?.find(p => p.name === values.productName);
+    const selectedProduct = products?.find(p => p.id === values.productId);
 
     try {
         await addDocumentNonBlocking(quoteRequestsRef, {
             ...values,
-            productId: selectedProduct?.id || 'other',
+            productName: selectedProduct?.name || 'Other',
             submissionDate: serverTimestamp(),
             status: 'Pending', // Add a default status
         });
@@ -196,19 +202,26 @@ function QuoteForm() {
               <div className="grid sm:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="productName"
+                  name="productId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Product</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          const productName = products?.find(p => p.id === value)?.name || 'Other';
+                          form.setValue('productName', productName);
+                        }}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={isLoadingProducts ? "Loading products..." : "Select a product"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {products?.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
-                          <SelectItem value="Other">Other (please specify in details)</SelectItem>
+                          {products?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                          <SelectItem value="other">Other (please specify in details)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -310,3 +323,5 @@ export default function QuotePage() {
         </Suspense>
     )
 }
+
+    
