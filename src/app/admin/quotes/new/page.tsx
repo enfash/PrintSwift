@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -22,11 +22,17 @@ import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
+const lineItemOptionSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+
 const lineItemSchema = z.object({
   productId: z.string().min(1, 'Product is required'),
   productName: z.string(),
+  productDetails: z.any().optional(), // To store the full product data
   qty: z.coerce.number().min(1, 'Qty must be at least 1'),
-  options: z.string().optional(),
+  options: z.array(lineItemOptionSchema).optional(),
   unitPrice: z.coerce.number().min(0, 'Unit price must be positive'),
 });
 
@@ -77,30 +83,108 @@ export default function NewQuotePage() {
 
   const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0 });
 
-  const calculateSummary = () => {
-    const subtotal = watchLineItems.reduce((acc, item) => acc + (item.qty * item.unitPrice), 0);
+  const calculateLineItemPrice = useCallback((item: any) => {
+    if (!item.productDetails || !item.productDetails.pricing || !item.productDetails.pricing.tiers) {
+        return 0;
+    }
+  
+    const tier = item.productDetails.pricing.tiers
+      .slice()
+      .sort((a: any, b: any) => b.minQty - a.minQty)
+      .find((t: any) => item.qty >= t.minQty);
+  
+    if (!tier) return 0;
+  
+    let { unitCost = 0 } = tier;
+    
+    let optionsCost = 0;
+    let numberInputMultiplier = 1;
+  
+    if (item.options && item.productDetails.details) {
+        item.options.forEach((selectedOpt: any) => {
+            const detail = item.productDetails.details.find((d: any) => d.label === selectedOpt.label);
+            if (!detail) return;
+
+            if (detail.type === 'dropdown' && detail.values) {
+                const option = detail.values.find((v: any) => v.value === selectedOpt.value);
+                if (option && option.cost) {
+                    optionsCost += option.cost;
+                }
+            } else if (detail.type === 'number') {
+                const numericValue = parseFloat(selectedOpt.value);
+                if (!isNaN(numericValue) && numericValue > 0) {
+                    numberInputMultiplier *= numericValue;
+                }
+            }
+        });
+    }
+
+    const finalUnitCost = (unitCost * numberInputMultiplier) + optionsCost;
+    return finalUnitCost;
+  }, []);
+
+  const calculateSummary = useCallback(() => {
+    const subtotal = watchLineItems.reduce((acc, item) => {
+      const unitPrice = calculateLineItemPrice(item);
+      form.setValue(`lineItems.${watchLineItems.indexOf(item)}.unitPrice`, unitPrice, { shouldValidate: true });
+      return acc + (item.qty * unitPrice);
+    }, 0);
+    
     const discountedTotal = subtotal - watchDiscount;
     const vat = discountedTotal * (watchVatRate / 100);
     const total = discountedTotal + vat + watchDelivery;
     setSummary({ subtotal, vat, total });
-  };
+  }, [watchLineItems, watchDiscount, watchVatRate, watchDelivery, calculateLineItemPrice, form]);
 
   useEffect(() => {
-    calculateSummary();
-  }, [watchLineItems, watchDiscount, watchVatRate, watchDelivery]);
+    const subscription = form.watch(() => calculateSummary());
+    return () => subscription.unsubscribe();
+  }, [form, calculateSummary]);
 
 
   const handleAddProduct = () => {
-    append({ productId: '', productName: '', qty: 1, options: '', unitPrice: 0 });
+    append({ productId: '', productName: '', qty: 100, options: [], unitPrice: 0, productDetails: null });
   };
   
   const handleProductChange = (index: number, productId: string) => {
     const product = products?.find(p => p.id === productId);
     if (product) {
         form.setValue(`lineItems.${index}.productName`, product.name);
-        const price = product.pricing?.tiers?.[0]?.unitCost || 0;
-        form.setValue(`lineItems.${index}.unitPrice`, price);
+        form.setValue(`lineItems.${index}.productDetails`, product);
+        
+        // Set default options
+        const defaultOptions: {label: string, value: string}[] = [];
+        if (product.details) {
+            product.details.forEach((detail: any) => {
+                if (detail.type === 'dropdown' && detail.values && detail.values.length > 0) {
+                    defaultOptions.push({label: detail.label, value: detail.values[0].value});
+                }
+                if ((detail.type === 'number' || detail.type === 'text') && detail.placeholder) {
+                    defaultOptions.push({label: detail.label, value: detail.placeholder});
+                }
+            });
+        }
+        form.setValue(`lineItems.${index}.options`, defaultOptions);
+        
+        // Set quantity to first tier
+        const firstTierQty = product.pricing?.tiers?.[0]?.minQty || 100;
+        form.setValue(`lineItems.${index}.qty`, firstTierQty);
+        
+        calculateSummary(); // Recalculate
     }
+  };
+  
+  const handleOptionChange = (lineIndex: number, optionLabel: string, value: string) => {
+    const currentOptions = form.getValues(`lineItems.${lineIndex}.options`) || [];
+    const optionIndex = currentOptions.findIndex(o => o.label === optionLabel);
+    
+    if(optionIndex > -1) {
+        currentOptions[optionIndex].value = value;
+    } else {
+        currentOptions.push({ label: optionLabel, value });
+    }
+    form.setValue(`lineItems.${lineIndex}.options`, currentOptions);
+    calculateSummary();
   };
   
   const showNotImplementedToast = (feature: string) => {
@@ -189,49 +273,77 @@ export default function NewQuotePage() {
               <CardTitle>Line Items</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="w-24">Qty</TableHead>
-                    <TableHead>Options</TableHead>
-                    <TableHead className="w-32 text-right">Unit ₦</TableHead>
-                    <TableHead className="w-32 text-right">Sum</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fields.map((item, index) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                         <Controller
-                            control={form.control}
-                            name={`lineItems.${index}.productId`}
-                            render={({ field }) => (
-                                <Select onValueChange={(value) => {field.onChange(value); handleProductChange(index, value);}} value={field.value}>
-                                    <SelectTrigger><SelectValue placeholder="Select product..."/></SelectTrigger>
-                                    <SelectContent>
-                                        {isLoadingProducts ? <LoaderCircle className="animate-spin" /> :
-                                            products?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
-                                        }
-                                    </SelectContent>
-                                </Select>
-                            )}
+              <div className="space-y-4">
+                {fields.map((item, index) => (
+                  <div key={item.id} className="p-4 border rounded-lg">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <Controller
+                          control={form.control}
+                          name={`lineItems.${index}.productId`}
+                          render={({ field }) => (
+                              <Select onValueChange={(value) => {field.onChange(value); handleProductChange(index, value);}} value={field.value}>
+                                  <SelectTrigger><SelectValue placeholder="Select product..."/></SelectTrigger>
+                                  <SelectContent>
+                                      {isLoadingProducts ? <LoaderCircle className="animate-spin" /> :
+                                          products?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
+                                      }
+                                  </SelectContent>
+                              </Select>
+                          )}
+                      />
+                       <Controller
+                          control={form.control}
+                          name={`lineItems.${index}.qty`}
+                          render={({ field }) => (
+                            <Input type="number" placeholder="Qty" {...field} />
+                          )}
                         />
-                      </TableCell>
-                       <TableCell><Input type="number" {...form.register(`lineItems.${index}.qty`)} /></TableCell>
-                      <TableCell><Input placeholder="e.g. Matte, RC" {...form.register(`lineItems.${index}.options`)} /></TableCell>
-                      <TableCell><Input type="number" className="text-right" {...form.register(`lineItems.${index}.unitPrice`)} /></TableCell>
-                      <TableCell className="text-right">{(watchLineItems[index].qty * watchLineItems[index].unitPrice).toLocaleString()}</TableCell>
-                      <TableCell>
+                    </div>
+                    
+                    {item.productDetails?.details?.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            {item.productDetails.details.map((detail: any) => {
+                                const options = watchLineItems[index]?.options || [];
+                                const selectedOpt = options.find(o => o.label === detail.label);
+                                
+                                return (
+                                    <div key={detail.label}>
+                                        <Label className="text-xs">{detail.label}</Label>
+                                        {detail.type === 'dropdown' ? (
+                                            <Select
+                                                onValueChange={(value) => handleOptionChange(index, detail.label, value)}
+                                                value={selectedOpt?.value}
+                                            >
+                                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                                <SelectContent>
+                                                    {detail.values.map((v: any) => <SelectItem key={v.value} value={v.value}>{v.value} {v.cost > 0 && `(+₦${v.cost})`}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Input
+                                                type={detail.type}
+                                                placeholder={detail.placeholder}
+                                                value={selectedOpt?.value || ''}
+                                                onChange={(e) => handleOptionChange(index, detail.label, e.target.value)}
+                                            />
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center mt-4">
+                         <div className="text-sm">
+                            Unit Price: ₦{watchLineItems[index].unitPrice.toFixed(2)} | Sum: ₦{(watchLineItems[index].qty * watchLineItems[index].unitPrice).toFixed(2)}
+                        </div>
                         <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                    </div>
+                  </div>
+                ))}
+              </div>
               <div className="mt-4 flex items-center gap-2">
                 <Button variant="outline" size="sm" type="button" onClick={handleAddProduct}>
                   <PlusCircle className="mr-2 h-4 w-4" /> Add Product
@@ -264,19 +376,19 @@ export default function NewQuotePage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>₦ {summary.subtotal.toLocaleString()}</span>
+                <span>₦ {summary.subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Discount</span>
-                <Input className="h-8 max-w-24 text-right" {...form.register('discount')} />
+                <Controller name="discount" control={form.control} render={({field}) => <Input type="number" className="h-8 max-w-24 text-right" {...field} />} />
               </div>
                <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Delivery</span>
-                <Input className="h-8 max-w-24 text-right" {...form.register('delivery')} />
+                <Controller name="delivery" control={form.control} render={({field}) => <Input type="number" className="h-8 max-w-24 text-right" {...field} />} />
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">VAT (%)</span>
-                <Input className="h-8 max-w-24 text-right" {...form.register('vatRate')} />
+                <Controller name="vatRate" control={form.control} render={({field}) => <Input type="number" className="h-8 max-w-24 text-right" {...field} />} />
               </div>
               <Separator />
                <div className="flex justify-between">
