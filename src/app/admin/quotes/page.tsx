@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -75,6 +75,16 @@ export default function QuotesPage() {
             description: 'The quote has been successfully deleted.',
         });
     }
+
+    const handleConvertToOrder = (quoteId: string) => {
+        if (!firestore) return;
+        const quoteDocRef = doc(firestore, 'quotes', quoteId);
+        updateDocumentNonBlocking(quoteDocRef, { status: 'won' });
+        toast({
+            title: 'Quote Converted!',
+            description: 'The quote status has been updated to "won".',
+        });
+    };
 
     return (
         <>
@@ -134,12 +144,14 @@ export default function QuotesPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuItem onClick={() => toast({ title: 'Coming soon', description: 'Editing quotes will be implemented soon.' })}>
-                                                        View/Edit
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/admin/quotes/${quote.id}`}>View/Edit</Link>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem>Convert to Order</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleConvertToOrder(quote.id)}>
+                                                        Convert to Order
+                                                    </DropdownMenuItem>
                                                     <AlertDialogTrigger asChild>
-                                                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                                        <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Delete</DropdownMenuItem>
                                                     </AlertDialogTrigger>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
