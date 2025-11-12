@@ -154,13 +154,13 @@ export default function PromosPage() {
                               <Link href={`/admin/promos/${promo.id}`}>Edit</Link>
                             </DropdownMenuItem>
                             <AlertDialogTrigger asChild>
-                              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Delete</DropdownMenuItem>
                             </AlertDialogTrigger>
                           </DropdownMenuContent>
                         </DropdownMenu>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
                               This will permanently delete this promotion. This action cannot be undone.
                             </AlertDialogDescription>
