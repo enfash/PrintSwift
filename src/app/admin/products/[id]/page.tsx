@@ -23,6 +23,7 @@ import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -36,6 +37,28 @@ const productDetailOptionSchema = z.object({
   values: z.array(detailValueSchema).optional(),
 });
 
+const addonSchema = z.object({
+  option: z.string(),
+  value: z.string(),
+  type: z.string(),
+  cost: z.coerce.number(),
+  active: z.boolean(),
+});
+
+const tierSchema = z.object({
+  minQty: z.coerce.number(),
+  setup: z.coerce.number(),
+  unitCost: z.coerce.number(),
+  margin: z.coerce.number(),
+});
+
+const pricingSchema = z.object({
+    baseCost: z.coerce.number().optional(),
+    tax: z.coerce.number().optional(),
+    addons: z.array(addonSchema).optional(),
+    tiers: z.array(tierSchema).optional(),
+});
+
 const productSchema = z.object({
   slug: z.string().min(3, 'Slug must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
@@ -46,6 +69,7 @@ const productSchema = z.object({
   imageUrls: z.array(z.string()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
   mainImageIndex: z.number().min(0).default(0),
   details: z.array(productDetailOptionSchema).optional(),
+  pricing: pricingSchema.optional(),
 });
 
 export default function ProductEditPage({ params }: { params: { id: string } }) {
@@ -71,6 +95,12 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
             featured: false,
             status: 'Draft',
             details: [],
+            pricing: {
+                baseCost: 0,
+                tax: 7.5,
+                addons: [],
+                tiers: [],
+            }
         }
     });
 
@@ -84,18 +114,25 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         name: "details"
     });
 
+    const { fields: tierFields, append: appendTier, remove: removeTier } = useFieldArray({
+        control: form.control,
+        name: "pricing.tiers",
+    });
+
     useEffect(() => {
         if (product) {
             form.reset({
-                name: product.name || '',
+                ...product,
                 slug: product.slug || '',
-                categoryId: product.categoryId || '',
+                name: product.name || '',
                 description: product.description || '',
+                categoryId: product.categoryId || '',
                 status: product.status || 'Draft',
                 featured: product.featured || false,
                 imageUrls: product.imageUrls || [],
                 mainImageIndex: product.mainImageIndex || 0,
                 details: product.details || [],
+                pricing: product.pricing || { baseCost: 0, tax: 7.5, addons: [], tiers: [] }
             });
         }
     }, [product, form]);
@@ -107,20 +144,23 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
             const productDocRef = doc(firestore, 'products', product.id);
 
             const updateData = { ...values };
+            
             const cleanData = (obj: any): any => {
-                const newObj: any = {};
-                for (const key in obj) {
-                    if (obj[key] !== undefined) {
-                        if (Array.isArray(obj[key])) {
-                            newObj[key] = obj[key].map((item: any) => (typeof item === 'object' && item !== null ? cleanData(item) : item));
-                        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-                            newObj[key] = cleanData(obj[key]);
-                        } else {
-                            newObj[key] = obj[key];
-                        }
-                    }
+              const newObj: any = {};
+              for (const key in obj) {
+                if (obj[key] !== undefined && obj[key] !== null) {
+                  if (Array.isArray(obj[key])) {
+                    newObj[key] = obj[key].map((item: any) =>
+                      typeof item === 'object' ? cleanData(item) : item
+                    );
+                  } else if (typeof obj[key] === 'object' && !obj[key].hasOwnProperty('_nanoseconds')) { // Exclude Timestamps
+                    newObj[key] = cleanData(obj[key]);
+                  } else if (obj[key] !== undefined) {
+                    newObj[key] = obj[key];
+                  }
                 }
-                return newObj;
+              }
+              return newObj;
             };
             
             const sanitizedData = cleanData(updateData);
@@ -171,9 +211,18 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
     const setMainImage = (index: number) => {
         form.setValue('mainImageIndex', index);
     };
+    
+    const calculateCustomerPrice = (tier: any) => {
+        if (!tier || typeof tier.minQty !== 'number' || typeof tier.unitCost !== 'number') return 0;
+        const { minQty, setup = 0, unitCost, margin = 0 } = tier;
+        const totalCost = setup + (minQty * unitCost);
+        const finalPrice = totalCost / (1 - margin / 100);
+        return isNaN(finalPrice) ? 0 : Math.round(finalPrice);
+    };
 
     const mainImageIndex = form.watch('mainImageIndex');
     const isSubmitting = form.formState.isSubmitting;
+    const currentTiers = form.watch('pricing.tiers');
 
     if (isLoadingProduct) {
         return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
@@ -201,6 +250,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                     <TabsList>
                         <TabsTrigger value="general">General</TabsTrigger>
                         <TabsTrigger value="details">Details & Media</TabsTrigger>
+                        <TabsTrigger value="pricing">Pricing</TabsTrigger>
                         <TabsTrigger value="publishing">Publishing</TabsTrigger>
                     </TabsList>
                     <TabsContent value="general" className="pt-6">
@@ -413,6 +463,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                                         {field.value?.map((v, vIndex) => (
                                                             <div key={vIndex} className="flex items-center gap-2">
                                                                 <Input value={v.value} disabled className="flex-1"/>
+                                                                <Label>₦</Label>
                                                                 <Input 
                                                                     type="number"
                                                                     placeholder="Cost"
@@ -438,7 +489,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                                 render={({ field }) => (
                                                     <FormItem>
                                                     <FormLabel>Placeholder</FormLabel>
-                                                    <FormControl><Input placeholder="e.g., 3.5" {...field} /></FormControl>
+                                                    <FormControl><Input placeholder="e.g., 3.5" {...field} value={field.value || ''} /></FormControl>
                                                     <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -449,6 +500,45 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                 <Button type="button" variant="outline" onClick={() => appendDetail({ label: '', type: 'dropdown', placeholder: '', values: [] })}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Option
                                 </Button>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="pricing" className="pt-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Pricing Rules</CardTitle>
+                                <CardDescription>Set up quantity-based pricing tiers for this product.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Min Qty</TableHead>
+                                            <TableHead>Setup Cost (₦)</TableHead>
+                                            <TableHead>Unit Cost (₦)</TableHead>
+                                            <TableHead>Margin %</TableHead>
+                                            <TableHead>Customer Price (₦)</TableHead>
+                                            <TableHead>Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {tierFields.map((field, index) => (
+                                            <TableRow key={field.id}>
+                                                <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.minQty`)} className="w-24"/></TableCell>
+                                                <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.setup`)} className="w-24"/></TableCell>
+                                                <TableCell><Input type="number" step="0.01" {...form.register(`pricing.tiers.${index}.unitCost`)} className="w-24"/></TableCell>
+                                                <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.margin`)} className="w-24"/></TableCell>
+                                                <TableCell>
+                                                    {calculateCustomerPrice(currentTiers?.[index]).toLocaleString()}
+                                                </TableCell>
+                                                <TableCell><Button type="button" variant="destructive" size="sm" onClick={() => removeTier(index)}>Remove</Button></TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                                <div className="mt-4 flex gap-2">
+                                    <Button type="button" variant="outline" onClick={() => appendTier({ minQty: 0, setup: 0, unitCost: 0, margin: 40 })}>Add Tier</Button>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -512,5 +602,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         </Form>
     );
 }
+
+    
 
     

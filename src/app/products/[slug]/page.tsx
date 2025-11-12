@@ -1,7 +1,7 @@
 
 
 'use client';
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useCallback } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -51,18 +51,107 @@ function QuantityControl({ value, onChange }: { value: number, onChange: (value:
     )
 }
 
-const renderDetailField = (detail: any) => {
+export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const { slug } = use(params);
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [product, setProduct] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(500);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [price, setPrice] = useState<number | null>(null);
+
+  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
+  const { data: categories } = useCollection<any>(categoriesRef);
+
+  const calculatePrice = useCallback(() => {
+    if (!product || !product.pricing || !product.pricing.tiers) {
+        return null;
+    }
+
+    const tier = product.pricing.tiers
+        .slice()
+        .sort((a: any, b: any) => b.minQty - a.minQty)
+        .find((t: any) => quantity >= t.minQty);
+        
+    if (!tier) return null;
+
+    const { setup = 0, unitCost = 0, margin = 0 } = tier;
+    let totalCost = setup + (quantity * unitCost);
+
+    let optionsCost = 0;
+    if (product.details) {
+        for (const label in selectedOptions) {
+            const selectedValue = selectedOptions[label];
+            const detail = product.details.find((d: any) => d.label === label);
+            if (detail && detail.values) {
+                const option = detail.values.find((v: any) => v.value === selectedValue);
+                if (option && option.cost) {
+                    optionsCost += option.cost * quantity;
+                }
+            }
+        }
+    }
+    
+    totalCost += optionsCost;
+
+    const finalPrice = totalCost / (1 - (margin / 100));
+
+    return isNaN(finalPrice) ? null : Math.round(finalPrice);
+  }, [product, quantity, selectedOptions]);
+
+  useEffect(() => {
+    async function fetchProduct() {
+      setIsLoading(true);
+      const productData = await getProductBySlug(firestore, slug);
+      if (!productData) {
+        notFound();
+      } else {
+        setProduct(productData);
+        setSelectedImage(productData.mainImageIndex || 0);
+
+        // Set default options
+        const defaultOptions: Record<string, string> = {};
+        if (productData.details) {
+            productData.details.forEach((detail: any) => {
+                if (detail.type === 'dropdown' && detail.values && detail.values.length > 0) {
+                    defaultOptions[detail.label] = detail.values[0].value;
+                }
+            });
+        }
+        setSelectedOptions(defaultOptions);
+        setQuantity(productData.pricing?.tiers?.[0]?.minQty || 1);
+      }
+      setIsLoading(false);
+    }
+
+    if (firestore && slug) {
+      fetchProduct();
+    }
+  }, [firestore, slug]);
+
+
+  useEffect(() => {
+    setPrice(calculatePrice());
+  }, [product, quantity, selectedOptions, calculatePrice]);
+
+  const handleOptionChange = (label: string, value: string) => {
+    setSelectedOptions(prev => ({ ...prev, [label]: value }));
+  };
+
+  const renderDetailField = (detail: any) => {
     switch (detail.type) {
         case 'dropdown':
             return (
                 <div key={detail.label} className="grid gap-2">
                     <Label htmlFor={`detail-${detail.label}`}>{detail.label}</Label>
-                    <Select>
+                    <Select onValueChange={(value) => handleOptionChange(detail.label, value)} value={selectedOptions[detail.label] || ''}>
                         <SelectTrigger id={`detail-${detail.label}`}>
                             <SelectValue placeholder={`Select ${detail.label}`} />
                         </SelectTrigger>
                         <SelectContent>
-                            {detail.values?.map((opt: any) => <SelectItem key={opt.value} value={opt.value}>{opt.value}</SelectItem>)}
+                            {detail.values?.map((opt: any) => <SelectItem key={opt.value} value={opt.value}>{opt.value} {opt.cost > 0 && `(+₦${opt.cost.toLocaleString()})`}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
@@ -78,39 +167,7 @@ const renderDetailField = (detail: any) => {
         default:
             return null;
     }
-}
-
-
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const { slug } = use(params);
-  const firestore = useFirestore();
-  const { toast } = useToast();
-  const [product, setProduct] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(500);
-
-  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
-  const { data: categories } = useCollection<any>(categoriesRef);
-
-  useEffect(() => {
-    async function fetchProduct() {
-      setIsLoading(true);
-      const productData = await getProductBySlug(firestore, slug);
-      if (!productData) {
-        notFound();
-      } else {
-        setProduct(productData);
-        setSelectedImage(productData.mainImageIndex || 0);
-      }
-      setIsLoading(false);
-    }
-
-    if (firestore && slug) {
-      fetchProduct();
-    }
-  }, [firestore, slug]);
-
+  };
 
   if (isLoading || !product) {
     return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
@@ -210,15 +267,22 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             <div className="bg-muted/50 p-6 rounded-lg space-y-4">
                 <div className="flex justify-between items-center">
                     <div>
-                        <p className="text-3xl font-bold">$78.50</p>
-                        <p className="text-sm text-muted-foreground">for {quantity} cards</p>
+                        {price !== null ? (
+                            <>
+                                <p className="text-3xl font-bold">₦{price.toLocaleString()}</p>
+                                <p className="text-sm text-muted-foreground">for {quantity} units</p>
+                            </>
+                        ) : (
+                             <p className="text-lg font-semibold text-muted-foreground">Select options to see price</p>
+                        )}
+
                     </div>
                     <Link href="#" className="text-sm font-medium text-primary hover:underline">
                         Bulk discounts available
                     </Link>
                 </div>
 
-                <Button size="lg" className="w-full h-12 text-lg font-semibold" onClick={() => toast({ title: "Feature coming soon!", description: "Add to cart functionality is not yet implemented."})}>
+                <Button size="lg" className="w-full h-12 text-lg font-semibold" disabled={price === null} onClick={() => toast({ title: "Feature coming soon!", description: "Add to cart functionality is not yet implemented."})}>
                     Add to Cart
                 </Button>
             </div>

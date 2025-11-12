@@ -19,7 +19,6 @@ import {
   Package,
   ChevronDown,
   Palette,
-  DollarSign,
   BarChart2,
   Activity,
   FileText,
@@ -83,7 +82,6 @@ const orderManagementItems = [
 
 const toolsItems = [
     { href: '/admin/artwork', label: 'Artwork', icon: Palette },
-    { href: '/admin/pricing-engine', label: 'Pricing Engine', icon: DollarSign },
 ];
 
 const insightsItems = [
@@ -368,3 +366,5 @@ export default function AdminApp({
     </FirebaseClientProvider>
   );
 }
+
+    
