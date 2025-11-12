@@ -76,7 +76,7 @@ export default function NewQuotePage() {
     name: 'lineItems',
   });
 
-  const watchForm = form.watch();
+  const { lineItems, discount, vatRate, delivery } = form.watch();
 
   const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0 });
   const [lineItemPrices, setLineItemPrices] = useState<number[]>([]);
@@ -122,22 +122,22 @@ export default function NewQuotePage() {
   }, []);
 
   const calculateSummary = useCallback(() => {
-    const newPrices = watchForm.lineItems.map(item => calculateLineItemPrice(item));
+    const newPrices = lineItems.map(item => calculateLineItemPrice(item));
     setLineItemPrices(newPrices);
     
-    const subtotal = watchForm.lineItems.reduce((acc, item, index) => {
+    const subtotal = lineItems.reduce((acc, item, index) => {
       return acc + (item.qty * (newPrices[index] || 0));
     }, 0);
     
-    const discountedTotal = subtotal - watchForm.discount;
-    const vat = discountedTotal * (watchForm.vatRate / 100);
-    const total = discountedTotal + vat + watchForm.delivery;
+    const discountedTotal = subtotal - discount;
+    const vat = discountedTotal * (vatRate / 100);
+    const total = discountedTotal + vat + delivery;
     setSummary({ subtotal, vat, total });
-  }, [watchForm, calculateLineItemPrice]);
+  }, [lineItems, discount, vatRate, delivery, calculateLineItemPrice]);
 
   useEffect(() => {
     calculateSummary();
-  }, [watchForm, calculateSummary]);
+  }, [lineItems, discount, vatRate, delivery, calculateSummary]);
 
 
   const handleAddProduct = () => {
@@ -304,7 +304,7 @@ export default function NewQuotePage() {
                     {item.productDetails?.details?.length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                             {item.productDetails.details.map((detail: any) => {
-                                const selectedOpt = watchForm.lineItems[index]?.options?.find(o => o.label === detail.label);
+                                const selectedOpt = lineItems[index]?.options?.find(o => o.label === detail.label);
                                 
                                 return (
                                     <div key={detail.label}>
@@ -335,7 +335,7 @@ export default function NewQuotePage() {
                     
                     <div className="flex justify-between items-center mt-4">
                          <div className="text-sm">
-                            Unit Price: ₦{(lineItemPrices[index] || 0).toFixed(2)} | Sum: ₦{((watchForm.lineItems[index]?.qty || 0) * (lineItemPrices[index] || 0)).toFixed(2)}
+                            Unit Price: ₦{(lineItemPrices[index] || 0).toFixed(2)} | Sum: ₦{((lineItems[index]?.qty || 0) * (lineItemPrices[index] || 0)).toFixed(2)}
                         </div>
                         <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
