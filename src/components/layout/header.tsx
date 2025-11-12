@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -18,27 +19,29 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-7xl items-center justify-between">
-        <div className="flex items-center">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
+      <div className="container flex h-16 max-w-7xl items-center">
+        <div className="flex-1 flex items-center justify-start">
+          <Link href="/" className="flex items-center space-x-2">
             <Logo />
             <span className="hidden font-bold font-headline sm:inline-block">PrintSwift</span>
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="hidden md:flex flex-1 items-center justify-center">
+          <div className="flex items-center space-x-6 text-sm font-medium">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="transition-colors hover:text-foreground/80 text-foreground/60"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </nav>
 
-        <div className="flex items-center justify-end space-x-2 sm:space-x-4">
+        <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
           <Button variant="ghost" asChild className="hidden lg:flex items-center space-x-2">
             <a href="tel:+2348022247567">
               <Phone className="h-4 w-4" />
