@@ -143,7 +143,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         if (!firestore || !product) return;
         
         // Prevent saving temporary blob URLs
-        if (values.imageUrls.some(url => url.startsWith('blob:'))) {
+        if (values.imageUrls.some(url => url && url.startsWith('blob:'))) {
             toast({
                 variant: 'destructive',
                 title: 'Temporary Image Preview',
@@ -246,6 +246,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
     }
 
     const isValidUrl = (url: string) => {
+        if (!url) return false;
         try {
             new URL(url);
             return url.startsWith('http');
@@ -353,7 +354,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
                                         const imageUrl = field.value;
-                                        const isBlob = imageUrl.startsWith('blob:');
+                                        const isBlob = typeof imageUrl === 'string' && imageUrl.startsWith('blob:');
                                         const finalImageUrl = isValidUrl(imageUrl) ? imageUrl : `https://picsum.photos/seed/${product?.id || 'placeholder'}-${index}/100/100`;
 
                                         return (
@@ -481,7 +482,9 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                                     <div className="space-y-2">
                                                         <Label>Dropdown Options & Pricing</Label>
                                                         <Textarea
-                                                            placeholder="Enter one value per line, e.g.,&#10;Value one&#10;Value two"
+                                                            placeholder="Enter one value per line, e.g.,
+Value one
+Value two"
                                                             defaultValue={field.value?.map(v => v.value).join('\n')}
                                                             onBlur={(e) => {
                                                                 const textValues = e.target.value.split('\n').filter(v => v.trim());
