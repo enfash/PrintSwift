@@ -1,4 +1,5 @@
 
+
 'use client';
 import { use, useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
@@ -48,6 +49,35 @@ function QuantityControl({ value, onChange }: { value: number, onChange: (value:
             </Button>
         </div>
     )
+}
+
+const renderDetailField = (detail: any) => {
+    switch (detail.type) {
+        case 'dropdown':
+            return (
+                <div key={detail.label} className="grid gap-2">
+                    <Label htmlFor={`detail-${detail.label}`}>{detail.label}</Label>
+                    <Select>
+                        <SelectTrigger id={`detail-${detail.label}`}>
+                            <SelectValue placeholder={`Select ${detail.label}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {detail.values?.map((opt: any) => <SelectItem key={opt.value} value={opt.value}>{opt.value}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+            );
+        case 'text':
+        case 'number':
+            return (
+                <div key={detail.label} className="grid gap-2">
+                    <Label htmlFor={`detail-${detail.label}`}>{detail.label}</Label>
+                    <Input id={`detail-${detail.label}`} type={detail.type} placeholder={detail.placeholder || ''} />
+                </div>
+            )
+        default:
+            return null;
+    }
 }
 
 
@@ -161,27 +191,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 <h2 className="text-2xl font-semibold">Customize Your Order</h2>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {product.details?.map((detail: any) => (
-                         <div key={detail.label} className="grid gap-2">
-                            <Label htmlFor={`detail-${detail.label}`}>{detail.label}</Label>
-                            <Select>
-                                <SelectTrigger id={`detail-${detail.label}`}>
-                                    <SelectValue placeholder={`Select ${detail.label}`} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {detail.values.map((opt: any) => <SelectItem key={opt.value} value={opt.value}>{opt.value}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    ))}
-                    <div className="grid gap-2">
-                        <Label htmlFor="width">Width (in)</Label>
-                        <Input id="width" placeholder="3.5" />
-                    </div>
-                     <div className="grid gap-2">
-                        <Label htmlFor="height">Height (in)</Label>
-                        <Input id="height" placeholder="2.0" />
-                    </div>
+                    {product.details?.map(renderDetailField)}
                 </div>
 
                  <div className="grid gap-2">
@@ -218,3 +228,5 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     </div>
   );
 }
+
+    

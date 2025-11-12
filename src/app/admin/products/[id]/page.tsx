@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -24,8 +25,10 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 
 const productDetailOptionSchema = z.object({
-  label: z.string(),
-  values: z.array(z.object({ value: z.string() })),
+  label: z.string().min(1, "Label is required."),
+  type: z.enum(["dropdown", "text", "number"]),
+  placeholder: z.string().optional(),
+  values: z.array(z.object({ value: z.string() })).optional(),
 });
 
 const productSchema = z.object({
@@ -123,7 +126,6 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                 const tempPreviewUrl = URL.createObjectURL(file);
                 appendImage(tempPreviewUrl);
             })
-            toast({ title: "Image Added", description: "This is a local preview. To save, replace it with a permanent URL using the Link tab."})
         }
     };
 
@@ -305,9 +307,6 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                     </TabsList>
                                     <TabsContent value="upload" className="pt-2">
                                         <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={imageFields.length >= 6} multiple />
-                                        <FormDescription className="text-xs mt-2">
-                                            Local previews must be replaced with a permanent URL before saving.
-                                        </FormDescription>
                                     </TabsContent>
                                      <TabsContent value="url" className="pt-2">
                                          <div className="flex gap-2">
@@ -325,52 +324,87 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                          <Card>
                             <CardHeader>
                                 <CardTitle>Customization Options</CardTitle>
-                                <CardDescription>Define dropdowns like "Paper Type" or "Finish" for customers.</CardDescription>
+                                <CardDescription>Define form fields for customers to customize the product.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {detailFields.map((field, index) => (
-                                    <div key={field.id} className="p-4 border rounded-md space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <Label>Option {index + 1}</Label>
-                                            <Button type="button" variant="ghost" size="icon" onClick={() => removeDetail(index)}>
+                                {detailFields.map((field, index) => {
+                                    const detailType = form.watch(`details.${index}.type`);
+                                    return (
+                                    <div key={field.id} className="p-4 border rounded-md space-y-4 relative">
+                                        <div className="flex justify-between items-start">
+                                            <div className="grid grid-cols-2 gap-4 flex-grow pr-10">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`details.${index}.label`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                        <FormLabel>Label</FormLabel>
+                                                        <FormControl><Input placeholder="e.g., Paper Type" {...field} /></FormControl>
+                                                        <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`details.${index}.type`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Field Type</FormLabel>
+                                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                                <SelectContent>
+                                                                    <SelectItem value="dropdown">Dropdown</SelectItem>
+                                                                    <SelectItem value="text">Text Input</SelectItem>
+                                                                    <SelectItem value="number">Number Input</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeDetail(index)}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         </div>
-                                        <FormField
-                                            control={form.control}
-                                            name={`details.${index}.label`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                <FormLabel>Label</FormLabel>
-                                                <FormControl><Input placeholder="e.g., Paper Type" {...field} /></FormControl>
-                                                <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name={`details.${index}.values`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Values</FormLabel>
-                                                    <FormControl>
-                                                        <Textarea
-                                                            placeholder="Enter one value per line, e.g.,&#10;16pt. Premium Matte&#10;14pt. Uncoated"
-                                                            value={field.value.map(v => v.value).join('\n')}
-                                                            onChange={(e) => {
-                                                                const valuesArray = e.target.value.split('\n').map(v => ({ value: v.trim() })).filter(v => v.value);
-                                                                field.onChange(valuesArray);
-                                                            }}
-                                                        />
-                                                    </FormControl>
-                                                    <FormDescription>Each line will be a separate option in the dropdown.</FormDescription>
+
+                                        { detailType === 'dropdown' ? (
+                                            <FormField
+                                                control={form.control}
+                                                name={`details.${index}.values`}
+                                                render={({ field: textAreaField }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Dropdown Options</FormLabel>
+                                                        <FormControl>
+                                                            <Textarea
+                                                                placeholder="Enter one value per line, e.g.,&#10;16pt. Premium Matte&#10;14pt. Uncoated"
+                                                                value={textAreaField.value?.map(v => v.value).join('\n') || ''}
+                                                                onChange={(e) => {
+                                                                    const valuesArray = e.target.value.split('\n').map(v => ({ value: v.trim() })).filter(v => v.value);
+                                                                    textAreaField.onChange(valuesArray);
+                                                                }}
+                                                            />
+                                                        </FormControl>
+                                                        <FormDescription>Each line will be a separate option in the dropdown.</FormDescription>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        ) : (
+                                            <FormField
+                                                control={form.control}
+                                                name={`details.${index}.placeholder`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                    <FormLabel>Placeholder</FormLabel>
+                                                    <FormControl><Input placeholder="e.g., 3.5" {...field} /></FormControl>
                                                     <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
                                     </div>
-                                ))}
-                                <Button type="button" variant="outline" onClick={() => appendDetail({ label: '', values: [] })}>
+                                )})}
+                                <Button type="button" variant="outline" onClick={() => appendDetail({ label: '', type: 'dropdown', placeholder: '', values: [] })}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Option
                                 </Button>
                             </CardContent>
@@ -436,3 +470,5 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         </Form>
     );
 }
+
+    

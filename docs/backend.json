@@ -81,6 +81,13 @@
               "label": {
                 "type": "string"
               },
+              "type": {
+                "type": "string",
+                "enum": ["dropdown", "text", "number"]
+              },
+              "placeholder": {
+                "type": "string"
+              },
               "values": {
                 "type": "array",
                 "items": {
@@ -234,10 +241,6 @@
         "company": {
           "type": "string",
           "description": "Company of the person (optional)."
-        },
-        "location": {
-          "type": "string",
-          "description": "Location of the person (e.g., 'Lagos')."
         },
         "quote": {
           "type": "string",
