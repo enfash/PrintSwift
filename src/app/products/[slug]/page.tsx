@@ -29,7 +29,8 @@ async function getProductBySlug(firestore: any, slug: string) {
     return { ...productDoc.data(), id: productDoc.id };
 }
 
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+export default function ProductDetailPage({ params: paramsProp }: { params: { slug: string } }) {
+  const params = use(paramsProp);
   const slug = params.slug;
   const firestore = useFirestore();
   const { toast } = useToast();
