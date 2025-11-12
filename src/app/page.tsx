@@ -1,3 +1,4 @@
+
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -157,7 +158,7 @@ export default function Home() {
               {featuredProducts?.map((product) => {
                 const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
                     ? product.imageUrls[product.mainImageIndex || 0]
-                    : 'https://placehold.co/600x400';
+                    : `https://picsum.photos/seed/${product.id}/600/400`;
                 return (
                   <Link key={product.id} href={`/products/${product.slug}`}>
                     <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full">
@@ -169,6 +170,7 @@ export default function Home() {
                               fill
                               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                               data-ai-hint="product image"
+                              onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}/600/400`; }}
                             />
                         </div>
                       </div>
@@ -251,5 +253,3 @@ export default function Home() {
     </>
   );
 }
-
-    

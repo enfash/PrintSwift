@@ -199,25 +199,20 @@ function ProductsComponent() {
                                 const startingPrice = calculateStartingPrice(product);
                                 const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
                                     ? product.imageUrls[product.mainImageIndex || 0]
-                                    : 'https://placehold.co/600x400';
+                                    : `https://picsum.photos/seed/${product.id}/600/400`;
                                 return (
                                     <Link key={product.id} href={`/products/${product.slug}`} className="block">
                                         <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col">
                                             <div className="overflow-hidden">
                                                 <div className="aspect-[4/3] relative">
-                                                    {mainImageUrl ? (
-                                                        <Image
-                                                            src={mainImageUrl}
-                                                            alt={product.name}
-                                                            fill
-                                                            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                                                            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                                                            <Package className="w-12 h-12 text-muted-foreground" />
-                                                        </div>
-                                                    )}
+                                                    <Image
+                                                        src={mainImageUrl}
+                                                        alt={product.name}
+                                                        fill
+                                                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                                                        onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}/600/400`; }}
+                                                    />
                                                 </div>
                                             </div>
                                             <CardContent className="p-4 flex-grow flex flex-col">

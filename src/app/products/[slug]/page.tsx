@@ -89,7 +89,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   const category = categories?.find(c => c.id === product.categoryId);
   const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
     ? product.imageUrls[selectedImage]
-    : 'https://placehold.co/600x400';
+    : `https://picsum.photos/seed/${product.id}/600/600`;
 
   return (
     <div className="bg-background">
@@ -108,12 +108,13 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           <div className="space-y-4 sticky top-24 self-start">
             <div className="aspect-square relative rounded-lg border overflow-hidden">
                 <Image
-                src={mainImageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
+                    src={mainImageUrl}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                    onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}/600/600`; }}
                 />
             </div>
              <div className="grid grid-cols-5 gap-2">
@@ -132,6 +133,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                             fill
                             className="object-cover"
                             sizes="20vw"
+                            onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}-${index}/100/100`; }}
                         />
                     </button>
                 ))}
@@ -216,5 +218,3 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     </div>
   );
 }
-
-    

@@ -120,6 +120,10 @@ const ProductsList = () => {
     const isValidUrl = (url: string) => {
         try {
             new URL(url);
+            // Additionally check if it's not a google redirect url
+            if (new URL(url).hostname.includes('google.com')) {
+                return false;
+            }
             return true;
         } catch (_) {
             return false;
@@ -202,7 +206,7 @@ const ProductsList = () => {
                                     ? product.imageUrls[product.mainImageIndex || 0] 
                                     : 'https://placehold.co/40x40';
 
-                                const mainImageUrl = isValidUrl(rawUrl) ? rawUrl : 'https://placehold.co/40x40';
+                                const mainImageUrl = isValidUrl(rawUrl) ? rawUrl : `https://picsum.photos/seed/${product.id}/40/40`;
 
                                 return (
                                 <TableRow key={product.id}>
@@ -213,6 +217,9 @@ const ProductsList = () => {
                                             height="40"
                                             src={mainImageUrl}
                                             width="40"
+                                            onError={(e) => {
+                                                e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}/40/40`;
+                                            }}
                                         />
                                     </TableCell>
                                     <TableCell className="font-medium">{product.name}</TableCell>
