@@ -1,8 +1,19 @@
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+    // Match the folder where product images are stored.
+    match /product-images/{allPaths=**} {
+
+      // Allow anyone to read files from this path.
+      // This is necessary to display product images on your public website.
+      allow read: if true;
+
+      // Allow write (create, update, delete) operations ONLY if the user
+      // is authenticated AND is an admin.
+      // This checks for the user's document in the 'roles_admin' collection in Firestore.
+      allow write: if request.auth != null && 
+                      firestore.exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
   }
 }
