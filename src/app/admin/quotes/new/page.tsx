@@ -76,12 +76,10 @@ export default function NewQuotePage() {
     name: 'lineItems',
   });
 
-  const watchLineItems = form.watch('lineItems');
-  const watchDiscount = form.watch('discount');
-  const watchVatRate = form.watch('vatRate');
-  const watchDelivery = form.watch('delivery');
+  const watchForm = form.watch();
 
   const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0 });
+  const [lineItemPrices, setLineItemPrices] = useState<number[]>([]);
 
   const calculateLineItemPrice = useCallback((item: any) => {
     if (!item.productDetails || !item.productDetails.pricing || !item.productDetails.pricing.tiers) {
@@ -124,22 +122,22 @@ export default function NewQuotePage() {
   }, []);
 
   const calculateSummary = useCallback(() => {
-    const subtotal = watchLineItems.reduce((acc, item) => {
-      const unitPrice = calculateLineItemPrice(item);
-      form.setValue(`lineItems.${watchLineItems.indexOf(item)}.unitPrice`, unitPrice, { shouldValidate: true });
-      return acc + (item.qty * unitPrice);
+    const newPrices = watchForm.lineItems.map(item => calculateLineItemPrice(item));
+    setLineItemPrices(newPrices);
+    
+    const subtotal = watchForm.lineItems.reduce((acc, item, index) => {
+      return acc + (item.qty * (newPrices[index] || 0));
     }, 0);
     
-    const discountedTotal = subtotal - watchDiscount;
-    const vat = discountedTotal * (watchVatRate / 100);
-    const total = discountedTotal + vat + watchDelivery;
+    const discountedTotal = subtotal - watchForm.discount;
+    const vat = discountedTotal * (watchForm.vatRate / 100);
+    const total = discountedTotal + vat + watchForm.delivery;
     setSummary({ subtotal, vat, total });
-  }, [watchLineItems, watchDiscount, watchVatRate, watchDelivery, calculateLineItemPrice, form]);
+  }, [watchForm, calculateLineItemPrice]);
 
   useEffect(() => {
-    const subscription = form.watch(() => calculateSummary());
-    return () => subscription.unsubscribe();
-  }, [form, calculateSummary]);
+    calculateSummary();
+  }, [watchForm, calculateSummary]);
 
 
   const handleAddProduct = () => {
@@ -152,7 +150,6 @@ export default function NewQuotePage() {
         form.setValue(`lineItems.${index}.productName`, product.name);
         form.setValue(`lineItems.${index}.productDetails`, product);
         
-        // Set default options
         const defaultOptions: {label: string, value: string}[] = [];
         if (product.details) {
             product.details.forEach((detail: any) => {
@@ -166,11 +163,8 @@ export default function NewQuotePage() {
         }
         form.setValue(`lineItems.${index}.options`, defaultOptions);
         
-        // Set quantity to first tier
         const firstTierQty = product.pricing?.tiers?.[0]?.minQty || 100;
         form.setValue(`lineItems.${index}.qty`, firstTierQty);
-        
-        calculateSummary(); // Recalculate
     }
   };
   
@@ -184,7 +178,6 @@ export default function NewQuotePage() {
         currentOptions.push({ label: optionLabel, value });
     }
     form.setValue(`lineItems.${lineIndex}.options`, currentOptions);
-    calculateSummary();
   };
   
   const showNotImplementedToast = (feature: string) => {
@@ -195,7 +188,15 @@ export default function NewQuotePage() {
   };
   
   const onSubmit = (data: QuoteFormValues) => {
-      console.log('Quote Data:', data);
+      // Before submitting, update the unitPrice in the form data
+      const finalData = {
+          ...data,
+          lineItems: data.lineItems.map((item, index) => ({
+              ...item,
+              unitPrice: lineItemPrices[index] || 0
+          }))
+      };
+      console.log('Quote Data:', finalData);
       showNotImplementedToast('Saving quote');
   }
 
@@ -303,8 +304,7 @@ export default function NewQuotePage() {
                     {item.productDetails?.details?.length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                             {item.productDetails.details.map((detail: any) => {
-                                const options = watchLineItems[index]?.options || [];
-                                const selectedOpt = options.find(o => o.label === detail.label);
+                                const selectedOpt = watchForm.lineItems[index]?.options?.find(o => o.label === detail.label);
                                 
                                 return (
                                     <div key={detail.label}>
@@ -335,7 +335,7 @@ export default function NewQuotePage() {
                     
                     <div className="flex justify-between items-center mt-4">
                          <div className="text-sm">
-                            Unit Price: ₦{watchLineItems[index].unitPrice.toFixed(2)} | Sum: ₦{(watchLineItems[index].qty * watchLineItems[index].unitPrice).toFixed(2)}
+                            Unit Price: ₦{(lineItemPrices[index] || 0).toFixed(2)} | Sum: ₦{((watchForm.lineItems[index]?.qty || 0) * (lineItemPrices[index] || 0)).toFixed(2)}
                         </div>
                         <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
