@@ -1,6 +1,7 @@
 
 'use client';
 
+import React, { useState } from 'react';
 import {
     Card,
     CardContent,
@@ -17,7 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft, ChevronRight, FileText, Upload, Download } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, FileText, Upload, Download, LoaderCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -26,35 +27,59 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-
-
-const orders = [
-    { id: '#412', customer: 'Ada Ventures', date: '2025-11-12', total: '185,500', status: 'In Production' },
-    { id: '#413', customer: 'Jide Stores', date: '2025-11-12', total: '45,000', status: 'Awaiting Pay' },
-    { id: '#414', customer: 'Lagos Tech Hub', date: '2025-11-11', total: '250,000', status: 'Delivered' },
-    { id: '#415', customer: 'The Food Place', date: '2025-11-10', total: '88,000', status: 'Ready for Dispatch' },
-];
+import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { collection, query, where, doc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
-        case 'Delivered':
-            return 'default';
+        case 'Delivered': return 'default';
         case 'In Production':
-        case 'Ready for Dispatch':
-            return 'secondary';
-        case 'Awaiting Pay':
-            return 'outline';
-        default:
-            return 'secondary';
+        case 'Ready for Dispatch': return 'secondary';
+        case 'Awaiting Pay': return 'outline';
+        default: return 'secondary';
     }
 };
 
+const productionStatuses = [
+    'Awaiting Artwork', 'In Prepress', 'Printing', 'In Production', 
+    'Finishing', 'QA', 'Ready for Dispatch', 'Dispatched', 'Delivered'
+];
+
 export default function OrdersPage() {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
+    const ordersQuery = useMemoFirebase(
+        () => firestore ? query(collection(firestore, 'quotes'), where('status', '==', 'won')) : null,
+        [firestore]
+    );
+    const { data: orders, isLoading } = useCollection<any>(ordersQuery);
+
+    const handleSelectOrder = (order: any) => {
+        setSelectedOrder(order);
+    };
+
+    const handleStatusChange = (newStatus: string) => {
+        if (!selectedOrder || !firestore) return;
+        
+        const updatedOrder = { ...selectedOrder, productionStatus: newStatus };
+        setSelectedOrder(updatedOrder);
+
+        const orderRef = doc(firestore, 'quotes', selectedOrder.id);
+        updateDocumentNonBlocking(orderRef, { productionStatus: newStatus });
+        toast({
+            title: "Order Status Updated",
+            description: `Order #${selectedOrder.id.substring(0,6)} is now "${newStatus}".`
+        });
+    };
+
     return (
         <div className="grid gap-6">
             <Card>
@@ -62,25 +87,12 @@ export default function OrdersPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle>Orders</CardTitle>
-                            <CardDescription>View and manage all customer orders.</CardDescription>
+                            <CardDescription>View and manage all active customer orders.</CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
                              <Input placeholder="Search..." className="w-64" />
-                             <Select>
-                                <SelectTrigger className="w-40">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Status</SelectItem>
-                                    <SelectItem value="in-production">In Production</SelectItem>
-                                    <SelectItem value="awaiting-pay">Awaiting Payment</SelectItem>
-                                </SelectContent>
-                             </Select>
-                             <Select>
-                                <SelectTrigger className="w-40">
-                                    <SelectValue placeholder="Date" />
-                                </SelectTrigger>
-                             </Select>
+                             <Select><SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger></Select>
+                             <Select><SelectTrigger className="w-40"><SelectValue placeholder="Date" /></SelectTrigger></Select>
                         </div>
                     </div>
                 </CardHeader>
@@ -92,40 +104,57 @@ export default function OrdersPage() {
                                 <TableHead>Customer</TableHead>
                                 <TableHead>Created</TableHead>
                                 <TableHead>Total ₦</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>Prod. Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {orders.map(order => (
-                                <TableRow key={order.id}>
-                                    <TableCell className="font-medium">{order.id}</TableCell>
-                                    <TableCell>{order.customer}</TableCell>
-                                    <TableCell>{order.date}</TableCell>
-                                    <TableCell>{order.total}</TableCell>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center">
+                                        <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : orders && orders.length > 0 ? (
+                                orders.map(order => (
+                                <TableRow key={order.id} className="cursor-pointer" onClick={() => handleSelectOrder(order)}>
+                                    <TableCell className="font-medium">#{order.id.substring(0, 6)}</TableCell>
+                                    <TableCell>{order.company || order.email}</TableCell>
+                                    <TableCell>{order.createdAt ? format(order.createdAt.toDate(), 'PPP') : 'N/A'}</TableCell>
+                                    <TableCell>{order.total.toLocaleString()}</TableCell>
                                     <TableCell>
-                                        <Badge variant={getStatusVariant(order.status)}>
-                                            {order.status}
+                                        <Badge variant={getStatusVariant(order.productionStatus || 'Awaiting Artwork')}>
+                                            {order.productionStatus || 'Awaiting Artwork'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="sm">View <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSelectOrder(order); }}>
+                                            View <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ))) : (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center">
+                                        No active orders found. Convert a "won" quote to see it here.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
                 <CardContent className="flex justify-end items-center gap-2">
                      <Button variant="outline" size="icon"><ChevronLeft className="h-4 w-4" /></Button>
-                     <span>1 / 10</span>
+                     <span>1 / {orders ? Math.ceil(orders.length / 10) : 1}</span>
                      <Button variant="outline" size="icon"><ChevronRight className="h-4 w-4" /></Button>
                 </CardContent>
             </Card>
 
             <Separator />
             
-            <h2 className="text-2xl font-bold">Order Detail (#412)</h2>
+            {selectedOrder ? (
+            <>
+            <h2 className="text-2xl font-bold">Order Detail (#{selectedOrder.id.substring(0, 6)})</h2>
             <div className="grid lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
@@ -141,18 +170,16 @@ export default function OrdersPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    <TableRow>
-                                        <TableCell>Business Cards</TableCell>
-                                        <TableCell>500</TableCell>
-                                        <TableCell className="text-xs text-muted-foreground">300gsm, Matte, RC, 4/4</TableCell>
-                                        <TableCell className="text-right">₦ 120,000</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>Roll-up Banner</TableCell>
-                                        <TableCell>2</TableCell>
-                                        <TableCell className="text-xs text-muted-foreground">85x200, Eco Solvent</TableCell>
-                                        <TableCell className="text-right">₦ 65,500</TableCell>
-                                    </TableRow>
+                                   {selectedOrder.lineItems.map((item: any, index: number) => (
+                                        <TableRow key={index}>
+                                            <TableCell>{item.productName}</TableCell>
+                                            <TableCell>{item.qty}</TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                {item.options?.map((opt: any) => `${opt.label}: ${opt.value}`).join(', ')}
+                                            </TableCell>
+                                            <TableCell className="text-right">₦ {(item.unitPrice * item.qty).toLocaleString()}</TableCell>
+                                        </TableRow>
+                                   ))}
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -162,17 +189,12 @@ export default function OrdersPage() {
                         <CardContent className="space-y-4">
                              <div>
                                 <h4 className="font-medium mb-2">Production Status</h4>
-                                <Select defaultValue="in-production">
+                                <Select value={selectedOrder.productionStatus || 'Awaiting Artwork'} onValueChange={handleStatusChange}>
                                     <SelectTrigger><SelectValue/></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="awaiting-artwork">Awaiting Artwork</SelectItem>
-                                        <SelectItem value="in-prepress">In Prepress</SelectItem>
-                                        <SelectItem value="printing">Printing</SelectItem>
-                                        <SelectItem value="in-production">In Production</SelectItem>
-                                        <SelectItem value="qa">QA</SelectItem>
-                                        <SelectItem value="ready">Ready for Dispatch</SelectItem>
-                                        <SelectItem value="dispatched">Dispatched</SelectItem>
-                                        <SelectItem value="delivered">Delivered</SelectItem>
+                                        {productionStatuses.map(status => (
+                                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                              </div>
@@ -186,8 +208,8 @@ export default function OrdersPage() {
                      <Card>
                         <CardHeader><CardTitle>Notes</CardTitle></CardHeader>
                         <CardContent className="grid sm:grid-cols-2 gap-4">
-                            <Textarea placeholder="Internal notes..." />
-                            <Textarea placeholder="Customer notes..." />
+                            <Textarea placeholder="Internal notes..." defaultValue={selectedOrder.notesInternal} />
+                            <Textarea placeholder="Customer notes..." defaultValue={selectedOrder.notesCustomer} />
                         </CardContent>
                          <CardContent className="flex justify-end pt-0">
                             <Button variant="outline">Save Notes</Button>
@@ -198,16 +220,16 @@ export default function OrdersPage() {
                     <Card>
                          <CardHeader><CardTitle>Timeline</CardTitle></CardHeader>
                          <CardContent className="space-y-4 text-sm">
-                            <p>• Order Placed <span className="text-muted-foreground">09:18</span></p>
-                            <p>• Payment Confirmed <span className="text-muted-foreground">09:25</span></p>
-                            <p>• In Production <span className="text-muted-foreground">11:00</span></p>
+                            <p>• Quote Won <span className="text-muted-foreground">{selectedOrder.updatedAt ? format(selectedOrder.updatedAt.toDate(), 'p') : ''}</span></p>
+                            <p>• Order Created <span className="text-muted-foreground">{selectedOrder.createdAt ? format(selectedOrder.createdAt.toDate(), 'p') : ''}</span></p>
                          </CardContent>
                     </Card>
                      <Card>
                         <CardHeader><CardTitle>Shipping & Billing</CardTitle></CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p className="font-medium">Ada Ventures</p>
-                            <p className="text-muted-foreground">123 Tech Road, Yaba, Lagos</p>
+                            <p className="font-medium">{selectedOrder.company}</p>
+                            <p className="text-muted-foreground">{selectedOrder.email}</p>
+                             <p className="text-muted-foreground">{selectedOrder.phone}</p>
                             <Separator className="my-4" />
                             <div className="flex items-center justify-between">
                                 <span className="font-medium">Delivery:</span>
@@ -230,8 +252,8 @@ export default function OrdersPage() {
                      <Card>
                         <CardHeader><CardTitle>Payments</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex justify-between text-sm"><span>Paid:</span> <span className="font-medium">₦123,250</span></div>
-                            <div className="flex justify-between text-sm"><span>Balance:</span> <span className="font-medium">₦62,250</span></div>
+                            <div className="flex justify-between text-sm"><span>Total:</span> <span className="font-medium">₦{selectedOrder.total.toLocaleString()}</span></div>
+                            <div className="flex justify-between text-sm"><span>Paid:</span> <span className="font-medium">₦0</span></div>
                             <Button className="w-full">Record Payment</Button>
                         </CardContent>
                     </Card>
@@ -241,12 +263,19 @@ export default function OrdersPage() {
                              <Button variant="secondary">Email Update</Button>
                              <Button variant="secondary">Issue Invoice</Button>
                              <Button variant="destructive">Refund</Button>
-                             <Button variant="destructive" >Cancel</Button>
+                             <Button variant="destructive" >Cancel Order</Button>
                         </CardContent>
                     </Card>
                 </div>
             </div>
+            </>
+            ) : (
+                 <Card>
+                    <CardContent className="py-24 text-center text-muted-foreground">
+                        <p>Select an order from the table above to see its details.</p>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
-
