@@ -133,6 +133,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   }, []);
 
   const calculateSummary = useCallback(() => {
+    if (!lineItems) return; // Add this guard clause
     const newSubtotal = lineItems.reduce((acc, item) => {
       const price = item.unitPrice || calculateLineItemPrice(item) || 0;
       return acc + (item.qty * price);
