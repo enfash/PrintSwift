@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UploadCloud, LoaderCircle, Image as ImageIcon, Link2, X, PlusCircle, Trash2 } from 'lucide-react';
+import { LoaderCircle, Link2, X, PlusCircle, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
@@ -140,17 +140,6 @@ export default function ProductFormPage() {
         if (!firestore) return;
         setIsSubmitting(true);
         
-        // Prevent saving temporary blob URLs
-        if (values.imageUrls.some(url => url.startsWith('blob:'))) {
-            toast({
-                variant: 'destructive',
-                title: 'Temporary Image Preview',
-                description: 'Please use the "Link" tab to add permanent image URLs before saving.',
-            });
-            setIsSubmitting(false);
-            return;
-        }
-
         const productsCollectionRef = collection(firestore, 'products');
         const newProductRef = doc(productsCollectionRef);
 
@@ -172,20 +161,6 @@ export default function ProductFormPage() {
         }
     };
     
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (files) {
-            if (imageFields.length + files.length > 6) {
-                toast({ variant: 'destructive', title: "Too many images", description: "You can upload a maximum of 6 images."});
-                return;
-            }
-            Array.from(files).forEach(file => {
-                const tempPreviewUrl = URL.createObjectURL(file);
-                appendImage(tempPreviewUrl);
-                toast({ title: 'Image Preview Added', description: 'This is a temporary preview. Use the Link tab to add a permanent URL before saving.' });
-            })
-        }
-    };
 
     const handleAddImageUrl = (url: string) => {
         if (imageFields.length >= 6) {
@@ -297,13 +272,12 @@ export default function ProductFormPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Media</CardTitle>
-                                <CardDescription>Manage product images (min 1, max 6).</CardDescription>
+                                <CardDescription>Add up to 6 image URLs. Images must be hosted online first.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
                                          const imageUrl = field.value;
-                                         const isBlob = imageUrl.startsWith('blob:');
                                          const finalImageUrl = isValidUrl(imageUrl) ? imageUrl : `https://picsum.photos/seed/placeholder-${index}/100/100`;
 
                                         return (
@@ -315,44 +289,27 @@ export default function ProductFormPage() {
                                                 className="object-cover rounded-md"
                                                 onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/fallback-${index}/100/100`; }}
                                             />
-                                            {isBlob && (
-                                                <div className="absolute inset-0 bg-yellow-500/30 flex items-center justify-center text-center p-1">
-                                                    <p className="text-xs font-bold text-white">PREVIEW</p>
-                                                </div>
-                                            )}
-                                            {mainImageIndex === index && !isBlob && (<Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>)}
+                                            {mainImageIndex === index && (<Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>)}
                                             <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeImage(index); }}>
                                                 <X className="h-4 w-4" />
                                             </Button>
                                         </div>
                                         );
                                      })}
-                                     {imageFields.length === 0 && (
-                                         <div className="col-span-full aspect-video relative rounded-md border bg-muted flex flex-col items-center justify-center text-muted-foreground">
-                                            <ImageIcon className="w-12 h-12" />
-                                            <p className="text-sm mt-2">No images added</p>
-                                        </div>
-                                     )}
                                 </div>
                                 <FormField control={form.control} name="imageUrls" render={() => (<FormItem><FormMessage /></FormItem>)}/>
-                                <Tabs defaultValue="url">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload (Preview)</TabsTrigger>
-                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Add URL</TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="upload" className="pt-2">
-                                        <Input type="file" onChange={handleFileUpload} accept="image/*" disabled={imageFields.length >= 6} multiple />
-                                        <FormDescription className="text-xs mt-2">
-                                            Upload for a temporary preview. You must add a permanent URL from the 'Add URL' tab to save the image.
-                                        </FormDescription>
-                                    </TabsContent>
-                                     <TabsContent value="url" className="pt-2">
-                                         <div className="flex gap-2">
-                                            <Input id="imageUrlInput" placeholder="https://example.com/image.png" disabled={imageFields.length >= 6}/>
-                                            <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
-                                         </div>
-                                    </TabsContent>
-                                </Tabs>
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor="imageUrlInput">Add Image URL</Label>
+                                     <div className="flex gap-2">
+                                        <Input id="imageUrlInput" placeholder="https://example.com/image.png" disabled={imageFields.length >= 6}/>
+                                        <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
+                                     </div>
+                                     <FormDescription>
+                                        Copy and paste a link to an image hosted online.
+                                     </FormDescription>
+                                </div>
+
                             </CardContent>
                         </Card>
                          <Card>
