@@ -26,7 +26,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoaderCircle, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   useCollection,
@@ -58,6 +58,16 @@ function QuoteForm() {
   const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
 
+  const uniqueProducts = useMemo(() => {
+    if (!products) return [];
+    const seen = new Set();
+    return products.filter(p => {
+        const duplicate = seen.has(p.id);
+        seen.add(p.id);
+        return !duplicate;
+    });
+  }, [products]);
+
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState('');
@@ -75,14 +85,14 @@ function QuoteForm() {
   });
   
   useEffect(() => {
-    if (productNameQuery && products) {
-        const product = products.find(p => p.name === productNameQuery);
+    if (productNameQuery && uniqueProducts) {
+        const product = uniqueProducts.find(p => p.name === productNameQuery);
         if (product) {
             form.setValue('productId', product.id);
             form.setValue('productName', product.name);
         }
     }
-  }, [productNameQuery, products, form]);
+  }, [productNameQuery, uniqueProducts, form]);
 
   async function onSubmit(values: z.infer<typeof quoteFormSchema>) {
     if (!firestore) {
@@ -96,7 +106,7 @@ function QuoteForm() {
 
     setIsSubmitting(true);
     const quoteRequestsRef = collection(firestore, 'quote_requests');
-    const selectedProduct = products?.find(p => p.id === values.productId);
+    const selectedProduct = uniqueProducts?.find(p => p.id === values.productId);
 
     try {
         await addDocumentNonBlocking(quoteRequestsRef, {
@@ -209,7 +219,7 @@ function QuoteForm() {
                       <Select
                         onValueChange={(value) => {
                           field.onChange(value);
-                          const productName = products?.find(p => p.id === value)?.name || 'Other';
+                          const productName = uniqueProducts?.find(p => p.id === value)?.name || 'Other';
                           form.setValue('productName', productName);
                         }}
                         value={field.value}
@@ -220,7 +230,7 @@ function QuoteForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {products?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                          {uniqueProducts?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                           <SelectItem value="other">Other (please specify in details)</SelectItem>
                         </SelectContent>
                       </Select>
@@ -323,5 +333,3 @@ export default function QuotePage() {
         </Suspense>
     )
 }
-
-    
