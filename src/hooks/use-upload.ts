@@ -34,12 +34,14 @@ export function useUpload(onUploadComplete?: (url: string) => void) {
         progress: 0,
       }));
 
-      // Add new uploads to the state
+      // Add new uploads to the state immediately to show them in the UI
       setUploads((prev) => [...prev, ...newUploadsData]);
 
       // Start each upload
       newUploadsData.forEach((upload) => {
-        const storageRef = ref(storage, `product-images/${upload.id}-${upload.file.name}`);
+        // Sanitize file name for URL safety
+        const sanitizedFileName = encodeURIComponent(upload.file.name);
+        const storageRef = ref(storage, `product-images/${upload.id}-${sanitizedFileName}`);
         const uploadTask = uploadBytesResumable(storageRef, upload.file);
 
         uploadTask.on(
@@ -56,8 +58,9 @@ export function useUpload(onUploadComplete?: (url: string) => void) {
               prev.map((u) => (u.id === upload.id ? { ...u, status: 'error', error } : u))
             );
           },
-          () => {
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          async () => { // Make this function async to use await
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               setUploads((prev) =>
                 prev.map((u) =>
                   u.id === upload.id
@@ -68,7 +71,12 @@ export function useUpload(onUploadComplete?: (url: string) => void) {
               if (onUploadComplete) {
                 onUploadComplete(downloadURL);
               }
-            });
+            } catch (error) {
+              console.error("Failed to get download URL:", error);
+               setUploads((prev) =>
+                prev.map((u) => (u.id === upload.id ? { ...u, status: 'error', error: error as Error } : u))
+              );
+            }
           }
         );
       });
