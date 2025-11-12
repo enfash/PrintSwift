@@ -4,21 +4,32 @@
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, UploadCloud } from 'lucide-react';
-import { useUpload } from '@/hooks/use-upload';
+import { PlusCircle, UploadCloud, LoaderCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { getStorage, ref, listAll, getDownloadURL } from 'firebase/storage';
-import { useFirebaseApp } from '@/firebase/provider';
+import { getStorage, ref, listAll, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
+import { useFirebaseApp, useStorage } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+
+type UploadStatus = {
+    id: string;
+    file: File;
+    progress: number;
+    status: 'uploading' | 'success' | 'error';
+    error?: string;
+};
+
 
 export default function MediaPage() {
-    const firebaseApp = useFirebaseApp();
+    const storage = useStorage();
+    const { toast } = useToast();
     const [mediaItems, setMediaItems] = useState<{ id: string, url: string, name: string }[]>([]);
+    const [uploads, setUploads] = useState<UploadStatus[]>([]);
+
 
     const fetchMedia = useCallback(async () => {
-        if (!firebaseApp) return;
-        const storage = getStorage(firebaseApp);
+        if (!storage) return;
         const listRef = ref(storage, 'product-images');
         try {
             const res = await listAll(listRef);
@@ -30,19 +41,60 @@ export default function MediaPage() {
         } catch (error) {
             console.error("Failed to fetch media:", error);
         }
-    }, [firebaseApp]);
+    }, [storage]);
 
-    const { uploads, uploadFiles } = useUpload(fetchMedia); // Pass fetchMedia as a callback
+
+    useEffect(() => {
+        fetchMedia();
+    }, [fetchMedia]);
+
+     const uploadFiles = useCallback((files: File[]) => {
+        if (!storage) {
+            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Storage service not available.' });
+            return;
+        }
+
+        const newUploads: UploadStatus[] = files.map(file => ({
+            id: `${file.name}-${Date.now()}`,
+            file,
+            progress: 0,
+            status: 'uploading',
+        }));
+
+        setUploads(prev => [...prev, ...newUploads]);
+
+        newUploads.forEach(upload => {
+            const storageRef = ref(storage, `product-images/${upload.file.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, upload.file);
+
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploads(prev => prev.map(u => u.id === upload.id ? { ...u, progress } : u));
+                },
+                (error) => {
+                    console.error('Upload error:', error);
+                    setUploads(prev => prev.map(u => u.id === upload.id ? { ...u, status: 'error', error: error.message } : u));
+                    toast({ variant: 'destructive', title: `Upload Failed: ${upload.file.name}`, description: error.message });
+                },
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then(() => {
+                        setUploads(prev => prev.map(u => u.id === upload.id ? { ...u, status: 'success', progress: 100 } : u));
+                        // No need to show a toast for every success if there's a visual cue.
+                        fetchMedia(); // Refresh the media library after successful upload
+                    });
+                }
+            );
+        });
+
+    }, [storage, toast, fetchMedia]);
+
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         uploadFiles(acceptedFiles);
     }, [uploadFiles]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
-
-    useEffect(() => {
-        fetchMedia();
-    }, [fetchMedia]);
 
     const allUploadsFinished = uploads.every(u => u.status === 'success' || u.status === 'error');
 
