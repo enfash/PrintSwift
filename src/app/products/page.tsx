@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
+import { getSafeImageUrl } from '@/lib/utils';
 
 function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
@@ -197,9 +198,11 @@ function ProductsComponent() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredAndSortedProducts.map((product) => {
                                 const startingPrice = calculateStartingPrice(product);
-                                const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
+                                const rawUrl = product.imageUrls && product.imageUrls.length > 0
                                     ? product.imageUrls[product.mainImageIndex || 0]
-                                    : `https://picsum.photos/seed/${product.id}/600/400`;
+                                    : null;
+                                const mainImageUrl = getSafeImageUrl(rawUrl, product.id);
+
                                 return (
                                     <Link key={product.id} href={`/products/${product.slug}`} className="block">
                                         <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col">
@@ -211,7 +214,6 @@ function ProductsComponent() {
                                                         fill
                                                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                                                         sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                                                        onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}/600/400`; }}
                                                     />
                                                 </div>
                                             </div>

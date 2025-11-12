@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { useUpload } from '@/hooks/use-upload';
+import { getSafeImageUrl } from '@/lib/utils';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -253,17 +254,6 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         return <div className="flex h-96 items-center justify-center"><p>Product not found.</p></div>;
     }
 
-    const isValidUrl = (url: string) => {
-        if (!url) return false;
-        try {
-            new URL(url);
-            return url.startsWith('http');
-        } catch (_) {
-            return false;
-        }
-    }
-
-
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -361,9 +351,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
-                                        const imageUrl = field.value;
-                                        if (!imageUrl) return null;
-                                        const finalImageUrl = isValidUrl(imageUrl) ? imageUrl : `https://picsum.photos/seed/${product?.id || 'placeholder'}-${index}/100/100`;
+                                        const finalImageUrl = getSafeImageUrl(field.value, `${product?.id}-${index}`);
 
                                         return (
                                             <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
@@ -372,7 +360,6 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                                     alt={`Product image ${index + 1}`}
                                                     fill
                                                     className="object-cover rounded-md"
-                                                    onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product?.id || 'fallback'}-${index}/100/100`; }}
                                                 />
                                                 {mainImageIndex === index && (
                                                     <Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>

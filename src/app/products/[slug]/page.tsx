@@ -13,7 +13,7 @@ import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn, getSafeImageUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Counter } from '@/components/ui/counter';
 
@@ -197,18 +197,10 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   const category = categories?.find(c => c.id === product.categoryId);
   const minQty = getMinQuantity();
 
-  const isValidUrl = (url: string) => {
-    try {
-        new URL(url);
-        return url.startsWith('http');
-    } catch (_) {
-        return false;
-    }
-  }
-
-  const mainImageUrl = product.imageUrls && product.imageUrls.length > 0 && isValidUrl(product.imageUrls[selectedImage])
-    ? product.imageUrls[selectedImage]
-    : `https://picsum.photos/seed/${product.id}/600/600`;
+  const mainImageUrl = getSafeImageUrl(
+    product.imageUrls?.[selectedImage],
+    `${product.id}-${selectedImage}`
+  );
 
   return (
     <div className="bg-background">
@@ -233,12 +225,11 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 50vw"
                     priority
-                    onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}/600/600`; }}
                 />
             </div>
              <div className="grid grid-cols-5 gap-2">
                 {product.imageUrls?.map((url: string, index: number) => {
-                    const thumbnailUrl = isValidUrl(url) ? url : `https://picsum.photos/seed/${product.id}-${index}/100/100`;
+                    const thumbnailUrl = getSafeImageUrl(url, `${product.id}-${index}`);
                     return (
                         <button
                             key={index}
@@ -254,7 +245,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                                 fill
                                 className="object-cover"
                                 sizes="20vw"
-                                onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}-${index}/100/100`; }}
                             />
                         </button>
                     )

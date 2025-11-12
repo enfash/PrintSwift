@@ -46,6 +46,7 @@ import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
+import { getSafeImageUrl } from '@/lib/utils';
 
 const ProductsList = () => {
     const firestore = useFirestore();
@@ -155,16 +156,6 @@ const ProductsList = () => {
 
     if (error) {
         return <p>Error: {error.message}</p>;
-    }
-    
-    const isValidUrl = (url: string) => {
-        if (!url) return false;
-        try {
-            new URL(url);
-            return url.startsWith('http');
-        } catch (_) {
-            return false;
-        }
     }
 
     return (
@@ -286,9 +277,9 @@ const ProductsList = () => {
                             ) : filteredAndSortedProducts && filteredAndSortedProducts.length > 0 ? filteredAndSortedProducts.map(product => {
                                 const rawUrl = product.imageUrls && product.imageUrls.length > 0 
                                     ? product.imageUrls[product.mainImageIndex || 0] 
-                                    : '';
+                                    : null;
 
-                                const mainImageUrl = isValidUrl(rawUrl) ? rawUrl : `https://picsum.photos/seed/${product.id}/40/40`;
+                                const mainImageUrl = getSafeImageUrl(rawUrl, product.id);
 
                                 return (
                                 <TableRow key={product.id} data-state={selectedProducts.includes(product.id) ? "selected" : ""}>
@@ -306,9 +297,6 @@ const ProductsList = () => {
                                             height="40"
                                             src={mainImageUrl}
                                             width="40"
-                                            onError={(e) => {
-                                                e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}/40/40`;
-                                            }}
                                         />
                                     </TableCell>
                                     <TableCell className="font-medium">{product.name}</TableCell>
@@ -396,5 +384,3 @@ export default function ProductsPage() {
 
     return <ProductsList />;
 }
-
-    

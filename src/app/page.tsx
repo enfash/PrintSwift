@@ -21,7 +21,7 @@ import {
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
-import { cn } from '@/lib/utils';
+import { cn, getSafeImageUrl } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const categoryIcons: { [key: string]: React.ReactElement } = {
@@ -156,9 +156,11 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {featuredProducts?.map((product) => {
-                const mainImageUrl = product.imageUrls && product.imageUrls.length > 0
+                const rawUrl = product.imageUrls && product.imageUrls.length > 0
                     ? product.imageUrls[product.mainImageIndex || 0]
-                    : `https://picsum.photos/seed/${product.id}/600/400`;
+                    : null;
+                const mainImageUrl = getSafeImageUrl(rawUrl, product.id);
+
                 return (
                   <Link key={product.id} href={`/products/${product.slug}`}>
                     <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full">
@@ -170,7 +172,6 @@ export default function Home() {
                               fill
                               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                               data-ai-hint="product image"
-                              onError={(e) => { e.currentTarget.srcset = `https://picsum.photos/seed/${product.id}/600/400`; }}
                             />
                         </div>
                       </div>

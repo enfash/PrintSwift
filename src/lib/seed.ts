@@ -15,7 +15,7 @@ const categories = [
 // Sample data for products
 const products = [
   // Marketing & Business Prints
-  { name: 'Business Cards', categoryId: 'marketing-prints', featured: true, pricing: { baseCost: 50, tax: 7.5, addons: [], tiers: [ { qty: 100, setup: 10, unitCost: 0.5, margin: 40 }, { qty: 500, setup: 10, unitCost: 0.4, margin: 45 }, { qty: 1000, setup: 10, unitCost: 0.3, margin: 50 } ] } },
+  { name: 'Business Cards', categoryId: 'marketing-prints', featured: true, pricing: { baseCost: 50, tax: 7.5, addons: [], tiers: [ { minQty: 100, setup: 10, unitCost: 0.5, margin: 40 }, { minQty: 500, setup: 10, unitCost: 0.4, margin: 45 }, { minQty: 1000, setup: 10, unitCost: 0.3, margin: 50 } ] } },
   { name: 'A5 Flyers', categoryId: 'marketing-prints', featured: true },
   { name: 'Posters (A2/A3)', categoryId: 'marketing-prints' },
   { name: 'Presentation Folders', categoryId: 'marketing-prints' },
@@ -28,7 +28,7 @@ const products = [
   // Packaging
   { name: 'Product Labels', categoryId: 'packaging' },
   { name: 'Paper Bags', categoryId: 'packaging' },
-  { name: 'Food Boxes', categoryId: 'packaging', pricing: { baseCost: 20, tax: 7.5, addons: [], tiers: [ { qty: 250, setup: 15, unitCost: 0.8, margin: 35 }, { qty: 1000, setup: 15, unitCost: 0.6, margin: 40 } ] } },
+  { name: 'Food Boxes', categoryId: 'packaging', pricing: { baseCost: 20, tax: 7.5, addons: [], tiers: [ { minQty: 250, setup: 15, unitCost: 0.8, margin: 35 }, { minQty: 1000, setup: 15, unitCost: 0.6, margin: 40 } ] } },
   { name: 'Product Boxes', categoryId: 'packaging' },
   // Apparel
   { name: 'Custom T-Shirts', categoryId: 'apparel', featured: true },
