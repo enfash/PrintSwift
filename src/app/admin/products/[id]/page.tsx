@@ -127,8 +127,8 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
 
         try {
             const fileRef = storageRef(storage, `product-images/${productId}/${file.name}-${Date.now()}`);
-            const snapshot = await uploadBytes(fileRef, file);
-            const downloadURL = await getDownloadURL(snapshot.ref);
+            await uploadBytes(fileRef, file);
+            const downloadURL = await getDownloadURL(fileRef);
             appendImage(downloadURL);
             toast({ title: 'Upload Successful', description: 'Image has been added to the gallery.' });
         } catch (error) {
@@ -136,7 +136,6 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
             toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the image. Please try again.' });
         } finally {
             setIsUploading(false);
-            // Reset the input so the same file can be selected again
             event.target.value = '';
         }
     };

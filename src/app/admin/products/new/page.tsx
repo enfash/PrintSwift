@@ -133,8 +133,8 @@ export default function ProductFormPage() {
 
         try {
             const fileRef = storageRef(storage, `product-images/${productId}/${file.name}-${Date.now()}`);
-            const snapshot = await uploadBytes(fileRef, file);
-            const downloadURL = await getDownloadURL(snapshot.ref);
+            await uploadBytes(fileRef, file);
+            const downloadURL = await getDownloadURL(fileRef);
             appendImage(downloadURL);
             toast({ title: 'Upload Successful', description: 'Image has been added to the gallery.' });
         } catch (error) {
