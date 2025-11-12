@@ -22,7 +22,7 @@ const promoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
   description: z.string().min(10, 'Description is too short.'),
   ctaText: z.string().min(2, 'CTA text is required.'),
-  ctaLink: z.string().url('Please enter a valid URL.'),
+  ctaLink: z.string().min(1, 'Please enter a link.'),
   imageUrl: z.string().url('Please enter a valid image URL.').optional().or(z.literal('')),
   placement: z.enum(['popup', 'top-banner']).default('popup'),
   active: z.boolean().default(false),
@@ -126,7 +126,7 @@ export default function NewPromoPage() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Button Link</FormLabel>
-                                        <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                                        <FormControl><Input placeholder="/products/your-product" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
