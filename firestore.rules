@@ -40,7 +40,8 @@ service cloud.firestore {
         allow read: if isAdmin() || resource.data.active == true;
     }
     match /promos {
-      allow list: if true; // Allow public listing to find active promo
+      // Allow admins to list everything, but public users can only list *active* promos.
+      allow list: if isAdmin() || request.query.where.get("active", false) == true;
     }
 
     // --- Other Collections ---
@@ -51,7 +52,8 @@ service cloud.firestore {
       allow read: if isAdmin() || resource.data.visible == true;
     }
     match /testimonials {
-      allow list: if isAdmin();
+      // Public users can only list testimonials that are marked as visible.
+      allow list: if isAdmin() || request.query.where.get("visible", false) == true;
     }
 
     // Quote Requests (From Public Form)
@@ -76,5 +78,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
