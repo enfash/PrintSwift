@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const PROMO_SEEN_KEY = 'promo_seen_session';
 
@@ -21,23 +21,17 @@ export default function PromoPopup() {
         return query(
             collection(firestore, 'promos'),
             where('active', '==', true),
-            where('placement', '==', 'popup'),
-            limit(1)
+            where('placement', '==', 'popup')
         );
     }, [firestore]);
     
     const { data: promos, isLoading } = useCollection<any>(activePromoQuery);
     
-    // Filter for date validity on the client-side after fetching active promos
     const validPromos = promos?.filter(p => {
         const now = new Date();
         const startDate = p.startDate?.toDate();
         const endDate = p.endDate?.toDate();
         
-        // Promo is valid if:
-        // 1. Start date is not set OR start date is in the past
-        // AND
-        // 2. End date is not set OR end date is in the future
         const isStarted = !startDate || startDate <= now;
         const isNotExpired = !endDate || endDate >= now;
         
@@ -55,7 +49,6 @@ export default function PromoPopup() {
             const promoKey = `${PROMO_SEEN_KEY}_${activePromo.id}`;
             const hasSeenPromo = sessionStorage.getItem(promoKey);
             if (!hasSeenPromo) {
-                // Delay showing the popup slightly
                 const timer = setTimeout(() => {
                     setIsOpen(true);
                     sessionStorage.setItem(promoKey, 'true');
@@ -64,7 +57,6 @@ export default function PromoPopup() {
             }
         } catch (error) {
             console.warn('Could not access sessionStorage for promo popup.');
-            // Fallback for environments without sessionStorage: just show it after a delay.
             const timer = setTimeout(() => {
                  setIsOpen(true);
             }, 2000);
@@ -91,8 +83,10 @@ export default function PromoPopup() {
                          </div>
                     )}
                     <div className="p-8 text-center md:text-left">
-                        <h2 className="text-2xl font-bold font-headline mb-2">{activePromo.title}</h2>
-                        <p className="text-muted-foreground mb-6">{activePromo.description}</p>
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl font-bold font-headline mb-2">{activePromo.title}</DialogTitle>
+                          <DialogDescription className="text-muted-foreground mb-6">{activePromo.description}</DialogDescription>
+                        </DialogHeader>
                         <Button asChild size="lg" className="w-full sm:w-auto" onClick={() => setIsOpen(false)}>
                             <Link href={activePromo.ctaLink}>{activePromo.ctaText}</Link>
                         </Button>
