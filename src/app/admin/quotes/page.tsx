@@ -46,17 +46,16 @@ import { format } from 'date-fns';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
-        case 'Approved':
-        case 'Won':
+        case 'won':
             return 'default';
-        case 'Sent':
+        case 'sent':
             return 'secondary';
-        case 'Pending':
-        case 'Draft':
+        case 'draft':
+            return 'outline';
+        case 'lost':
+            return 'destructive';
         default:
             return 'outline';
-        case 'Lost':
-            return 'destructive';
     }
 };
 
@@ -64,23 +63,23 @@ export default function QuotesPage() {
     const router = useRouter();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const quotesRef = useMemoFirebase(() => firestore ? collection(firestore, 'quote_requests') : null, [firestore]);
+    const quotesRef = useMemoFirebase(() => firestore ? collection(firestore, 'quotes') : null, [firestore]);
     const { data: quotes, isLoading } = useCollection<any>(quotesRef);
 
     const handleDelete = (quoteId: string) => {
         if (!firestore) return;
-        const quoteDocRef = doc(firestore, 'quote_requests', quoteId);
+        const quoteDocRef = doc(firestore, 'quotes', quoteId);
         deleteDocumentNonBlocking(quoteDocRef);
         toast({
-            title: 'Quote Request Deleted',
-            description: 'The quote request has been successfully deleted.',
+            title: 'Quote Deleted',
+            description: 'The quote has been successfully deleted.',
         });
     }
 
     return (
         <>
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">Quote Requests</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Quotes</h1>
                 <Button asChild>
                     <Link href="/admin/quotes/new">
                         <PlusCircle className="mr-2 h-4 w-4" /> Create New Quote
@@ -89,16 +88,16 @@ export default function QuotesPage() {
             </div>
             <Card className="mt-6">
                 <CardHeader>
-                    <CardTitle>All Quote Requests</CardTitle>
-                    <CardDescription>Review and manage customer quote inquiries.</CardDescription>
+                    <CardTitle>All Quotes</CardTitle>
+                    <CardDescription>Manage all admin-generated quotes.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Customer</TableHead>
-                                <TableHead>Product</TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead>Total</TableHead>
+                                <TableHead>Date Created</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>
                                     <span className="sr-only">Actions</span>
@@ -114,14 +113,14 @@ export default function QuotesPage() {
                                 </TableRow>
                             ) : quotes && quotes.length > 0 ? quotes.map(quote => (
                                 <TableRow key={quote.id}>
-                                    <TableCell className="font-medium">{quote.name}</TableCell>
-                                    <TableCell>{quote.productName}</TableCell>
+                                    <TableCell className="font-medium">{quote.company || quote.email}</TableCell>
+                                    <TableCell>₦{quote.total?.toLocaleString() || '0'}</TableCell>
                                     <TableCell>
-                                        {quote.submissionDate ? format(quote.submissionDate.toDate(), 'PPP') : 'N/A'}
+                                        {quote.createdAt ? format(quote.createdAt.toDate(), 'PPP') : 'N/A'}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={getStatusVariant(quote.status || 'Pending')}>
-                                            {quote.status || 'Pending'}
+                                        <Badge variant={getStatusVariant(quote.status || 'draft')} className="capitalize">
+                                            {quote.status || 'draft'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -135,8 +134,8 @@ export default function QuotesPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuItem onClick={() => router.push('/admin/quotes/new')}>
-                                                        View Details
+                                                    <DropdownMenuItem onClick={() => toast({ title: 'Coming soon', description: 'Editing quotes will be implemented soon.' })}>
+                                                        View/Edit
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem>Convert to Order</DropdownMenuItem>
                                                     <AlertDialogTrigger asChild>
@@ -148,7 +147,7 @@ export default function QuotesPage() {
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This action cannot be undone. This will permanently delete this quote request.
+                                                        This action cannot be undone. This will permanently delete this quote.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
@@ -164,7 +163,7 @@ export default function QuotesPage() {
                             )) : (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-24 text-center">
-                                        No quote requests found.
+                                        No quotes found. Create one to get started.
                                     </TableCell>
                                 </TableRow>
                             )}
