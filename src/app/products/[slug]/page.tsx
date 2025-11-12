@@ -52,13 +52,13 @@ function QuantityControl({ value, onChange }: { value: number, onChange: (value:
 }
 
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const { slug } = use(params);
+  const slug = use(params).slug;
   const firestore = useFirestore();
   const { toast } = useToast();
   const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(500);
+  const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [price, setPrice] = useState<number | null>(null);
 
