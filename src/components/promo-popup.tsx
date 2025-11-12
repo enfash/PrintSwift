@@ -5,10 +5,9 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { collection, query, where, limit, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { LoaderCircle } from 'lucide-react';
 
 const PROMO_SEEN_KEY = 'promo_seen_session';
 
@@ -16,19 +15,28 @@ export default function PromoPopup() {
     const [isOpen, setIsOpen] = useState(false);
     const firestore = useFirestore();
 
-    const activePromoQuery = useMemoFirebase(() => 
-        firestore 
-        ? query(
-            collection(firestore, 'promos'), 
-            where('active', '==', true), 
-            where('placement', '==', 'popup'), 
+    const activePromoQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        
+        const now = Timestamp.now();
+        
+        return query(
+            collection(firestore, 'promos'),
+            where('active', '==', true),
+            where('placement', '==', 'popup'),
+            where('startDate', '<=', now),
             limit(1)
-          ) 
-        : null, 
-    [firestore]);
+        );
+    }, [firestore]);
     
     const { data: promos, isLoading } = useCollection<any>(activePromoQuery);
-    const activePromo = promos && promos.length > 0 ? promos[0] : null;
+    
+    const validPromos = promos?.filter(p => {
+        const endDate = p.endDate?.toDate();
+        return !endDate || endDate >= new Date();
+    });
+
+    const activePromo = validPromos && validPromos.length > 0 ? validPromos[0] : null;
 
     useEffect(() => {
         if (isLoading || !activePromo) {
@@ -36,20 +44,25 @@ export default function PromoPopup() {
         }
 
         try {
-            const hasSeenPromo = sessionStorage.getItem(PROMO_SEEN_KEY);
+            const promoKey = `${PROMO_SEEN_KEY}_${activePromo.id}`;
+            const hasSeenPromo = sessionStorage.getItem(promoKey);
             if (!hasSeenPromo) {
-                setIsOpen(true);
-                sessionStorage.setItem(PROMO_SEEN_KEY, 'true');
+                // Delay showing the popup slightly
+                const timer = setTimeout(() => {
+                    setIsOpen(true);
+                    sessionStorage.setItem(promoKey, 'true');
+                }, 2000);
+                return () => clearTimeout(timer);
             }
         } catch (error) {
-            // This can happen in environments where sessionStorage is not available.
             console.warn('Could not access sessionStorage for promo popup.');
-            // Fallback for environments without sessionStorage: just show it.
-            if (!isOpen) { // Basic check to prevent loops
-                setIsOpen(true);
-            }
+            // Fallback for environments without sessionStorage: just show it after a delay.
+            const timer = setTimeout(() => {
+                 setIsOpen(true);
+            }, 2000);
+            return () => clearTimeout(timer);
         }
-    }, [activePromo, isLoading, isOpen]);
+    }, [activePromo, isLoading]);
     
     if (!activePromo || !isOpen) {
         return null;
@@ -72,7 +85,7 @@ export default function PromoPopup() {
                     <div className="p-8 text-center md:text-left">
                         <h2 className="text-2xl font-bold font-headline mb-2">{activePromo.title}</h2>
                         <p className="text-muted-foreground mb-6">{activePromo.description}</p>
-                        <Button asChild size="lg" className="w-full sm:w-auto">
+                        <Button asChild size="lg" className="w-full sm:w-auto" onClick={() => setIsOpen(false)}>
                             <Link href={activePromo.ctaLink}>{activePromo.ctaText}</Link>
                         </Button>
                     </div>

@@ -8,15 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 const promoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -26,6 +30,8 @@ const promoSchema = z.object({
   imageUrl: z.string().url('Please enter a valid image URL.').optional().or(z.literal('')),
   placement: z.enum(['popup', 'top-banner']).default('popup'),
   active: z.boolean().default(false),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
 });
 
 export default function EditPromoPage({ params }: { params: { id: string } }) {
@@ -34,7 +40,7 @@ export default function EditPromoPage({ params }: { params: { id: string } }) {
     const { toast } = useToast();
     
     const promoRef = useMemoFirebase(() => firestore ? doc(firestore, 'promos', params.id) : null, [firestore, params.id]);
-    const { data: promo, isLoading } = useDoc<z.infer<typeof promoSchema>>(promoRef);
+    const { data: promo, isLoading } = useDoc<any>(promoRef);
 
     const form = useForm<z.infer<typeof promoSchema>>({
         resolver: zodResolver(promoSchema),
@@ -45,6 +51,8 @@ export default function EditPromoPage({ params }: { params: { id: string } }) {
             form.reset({
                 ...promo,
                 imageUrl: promo.imageUrl || '',
+                startDate: promo.startDate ? promo.startDate.toDate() : undefined,
+                endDate: promo.endDate ? promo.endDate.toDate() : undefined,
             });
         }
     }, [promo, form]);
@@ -152,6 +160,84 @@ export default function EditPromoPage({ params }: { params: { id: string } }) {
                                 </FormItem>
                             )}
                         />
+                        <div className="grid sm:grid-cols-2 gap-6">
+                             <FormField
+                                control={form.control}
+                                name="startDate"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Start Date</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-full pl-3 text-left font-normal",
+                                                    !field.value && "text-muted-foreground"
+                                                )}
+                                                >
+                                                {field.value ? (
+                                                    format(field.value, "PPP")
+                                                ) : (
+                                                    <span>Pick a date</span>
+                                                )}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                initialFocus
+                                            />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="endDate"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>End Date</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-full pl-3 text-left font-normal",
+                                                    !field.value && "text-muted-foreground"
+                                                )}
+                                                >
+                                                {field.value ? (
+                                                    format(field.value, "PPP")
+                                                ) : (
+                                                    <span>Pick a date</span>
+                                                )}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                initialFocus
+                                            />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <div className="grid sm:grid-cols-2 gap-6">
                             <FormField
                                 control={form.control}

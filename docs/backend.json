@@ -83,7 +83,11 @@
               },
               "type": {
                 "type": "string",
-                "enum": ["dropdown", "text", "number"]
+                "enum": [
+                  "dropdown",
+                  "text",
+                  "number"
+                ]
               },
               "placeholder": {
                 "type": "string"
@@ -278,16 +282,63 @@
       "type": "object",
       "description": "Represents a marketing promotion, like a popup or banner.",
       "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the promotion." },
-        "title": { "type": "string", "description": "The main headline of the promotion." },
-        "description": { "type": "string", "description": "The body text of the promotion." },
-        "imageUrl": { "type": "string", "format": "uri", "description": "URL for a background or feature image." },
-        "ctaText": { "type": "string", "description": "Text for the call-to-action button." },
-        "ctaLink": { "type": "string", "format": "uri", "description": "The destination URL for the CTA button." },
-        "placement": { "type": "string", "enum": ["popup", "top-banner"], "description": "Where the promotion should be displayed." },
-        "active": { "type": "boolean", "description": "Controls whether the promotion is currently active." }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the promotion."
+        },
+        "title": {
+          "type": "string",
+          "description": "The main headline of the promotion."
+        },
+        "description": {
+          "type": "string",
+          "description": "The body text of the promotion."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for a background or feature image."
+        },
+        "ctaText": {
+          "type": "string",
+          "description": "Text for the call-to-action button."
+        },
+        "ctaLink": {
+          "type": "string",
+          "description": "The destination URL for the CTA button."
+        },
+        "placement": {
+          "type": "string",
+          "enum": [
+            "popup",
+            "top-banner"
+          ],
+          "description": "Where the promotion should be displayed."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Controls whether the promotion is currently active."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time the promotion becomes active."
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time the promotion expires."
+        }
       },
-      "required": [ "id", "title", "description", "ctaText", "ctaLink", "placement", "active" ]
+      "required": [
+        "id",
+        "title",
+        "description",
+        "ctaText",
+        "ctaLink",
+        "placement",
+        "active"
+      ]
     }
   },
   "auth": {
@@ -382,10 +433,15 @@
         "path": "/promos/{promoId}",
         "definition": {
           "entityName": "Promo",
-          "schema": { "$ref": "#/backend/entities/Promo" },
+          "schema": {
+            "$ref": "#/backend/entities/Promo"
+          },
           "description": "Collection for marketing promotions. Publicly readable if active, writeable by admins.",
           "params": [
-            { "name": "promoId", "description": "Unique identifier for the promotion." }
+            {
+              "name": "promoId",
+              "description": "Unique identifier for the promotion."
+            }
           ]
         }
       }

@@ -42,6 +42,18 @@ import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { format } from 'date-fns';
+
+const getPromoStatus = (promo: any) => {
+  const now = new Date();
+  const startDate = promo.startDate?.toDate();
+  const endDate = promo.endDate?.toDate();
+
+  if (endDate && endDate < now) return { label: 'Expired', variant: 'outline' };
+  if (startDate && startDate > now) return { label: 'Scheduled', variant: 'secondary' };
+  if (promo.active) return { label: 'Active', variant: 'default' };
+  return { label: 'Inactive', variant: 'destructive' };
+};
 
 export default function PromosPage() {
   const firestore = useFirestore();
@@ -90,7 +102,9 @@ export default function PromosPage() {
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Placement</TableHead>
-                <TableHead>Active</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Dates</TableHead>
+                <TableHead>Active Toggle</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -99,21 +113,30 @@ export default function PromosPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
                   </TableCell>
                 </TableRow>
               ) : promos && promos.length > 0 ? (
-                promos.map((promo) => (
+                promos.map((promo) => {
+                  const status = getPromoStatus(promo);
+                  return (
                   <TableRow key={promo.id}>
                     <TableCell className="font-medium">{promo.title}</TableCell>
                     <TableCell>
                         <Badge variant="outline">{promo.placement}</Badge>
                     </TableCell>
                     <TableCell>
+                      <Badge variant={status.variant as any}>{status.label}</Badge>
+                    </TableCell>
+                     <TableCell className="text-sm text-muted-foreground">
+                        {promo.startDate ? format(promo.startDate.toDate(), 'PP') : 'N/A'} - {promo.endDate ? format(promo.endDate.toDate(), 'PP') : 'N/A'}
+                    </TableCell>
+                    <TableCell>
                       <Switch
                         checked={promo.active}
                         onCheckedChange={() => toggleActive(promo.id, promo.active)}
+                        aria-label="Toggle Active"
                       />
                     </TableCell>
                     <TableCell>
@@ -152,10 +175,10 @@ export default function PromosPage() {
                       </AlertDialog>
                     </TableCell>
                   </TableRow>
-                ))
+                )})
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No promotions found. Create one to get started.
                   </TableCell>
                 </TableRow>
