@@ -40,7 +40,8 @@ service cloud.firestore {
         allow read: if isAdmin() || resource.data.active == true;
     }
     match /promos {
-      allow list: if isAdmin() || request.query.get("where")[0][2] == true;
+      // Public users can only list promos that are active. Admins can list all.
+      allow list: if isAdmin() || (request.query.get("where") != null && request.query.where[0][2] == true);
     }
 
     // --- Other Collections ---
