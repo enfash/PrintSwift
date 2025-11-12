@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { useFirebaseApp } from '@/firebase';
+import { ref, uploadBytesResumable, getDownloadURL, type FirebaseStorage } from 'firebase/storage';
+import { useStorage } from '@/firebase/provider';
 
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -18,17 +18,15 @@ export interface Upload {
 
 export function useUpload(onUploadComplete?: (url: string) => void) {
   const [uploads, setUploads] = useState<Upload[]>([]);
-  const app = useFirebaseApp(); // Use the initialized app instance
+  const storage = useStorage();
 
   const uploadFiles = useCallback(
     (files: File[]) => {
-      if (!app) {
-        console.error("Firebase app not available for upload.");
+      if (!storage) {
+        console.error("Firebase Storage not available for upload.");
         return;
       }
       
-      const storage = getStorage(app);
-
       const newUploadsData: Upload[] = files.map((file) => ({
         id: `${file.name}-${Date.now()}`,
         file,
@@ -36,8 +34,10 @@ export function useUpload(onUploadComplete?: (url: string) => void) {
         progress: 0,
       }));
 
+      // Add new uploads to the state
       setUploads((prev) => [...prev, ...newUploadsData]);
 
+      // Start each upload
       newUploadsData.forEach((upload) => {
         const storageRef = ref(storage, `product-images/${upload.id}-${upload.file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, upload.file);
@@ -47,7 +47,7 @@ export function useUpload(onUploadComplete?: (url: string) => void) {
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             setUploads((prev) =>
-              prev.map((u) => (u.id === upload.id ? { ...u, progress: progress } : u))
+              prev.map((u) => (u.id === upload.id ? { ...u, progress } : u))
             );
           },
           (error) => {
@@ -65,13 +65,15 @@ export function useUpload(onUploadComplete?: (url: string) => void) {
                     : u
                 )
               );
-              onUploadComplete?.(downloadURL);
+              if (onUploadComplete) {
+                onUploadComplete(downloadURL);
+              }
             });
           }
         );
       });
     },
-    [app, onUploadComplete]
+    [storage, onUploadComplete]
   );
 
   return { uploads, uploadFiles };

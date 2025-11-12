@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { getStorage, ref, listAll, getDownloadURL } from 'firebase/storage';
-import { useFirebaseApp } from '@/firebase';
+import { useFirebaseApp } from '@/firebase/provider';
 
 export default function MediaPage() {
     const firebaseApp = useFirebaseApp();
@@ -38,7 +38,7 @@ export default function MediaPage() {
         uploadFiles(acceptedFiles);
     }, [uploadFiles]);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true });
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
     useEffect(() => {
         fetchMedia();
@@ -52,31 +52,31 @@ export default function MediaPage() {
                 <h1 className="text-3xl font-bold tracking-tight">Media Library</h1>
                  <label className="flex items-center justify-center px-4 h-10 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer">
                     <PlusCircle className="mr-2 h-4 w-4" /> Upload Media
-                    <input {...getInputProps()} className="hidden" />
+                    <input {...getInputProps({multiple: true})} className="hidden" />
                 </label>
             </div>
             <Card className="mt-6">
                 <CardContent className="p-4">
-                    <div {...getRootProps()} className={`flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition ${isDragActive ? 'border-primary' : ''}`}>
+                    <div {...getRootProps({className: `flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition ${isDragActive ? 'border-primary' : ''}`})}>
                         <input {...getInputProps()} />
                         <div className="flex flex-col items-center justify-center">
                             <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground" />
                             <p className="text-sm text-muted-foreground">
-                                {isDragActive ? 'Drop the files here...' : 'Drag & drop some files here, or click the button above to select files'}
+                                {isDragActive ? 'Drop the files here...' : 'Drag & drop some files here, or click the button to select files'}
                             </p>
                         </div>
                     </div>
                     {uploads.length > 0 && !allUploadsFinished && (
                         <div className="mt-4">
                             <h2 className="text-lg font-semibold">Uploads</h2>
-                            <ul className="space-y-2">
+                            <ul className="space-y-2 mt-2">
                                 {uploads.filter(u => u.status === 'uploading').map(upload => (
                                     <li key={upload.id}>
-                                        <div className="flex items-center justify-between">
-                                            <span>{upload.file.name}</span>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="truncate max-w-xs">{upload.file.name}</span>
                                             <span>{Math.round(upload.progress)}%</span>
                                         </div>
-                                        <Progress value={upload.progress} className="w-full" />
+                                        <Progress value={upload.progress} className="w-full h-2" />
                                     </li>
                                 ))}
                             </ul>
@@ -100,7 +100,7 @@ export default function MediaPage() {
                                 </Card>
                             ))
                         ) : (
-                            <div className="col-span-full text-center text-muted-foreground">
+                            <div className="col-span-full text-center text-muted-foreground py-12">
                                 Your media library is empty.
                             </div>
                         )}

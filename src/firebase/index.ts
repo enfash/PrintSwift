@@ -4,11 +4,11 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
-export function initializeFirebase(): { firebaseApp: FirebaseApp, auth: Auth, firestore: Firestore } {
+export function initializeFirebase(): { firebaseApp: FirebaseApp, auth: Auth, firestore: Firestore, storage: FirebaseStorage } {
   let firebaseApp: FirebaseApp;
   if (!getApps().length) {
     firebaseApp = initializeApp(firebaseConfig);
@@ -18,12 +18,9 @@ export function initializeFirebase(): { firebaseApp: FirebaseApp, auth: Auth, fi
   
   const auth = getAuth(firebaseApp);
   const firestore = getFirestore(firebaseApp);
-  
-  // Ensure storage is initialized here if you use it globally,
-  // or pass the app instance when calling getStorage() elsewhere.
-  getStorage(firebaseApp);
+  const storage = getStorage(firebaseApp);
 
-  return { firebaseApp, auth, firestore };
+  return { firebaseApp, auth, firestore, storage };
 }
 
 

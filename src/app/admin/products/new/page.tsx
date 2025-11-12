@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoaderCircle, X, PlusCircle, Trash2, UploadCloud } from 'lucide-react';
+import { LoaderCircle, X, PlusCircle, Trash2, UploadCloud, Link2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
@@ -80,8 +80,8 @@ const slugify = (str: string) =>
   str
     .toLowerCase()
     .trim()
-    .replace(/[^\\w\\s-]/g, '')
-    .replace(/[\\s_-]+/g, '-')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
 const FileUploadProgress = ({ file, progress }: { file: File, progress: number }) => (
@@ -148,6 +148,22 @@ export default function ProductFormPage() {
         }
         uploadFiles(files);
     };
+
+    const handleAddImageUrl = (url: string) => {
+        try {
+            z.string().url().parse(url);
+             if (imageFields.length < 6) {
+                appendImage(url);
+            } else {
+                toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
+            }
+            const input = document.getElementById('imageUrlInput') as HTMLInputElement;
+            if (input) input.value = '';
+        } catch {
+            toast({ variant: 'destructive', title: "Invalid URL", description: "Please enter a valid image URL."});
+        }
+    }
+
 
     const { fields: detailFields, append: appendDetail, remove: removeDetail } = useFieldArray({
         control: form.control,
@@ -289,7 +305,7 @@ export default function ProductFormPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Media</CardTitle>
-                                <CardDescription>Add up to 6 images. Upload files directly from your computer.</CardDescription>
+                                <CardDescription>Add up to 6 images for your product gallery.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -316,29 +332,47 @@ export default function ProductFormPage() {
                                 </div>
                                 <FormField control={form.control} name="imageUrls" render={() => (<FormItem><FormMessage /></FormItem>)}/>
                                 
-                                <div className="space-y-2">
-                                    <Label htmlFor="imageUpload" >Upload Images</Label>
-                                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
-                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground"/>
-                                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                <Tabs defaultValue="upload" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
+                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Add URL</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="upload" className="pt-4">
+                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
+                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground"/>
+                                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                            </div>
+                                            <Input 
+                                                id="imageUpload"
+                                                type="file"
+                                                className="hidden"
+                                                multiple
+                                                accept="image/*"
+                                                onChange={handleFileSelect}
+                                                disabled={imageFields.length >= 6 || uploads.some(u => u.status === 'uploading')}
+                                            />
+                                        </label>
+                                         <div className="space-y-2 mt-4">
+                                            {uploads.filter(u => u.status === 'uploading').map(upload => (
+                                                <FileUploadProgress key={upload.id} file={upload.file} progress={upload.progress} />
+                                            ))}
                                         </div>
-                                        <Input 
-                                            id="imageUpload"
-                                            type="file"
-                                            className="hidden"
-                                            multiple
-                                            accept="image/*"
-                                            onChange={handleFileSelect}
-                                            disabled={imageFields.length >= 6 || uploads.some(u => u.status === 'uploading')}
-                                        />
-                                    </label>
-                                     <div className="space-y-2">
-                                        {uploads.filter(u => u.status === 'uploading').map(upload => (
-                                            <FileUploadProgress key={upload.id} file={upload.file} progress={upload.progress} />
-                                        ))}
-                                    </div>
-                                </div>
+                                    </TabsContent>
+                                     <TabsContent value="url" className="pt-2">
+                                        <FormLabel>Image URL</FormLabel>
+                                        <div className="flex gap-2">
+                                            <Input 
+                                                id="imageUrlInput"
+                                                placeholder="https://..."
+                                            />
+                                            <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
+                                        </div>
+                                        <FormDescription className="text-xs mt-2">
+                                            Paste a link to an image hosted elsewhere (e.g., Imgur, Dropbox).
+                                        </FormDescription>
+                                    </TabsContent>
+                                </Tabs>
 
                             </CardContent>
                         </Card>
@@ -388,10 +422,10 @@ export default function ProductFormPage() {
                                                     <div className="space-y-2">
                                                         <Label>Dropdown Options & Pricing</Label>
                                                         <Textarea
-                                                            placeholder={"Enter one value per line, e.g.,\\nValue one\\nValue two"}
-                                                            defaultValue={field.value?.map(v => v.value).join('\\n')}
+                                                            placeholder={"Enter one value per line, e.g.,\nValue one\nValue two"}
+                                                            defaultValue={field.value?.map(v => v.value).join('\n')}
                                                             onBlur={(e) => {
-                                                                const textValues = e.target.value.split('\\n').filter(v => v.trim());
+                                                                const textValues = e.target.value.split('\n').filter(v => v.trim());
                                                                 const newValues = textValues.map(tv => {
                                                                     const existing = field.value?.find(fv => fv.value === tv);
                                                                     return existing || { value: tv, cost: 0 };
