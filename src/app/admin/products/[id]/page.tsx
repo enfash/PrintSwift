@@ -101,10 +101,15 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         try {
             const productDocRef = doc(firestore, 'products', product.id);
 
-            const updateData = {
-                ...values,
-                updatedAt: serverTimestamp()
-            };
+            const updateData: { [key: string]: any } = { ...values };
+            // Remove undefined fields before sending to Firestore
+            Object.keys(updateData).forEach(key => {
+                if (updateData[key] === undefined) {
+                    delete updateData[key];
+                }
+            });
+
+            updateData.updatedAt = serverTimestamp();
             
             await updateDocumentNonBlocking(productDocRef, updateData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
