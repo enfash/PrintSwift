@@ -346,6 +346,8 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
                                         const imageUrl = field.value;
+                                        if (!imageUrl) return null;
+                                        const isBlob = imageUrl.startsWith('blob:');
                                         const finalImageUrl = isValidUrl(imageUrl) ? imageUrl : `https://picsum.photos/seed/${product?.id || 'placeholder'}-${index}/100/100`;
 
                                         return (
