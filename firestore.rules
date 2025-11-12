@@ -43,6 +43,15 @@ service cloud.firestore {
     match /testimonials {
       allow list: if isAdmin();
     }
+    
+    // Promotions Collection
+    match /promos/{promoId} {
+        allow write: if isAdmin();
+        allow read: if isAdmin() || resource.data.active == true;
+    }
+     match /promos {
+      allow list: if true; // Allow public listing to find active promo
+    }
 
     // Quote Requests (Admin Only)
     match /quote_requests/{quoteRequestId} {
