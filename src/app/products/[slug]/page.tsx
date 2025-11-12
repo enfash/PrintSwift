@@ -67,36 +67,48 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
   const calculatePrice = useCallback(() => {
     if (!product || !product.pricing || !product.pricing.tiers) {
-        return null;
+      return null;
     }
 
     const tier = product.pricing.tiers
-        .slice()
-        .sort((a: any, b: any) => b.minQty - a.minQty)
-        .find((t: any) => quantity >= t.minQty);
-        
+      .slice()
+      .sort((a: any, b: any) => b.minQty - a.minQty)
+      .find((t: any) => quantity >= t.minQty);
+
     if (!tier) return null;
 
-    const { setup = 0, unitCost = 0, margin = 0 } = tier;
-    let totalCost = setup + (quantity * unitCost);
+    let { unitCost = 0, setup = 0, margin = 0 } = tier;
 
     let optionsCost = 0;
+    let numberInputMultiplier = 1;
+
     if (product.details) {
-        for (const label in selectedOptions) {
-            const selectedValue = selectedOptions[label];
-            const detail = product.details.find((d: any) => d.label === label);
-            if (detail && detail.values) {
-                const option = detail.values.find((v: any) => v.value === selectedValue);
-                if (option && option.cost) {
-                    optionsCost += option.cost * quantity;
-                }
+      for (const label in selectedOptions) {
+        const selectedValue = selectedOptions[label];
+        const detail = product.details.find((d: any) => d.label === label);
+
+        if (detail) {
+          if (detail.type === 'dropdown' && detail.values) {
+            const option = detail.values.find((v: any) => v.value === selectedValue);
+            if (option && option.cost) {
+              optionsCost += option.cost;
             }
+          } else if (detail.type === 'number') {
+            const numericValue = parseFloat(selectedValue);
+            if (!isNaN(numericValue) && numericValue > 0) {
+              numberInputMultiplier *= numericValue;
+            }
+          }
         }
+      }
     }
     
-    totalCost += optionsCost;
+    // Apply multiplier to unit cost
+    unitCost *= numberInputMultiplier;
 
-    const finalPrice = totalCost / (1 - (margin / 100));
+    const totalCost = setup + quantity * (unitCost + optionsCost);
+
+    const finalPrice = totalCost / (1 - margin / 100);
 
     return isNaN(finalPrice) ? null : Math.round(finalPrice);
   }, [product, quantity, selectedOptions]);
@@ -117,6 +129,9 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             productData.details.forEach((detail: any) => {
                 if (detail.type === 'dropdown' && detail.values && detail.values.length > 0) {
                     defaultOptions[detail.label] = detail.values[0].value;
+                }
+                if (detail.type === 'number' && detail.placeholder) {
+                    defaultOptions[detail.label] = detail.placeholder;
                 }
             });
         }
@@ -161,7 +176,13 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             return (
                 <div key={detail.label} className="grid gap-2">
                     <Label htmlFor={`detail-${detail.label}`}>{detail.label}</Label>
-                    <Input id={`detail-${detail.label}`} type={detail.type} placeholder={detail.placeholder || ''} />
+                    <Input 
+                        id={`detail-${detail.label}`} 
+                        type={detail.type} 
+                        placeholder={detail.placeholder || ''}
+                        value={selectedOptions[detail.label] || ''}
+                        onChange={(e) => handleOptionChange(detail.label, e.target.value)}
+                    />
                 </div>
             )
         default:

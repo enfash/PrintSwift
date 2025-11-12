@@ -281,7 +281,7 @@ export default function ProductFormPage() {
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => (
                                         <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
-                                            {field.value ? (
+                                            {field.value && (field.value.startsWith('http') || field.value.startsWith('blob')) ? (
                                                 <Image src={field.value} alt={`Product image ${index + 1}`} fill className="object-cover rounded-md"/>
                                             ) : (
                                                  <div className="w-full h-full bg-muted rounded-md flex items-center justify-center">
@@ -346,7 +346,7 @@ export default function ProductFormPage() {
                                                             <SelectContent>
                                                                 <SelectItem value="dropdown">Dropdown</SelectItem>
                                                                 <SelectItem value="text">Text Input</SelectItem>
-                                                                <SelectItem value="number">Number Input</SelectItem>
+                                                                <SelectItem value="number">Number Input (Multiplier)</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </FormItem>
@@ -403,6 +403,7 @@ export default function ProductFormPage() {
                                                 <FormItem>
                                                 <FormLabel>Placeholder</FormLabel>
                                                 <FormControl><Input placeholder="e.g., 3.5" {...field} /></FormControl>
+                                                {detailType === 'number' && <FormDescription>This value will multiply the unit cost.</FormDescription>}
                                                 <FormMessage />
                                                 </FormItem>
                                             )}/>

@@ -151,9 +151,9 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                 if (obj[key] !== undefined && obj[key] !== null) {
                   if (Array.isArray(obj[key])) {
                     newObj[key] = obj[key].map((item: any) =>
-                      typeof item === 'object' ? cleanData(item) : item
+                      (item && typeof item === 'object') ? cleanData(item) : item
                     );
-                  } else if (typeof obj[key] === 'object' && !obj[key].hasOwnProperty('_nanoseconds')) { // Exclude Timestamps
+                  } else if (obj[key] && typeof obj[key] === 'object' && !obj[key].hasOwnProperty('_nanoseconds')) { // Exclude Timestamps
                     newObj[key] = cleanData(obj[key]);
                   } else if (obj[key] !== undefined) {
                     newObj[key] = obj[key];
@@ -173,8 +173,8 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
             console.error("Error updating product:", error);
             toast({ 
                 variant: 'destructive', 
-                title: 'Error', 
-                description: error.message || 'Could not update the product.' 
+                title: 'Error updating product', 
+                description: error.message || 'Could not update the product. Please check the console for details.' 
             });
         }
     };
@@ -330,7 +330,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => (
                                         <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
-                                            {field.value ? (
+                                            {field.value && (field.value.startsWith('http') || field.value.startsWith('blob')) ? (
                                                 <Image
                                                     src={field.value}
                                                     alt={`Product image ${index + 1}`}
@@ -429,7 +429,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                                                 <SelectContent>
                                                                     <SelectItem value="dropdown">Dropdown</SelectItem>
                                                                     <SelectItem value="text">Text Input</SelectItem>
-                                                                    <SelectItem value="number">Number Input</SelectItem>
+                                                                    <SelectItem value="number">Number Input (Multiplier)</SelectItem>
                                                                 </SelectContent>
                                                             </Select>
                                                         </FormItem>
@@ -490,6 +490,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                                     <FormItem>
                                                     <FormLabel>Placeholder</FormLabel>
                                                     <FormControl><Input placeholder="e.g., 3.5" {...field} value={field.value || ''} /></FormControl>
+                                                     {detailType === 'number' && <FormDescription>This value will multiply the unit cost.</FormDescription>}
                                                     <FormMessage />
                                                     </FormItem>
                                                 )}
