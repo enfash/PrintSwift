@@ -30,7 +30,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
   featured: z.boolean().default(false),
-  imageUrls: z.array(z.string().url()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
+  imageUrls: z.array(z.string()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
   mainImageIndex: z.number().min(0).default(0),
 });
 
@@ -86,18 +86,9 @@ export default function ProductFormPage() {
         const productsCollectionRef = collection(firestore, 'products');
         const newProductRef = doc(productsCollectionRef);
 
-        const persistentImageUrls = values.imageUrls.filter(url => !url.startsWith('blob:'));
-
-        if (persistentImageUrls.length !== values.imageUrls.length) {
-            toast({ variant: 'destructive', title: 'Temporary Images Detected', description: "Please replace local image previews with permanent links before saving. The save operation was cancelled."});
-            setIsSubmitting(false);
-            return;
-        }
-
         const finalProductData = {
             id: newProductRef.id,
             ...values,
-            imageUrls: persistentImageUrls,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             pricing: {
