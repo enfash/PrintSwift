@@ -313,16 +313,16 @@ export default function ProductFormPage() {
                                         </div>
 
                                         { detailType === 'dropdown' ? (
-                                            <FormField control={form.control} name={`details.${index}.values`} render={({ field: textAreaField }) => (
+                                            <FormField control={form.control} name={`details.${index}.values`} render={({ field: { onChange, value } }) => (
                                                 <FormItem>
                                                     <FormLabel>Dropdown Options</FormLabel>
                                                     <FormControl>
                                                         <Textarea
                                                             placeholder="Enter one value per line, e.g.,&#10;16pt. Premium Matte&#10;14pt. Uncoated"
-                                                            value={textAreaField.value?.map(v => v.value).join('\n') || ''}
-                                                            onChange={(e) => {
+                                                            defaultValue={value?.map(v => v.value).join('\n')}
+                                                            onBlur={(e) => {
                                                                 const valuesArray = e.target.value.split('\n').map(v => ({ value: v.trim() })).filter(v => v.value);
-                                                                textAreaField.onChange(valuesArray);
+                                                                onChange(valuesArray);
                                                             }}
                                                         />
                                                     </FormControl>
@@ -386,5 +386,3 @@ export default function ProductFormPage() {
         </Form>
     );
 }
-
-    
