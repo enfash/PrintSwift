@@ -5,12 +5,17 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, UploadCloud, LoaderCircle, Trash2 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 import { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { getStorage, ref, listAll, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
-import { useFirebaseApp, useStorage } from '@/firebase';
+import { listAll, getDownloadURL, uploadBytesResumable, ref } from 'firebase/storage';
+import { useStorage } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+
+type MediaItem = {
+    id: string;
+    url: string;
+    name: string;
+};
 
 type UploadStatus = {
     id: string;
@@ -24,12 +29,14 @@ type UploadStatus = {
 export default function MediaPage() {
     const storage = useStorage();
     const { toast } = useToast();
-    const [mediaItems, setMediaItems] = useState<{ id: string, url: string, name: string }[]>([]);
+    const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const [uploads, setUploads] = useState<UploadStatus[]>([]);
+    const [isLoadingMedia, setIsLoadingMedia] = useState(true);
 
 
     const fetchMedia = useCallback(async () => {
         if (!storage) return;
+        setIsLoadingMedia(true);
         const listRef = ref(storage, 'product-images');
         try {
             const res = await listAll(listRef);
@@ -40,8 +47,11 @@ export default function MediaPage() {
             setMediaItems(items);
         } catch (error) {
             console.error("Failed to fetch media:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch media files.'})
+        } finally {
+            setIsLoadingMedia(false);
         }
-    }, [storage]);
+    }, [storage, toast]);
 
 
     useEffect(() => {
@@ -96,8 +106,6 @@ export default function MediaPage() {
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
-    const allUploadsFinished = uploads.every(u => u.status === 'success' || u.status === 'error');
-
     return (
         <>
             <div className="flex items-center justify-between">
@@ -118,24 +126,30 @@ export default function MediaPage() {
                             </p>
                         </div>
                     </div>
-                    {uploads.length > 0 && !allUploadsFinished && (
+                    {uploads.length > 0 && (
                         <div className="mt-4">
                             <h2 className="text-lg font-semibold">Uploads</h2>
                             <ul className="space-y-2 mt-2">
-                                {uploads.filter(u => u.status === 'uploading').map(upload => (
+                                {uploads.map(upload => (
                                     <li key={upload.id}>
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="truncate max-w-xs">{upload.file.name}</span>
-                                            <span>{Math.round(upload.progress)}%</span>
+                                            {upload.status === 'uploading' && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                                            {upload.status === 'error' && <span className="text-destructive text-xs">Failed</span>}
+                                            {upload.status === 'success' && <span className="text-green-600 text-xs">Done</span>}
                                         </div>
-                                        <Progress value={upload.progress} className="w-full h-2" />
                                     </li>
                                 ))}
                             </ul>
                         </div>
                     )}
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
-                        {mediaItems.length > 0 ? (
+                        {isLoadingMedia ? (
+                            <div className="col-span-full text-center text-muted-foreground py-12">
+                                <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
+                                <p className="mt-2">Loading media...</p>
+                            </div>
+                        ) : mediaItems.length > 0 ? (
                             mediaItems.map(item => (
                                 <Card key={item.id} className="overflow-hidden group">
                                     <div className="aspect-square relative">

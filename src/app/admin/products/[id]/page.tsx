@@ -116,7 +116,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
     });
     
     const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!event.target.files || event.target.files.length === 0) return;
+        if (!storage || !event.target.files || event.target.files.length === 0) return;
         if (imageFields.length >= 6) {
             toast({ variant: 'destructive', title: "Maximum images reached", description: "You can only add up to 6 images."});
             return;
