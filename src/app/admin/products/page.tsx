@@ -18,7 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, LoaderCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, LoaderCircle, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -29,7 +29,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, useUser } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, writeBatch } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const ProductsList = () => {
     const firestore = useFirestore();
@@ -57,7 +58,9 @@ const ProductsList = () => {
 
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterCategory, setFilterCategory] = useState('all');
+    const [filterFeatured, setFilterFeatured] = useState('all');
     const [sortOption, setSortOption] = useState('updatedAt-desc');
+    const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
     const getCategoryName = (categoryId: string) => {
         return categories?.find(c => c.id === categoryId)?.name || 'N/A';
@@ -73,6 +76,21 @@ const ProductsList = () => {
         });
     }
 
+    const handleMultiDelete = async () => {
+        if (!firestore || selectedProducts.length === 0) return;
+        const batch = writeBatch(firestore);
+        selectedProducts.forEach(productId => {
+            const productDocRef = doc(firestore, 'products', productId);
+            batch.delete(productDocRef);
+        });
+        await batch.commit();
+        toast({
+            title: 'Products Deleted',
+            description: `${selectedProducts.length} products have been successfully deleted.`,
+        });
+        setSelectedProducts([]);
+    };
+
     const filteredAndSortedProducts = useMemo(() => {
         if (!products) return [];
         let filtered = [...products];
@@ -85,6 +103,12 @@ const ProductsList = () => {
         // Filter by category
         if (filterCategory !== 'all') {
             filtered = filtered.filter(p => p.categoryId === filterCategory);
+        }
+
+        // Filter by featured
+        if (filterFeatured !== 'all') {
+            const isFeatured = filterFeatured === 'featured';
+            filtered = filtered.filter(p => (p.featured || false) === isFeatured);
         }
 
         // Sort products
@@ -108,7 +132,23 @@ const ProductsList = () => {
         });
 
         return filtered;
-    }, [products, filterStatus, filterCategory, sortOption]);
+    }, [products, filterStatus, filterCategory, filterFeatured, sortOption]);
+
+    const handleSelectAll = (checked: boolean | string) => {
+        if (checked) {
+            setSelectedProducts(filteredAndSortedProducts.map(p => p.id));
+        } else {
+            setSelectedProducts([]);
+        }
+    };
+    
+    const handleSelectProduct = (productId: string, checked: boolean | string) => {
+        if (checked) {
+            setSelectedProducts(prev => [...prev, productId]);
+        } else {
+            setSelectedProducts(prev => prev.filter(id => id !== productId));
+        }
+    };
 
     const isLoading = isLoadingProducts || isLoadingCategories;
     const error = productsError || categoriesError;
@@ -118,6 +158,7 @@ const ProductsList = () => {
     }
     
     const isValidUrl = (url: string) => {
+        if (!url) return false;
         try {
             new URL(url);
             return url.startsWith('http');
@@ -138,13 +179,41 @@ const ProductsList = () => {
             </div>
             <Card className="mt-6">
                 <CardHeader>
-                    <CardTitle>All Products</CardTitle>
-                    <CardDescription>Manage your store's products here.</CardDescription>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>All Products</CardTitle>
+                            <CardDescription>Manage your store's products here.</CardDescription>
+                        </div>
+                        {selectedProducts.length > 0 && (
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete ({selectedProducts.length})
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete {selectedProducts.length} product(s).
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleMultiDelete} className="bg-destructive hover:bg-destructive/90">
+                                            Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center gap-2 mb-4 p-4 bg-muted/50 rounded-lg">
+                    <div className="flex flex-wrap items-center gap-2 mb-4 p-4 bg-muted/50 rounded-lg">
                         <Select value={filterStatus} onValueChange={setFilterStatus}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -154,7 +223,7 @@ const ProductsList = () => {
                             </SelectContent>
                         </Select>
                         <Select value={filterCategory} onValueChange={setFilterCategory}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Filter by category" />
                             </SelectTrigger>
                             <SelectContent>
@@ -162,9 +231,19 @@ const ProductsList = () => {
                                 {categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
+                         <Select value={filterFeatured} onValueChange={setFilterFeatured}>
+                            <SelectTrigger className="w-full sm:w-[180px]">
+                                <SelectValue placeholder="Filter by featured" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="featured">Featured</SelectItem>
+                                <SelectItem value="not_featured">Not Featured</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <div className="flex-grow" />
                         <Select value={sortOption} onValueChange={setSortOption}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
                             <SelectContent>
@@ -178,7 +257,14 @@ const ProductsList = () => {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="hidden w-[100px] sm:table-cell">
+                                <TableHead className="w-[40px]">
+                                     <Checkbox 
+                                        onCheckedChange={handleSelectAll}
+                                        checked={selectedProducts.length === filteredAndSortedProducts.length && filteredAndSortedProducts.length > 0}
+                                        aria-label="Select all"
+                                     />
+                                </TableHead>
+                                <TableHead className="hidden w-[64px] sm:table-cell">
                                     <span className="sr-only">Image</span>
                                 </TableHead>
                                 <TableHead>Name</TableHead>
@@ -193,7 +279,7 @@ const ProductsList = () => {
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">
+                                    <TableCell colSpan={7} className="h-24 text-center">
                                         <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
                                     </TableCell>
                                 </TableRow>
@@ -205,7 +291,14 @@ const ProductsList = () => {
                                 const mainImageUrl = isValidUrl(rawUrl) ? rawUrl : `https://picsum.photos/seed/${product.id}/40/40`;
 
                                 return (
-                                <TableRow key={product.id}>
+                                <TableRow key={product.id} data-state={selectedProducts.includes(product.id) ? "selected" : ""}>
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={selectedProducts.includes(product.id)}
+                                            onCheckedChange={(checked) => handleSelectProduct(product.id, checked)}
+                                            aria-label={`Select ${product.name}`}
+                                        />
+                                    </TableCell>
                                     <TableCell className="hidden sm:table-cell">
                                         <Image
                                             alt={product.name}
@@ -268,7 +361,7 @@ const ProductsList = () => {
                                 );
                             }) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">
+                                    <TableCell colSpan={7} className="h-24 text-center">
                                         No products found. Try adjusting your filters.
                                     </TableCell>
                                 </TableRow>
@@ -303,3 +396,5 @@ export default function ProductsPage() {
 
     return <ProductsList />;
 }
+
+    
