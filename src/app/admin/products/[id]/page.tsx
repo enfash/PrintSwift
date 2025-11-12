@@ -18,7 +18,7 @@ import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +44,7 @@ const productSchema = z.object({
 });
 
 export default function ProductEditPage({ params }: { params: { id: string } }) {
-    const { id: productId } = params; 
+    const { id: productId } = use(params); 
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
@@ -475,3 +475,5 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
         </Form>
     );
 }
+
+    
