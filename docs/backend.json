@@ -216,6 +216,10 @@
           "type": "string",
           "description": "Reference to Product. (Relationship: Product 1:N QuoteRequest).  ID of the product the quote is for."
         },
+        "productName": {
+          "type": "string",
+          "description": "Name of the product the quote is for."
+        },
         "submissionDate": {
           "type": "string",
           "description": "Date and time the quote request was submitted.",
@@ -229,6 +233,7 @@
         "phone",
         "details",
         "productId",
+        "productName",
         "submissionDate"
       ]
     },

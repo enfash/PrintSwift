@@ -52,7 +52,7 @@ function QuoteForm() {
   const productNameQuery = searchParams.get('product');
   const firestore = useFirestore();
 
-  const productsRef = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+  const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
 
   const { toast } = useToast();
@@ -79,15 +79,25 @@ function QuoteForm() {
   }, [productNameQuery, form]);
 
   async function onSubmit(values: z.infer<typeof quoteFormSchema>) {
+    if (!firestore) {
+        toast({
+            variant: "destructive",
+            title: 'Submission Failed',
+            description: "Could not connect to the database. Please try again later.",
+        });
+        return;
+    }
+
     setIsSubmitting(true);
     const quoteRequestsRef = collection(firestore, 'quote_requests');
     const selectedProduct = products?.find(p => p.name === values.productName);
 
     try {
-        addDocumentNonBlocking(quoteRequestsRef, {
+        await addDocumentNonBlocking(quoteRequestsRef, {
             ...values,
             productId: selectedProduct?.id || 'other',
             submissionDate: serverTimestamp(),
+            status: 'Pending', // Add a default status
         });
 
         setIsSubmitting(false);
