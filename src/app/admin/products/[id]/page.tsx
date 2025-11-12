@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LoaderCircle, Link2, X, PlusCircle, Trash2, UploadCloud } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useDoc } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useDoc, useFirebaseApp } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
@@ -89,6 +89,7 @@ const FileUploadProgress = ({ file, progress }: { file: File, progress: number }
 export default function ProductEditPage({ params }: { params: { id: string } }) {
     const { id: productId } = use(params);
     const firestore = useFirestore();
+    const firebaseApp = useFirebaseApp();
     const router = useRouter();
     const { toast } = useToast();
     const [uploadProgress, setUploadProgress] = useState<Record<string, {file: File, progress: number}>>({});
@@ -203,7 +204,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
             return;
         }
 
-        const storage = getStorage();
+        const storage = getStorage(firebaseApp);
 
         files.forEach(file => {
             const uniqueFileName = `${new Date().getTime()}-${file.name}`;
