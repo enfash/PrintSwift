@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LoaderCircle, X, PlusCircle, Trash2, UploadCloud, Link2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useStorage } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -24,9 +24,8 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
-import { useUpload } from '@/hooks/use-upload';
 import { getSafeImageUrl } from '@/lib/utils';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -85,22 +84,14 @@ const slugify = (str: string) =>
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-const FileUploadProgress = ({ file, progress }: { file: File, progress: number }) => (
-    <div className="space-y-1">
-        <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground truncate max-w-xs">{file.name}</span>
-            <span className="text-sm font-medium">{Math.round(progress)}%</span>
-        </div>
-        <Progress value={progress} className="h-2" />
-    </div>
-);
-
-
 export default function ProductFormPage() {
     const firestore = useFirestore();
+    const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [productId] = useState(() => doc(collection(firestore, 'products')).id); // Generate ID once
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
@@ -130,24 +121,29 @@ export default function ProductFormPage() {
         name: "imageUrls"
     });
     
-    const handleUploadComplete = useCallback((url: string) => {
-        if (imageFields.length < 6) {
-            appendImage(url);
-        } else {
-            toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
-        }
-    }, [appendImage, imageFields.length, toast]);
-
-    const { uploads, uploadFiles } = useUpload(handleUploadComplete);
-
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!event.target.files) return;
-        const files = Array.from(event.target.files);
-        if (imageFields.length + files.length > 6) {
-            toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
+    const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!event.target.files || event.target.files.length === 0) return;
+        if (imageFields.length >= 6) {
+            toast({ variant: 'destructive', title: "Maximum images reached", description: "You can only add up to 6 images."});
             return;
         }
-        uploadFiles(files);
+
+        const file = event.target.files[0];
+        setIsUploading(true);
+
+        try {
+            const fileRef = storageRef(storage, `product-images/${productId}/${file.name}-${Date.now()}`);
+            const snapshot = await uploadBytes(fileRef, file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            appendImage(downloadURL);
+            toast({ title: 'Upload Successful', description: 'Image has been added to the gallery.' });
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the image. Please try again.' });
+        } finally {
+            setIsUploading(false);
+            event.target.value = '';
+        }
     };
 
     const handleAddImageUrl = (url: string) => {
@@ -190,18 +186,15 @@ export default function ProductFormPage() {
         if (!firestore) return;
         setIsSubmitting(true);
         
-        const productsCollectionRef = collection(firestore, 'products');
-        const newProductRef = doc(productsCollectionRef);
-
         const finalProductData = {
-            id: newProductRef.id,
+            id: productId,
             ...values,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         }
 
         try {
-            await addDocumentNonBlocking(productsCollectionRef, finalProductData, { id: finalProductData.id });
+            await addDocumentNonBlocking(collection(firestore, 'products'), finalProductData, { id: finalProductData.id });
             toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
             router.push('/admin/products');
         } catch (error) {
@@ -325,30 +318,28 @@ export default function ProductFormPage() {
                                 
                                 <Tabs defaultValue="upload" className="w-full">
                                     <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
-                                        <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Add URL</TabsTrigger>
+                                        <TabsTrigger value="upload" disabled={isUploading}><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
+                                        <TabsTrigger value="url" disabled={isUploading}><Link2 className="mr-2 h-4 w-4"/>Add URL</TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="upload" className="pt-4">
-                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
-                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground"/>
-                                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                         <label className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
+                                            <div className="flex items-center justify-center text-muted-foreground">
+                                                {isUploading ? (
+                                                     <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                                                ) : (
+                                                    <UploadCloud className="mr-2 h-5 w-5"/>
+                                                )}
+                                                <p className="font-semibold">{isUploading ? 'Uploading...' : 'Click to upload'}</p>
                                             </div>
                                             <Input 
                                                 id="imageUpload"
                                                 type="file"
                                                 className="hidden"
-                                                multiple
                                                 accept="image/*"
                                                 onChange={handleFileSelect}
-                                                disabled={imageFields.length >= 6 || uploads.some(u => u.status === 'uploading')}
+                                                disabled={imageFields.length >= 6 || isUploading}
                                             />
                                         </label>
-                                         <div className="space-y-2 mt-4">
-                                            {uploads.filter(u => u.status === 'uploading').map(upload => (
-                                                <FileUploadProgress key={upload.id} file={upload.file} progress={upload.progress} />
-                                            ))}
-                                        </div>
                                     </TabsContent>
                                      <TabsContent value="url" className="pt-2">
                                         <FormLabel>Image URL</FormLabel>
