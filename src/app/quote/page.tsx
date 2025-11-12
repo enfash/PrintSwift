@@ -108,12 +108,15 @@ function QuoteForm() {
     const quoteRequestsRef = collection(firestore, 'quote_requests');
     const selectedProduct = uniqueProducts?.find(p => p.id === values.productId);
 
+    // Exclude the artwork FileList from the data being sent to Firestore
+    const { artwork, ...dataToSave } = values;
+
     try {
         await addDocumentNonBlocking(quoteRequestsRef, {
-            ...values,
+            ...dataToSave,
             productName: selectedProduct?.name || 'Other',
             submissionDate: serverTimestamp(),
-            status: 'Pending', // Add a default status
+            status: 'Pending',
         });
 
         setIsSubmitting(false);
