@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { cn } from '@/lib/utils';
 
 const detailValueSchema = z.object({
@@ -115,30 +115,82 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
     });
     
     const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!storage || !event.target.files || event.target.files.length === 0) return;
-        if (imageFields.length >= 6) {
-            toast({ variant: 'destructive', title: "Maximum images reached", description: "You can only add up to 6 images."});
-            return;
-        }
-
-        const file = event.target.files[0];
-        setIsUploading(true);
-
-        try {
-            const fileRef = storageRef(storage, `product-images/${productId}/${file.name}-${Date.now()}`);
-            const uploadResult = await uploadBytes(fileRef, file);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
-            appendImage(downloadURL);
-            toast({ title: 'Upload Successful', description: 'Image has been added to the gallery.' });
-        } catch (error) {
-            console.error("Upload error:", error);
-            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the image. Please check permissions and try again.' });
-        } finally {
+      if (!storage || !event.target.files || event.target.files.length === 0) {
+        console.warn('No storage instance or no files');
+        return;
+      }
+      if (imageFields.length >= 6) {
+        toast({ variant: 'destructive', title: "Maximum images reached", description: "You can only add a maximum of 6 images."});
+        return;
+      }
+    
+      const file = event.target.files[0];
+      setIsUploading(true);
+    
+      const MAX_MB = 25;
+      if (file.size > MAX_MB * 1024 * 1024) {
+        setIsUploading(false);
+        toast({ variant: 'destructive', title: 'File too large', description: `Max file size is ${MAX_MB}MB.` });
+        event.target.value = '';
+        return;
+      }
+    
+      try {
+        const safeName = encodeURIComponent(file.name.replace(/\s+/g, '_'));
+        const path = `product-images/${productId}/${safeName}-${Date.now()}`;
+        const fileRef = storageRef(storage, path);
+    
+        const metadata = { contentType: file.type || 'application/octet-stream' };
+    
+        const uploadTask = uploadBytesResumable(fileRef, file, metadata);
+    
+        const UPLOAD_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+        let timedOut = false;
+        const timeoutId = setTimeout(() => {
+          timedOut = true;
+          uploadTask.cancel();
+        }, UPLOAD_TIMEOUT_MS);
+    
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.debug(`Upload is ${progress.toFixed(1)}% done`, snapshot.state);
+          },
+          (error) => {
+            clearTimeout(timeoutId);
             setIsUploading(false);
-            if (event.target) {
-                event.target.value = '';
+            console.error('Upload failed', error);
+            toast({
+              variant: 'destructive',
+              title: 'Upload failed',
+              description: error?.message || 'An unknown error occurred during upload.'
+            });
+          },
+          async () => {
+            clearTimeout(timeoutId);
+            if (timedOut) {
+              return;
             }
-        }
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              appendImage(downloadURL);
+              toast({ title: 'Upload Successful', description: 'Image has been added to the gallery.' });
+            } catch (err) {
+              console.error('getDownloadURL error', err);
+              toast({ variant: 'destructive', title: 'Upload error', description: 'Could not get file URL.' });
+            } finally {
+              setIsUploading(false);
+              if (event.target) event.target.value = '';
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Upload handler error', error);
+        setIsUploading(false);
+        toast({ variant: 'destructive', title: 'Upload error', description: (error as any).message || 'Unknown error' });
+        if (event.target) event.target.value = '';
+      }
     };
 
     const { fields: detailFields, append: appendDetail, remove: removeDetail } = useFieldArray({
