@@ -142,7 +142,7 @@ export default function ProductFormPage() {
     
       try {
         const safeName = encodeURIComponent(file.name.replace(/\s+/g, '_'));
-        const path = `product-images/${productId}/${safeName}-${Date.now()}`;
+        const path = `products/${productId}/${safeName}-${Date.now()}`;
         const fileRef = storageRef(storage, path);
     
         const metadata = { contentType: file.type || 'application/octet-stream' };
@@ -164,7 +164,6 @@ export default function ProductFormPage() {
           },
           (error) => {
             clearTimeout(timeoutId);
-            setIsUploading(false);
             console.error('Upload failed', error);
             toast({
               variant: 'destructive',
@@ -192,9 +191,10 @@ export default function ProductFormPage() {
         );
       } catch (error) {
         console.error('Upload handler error', error);
-        setIsUploading(false);
         toast({ variant: 'destructive', title: 'Upload error', description: (error as any).message || 'Unknown error' });
         if (event.target) event.target.value = '';
+      } finally {
+          setIsUploading(false);
       }
     };
 

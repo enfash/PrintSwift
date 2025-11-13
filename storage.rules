@@ -4,7 +4,7 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     // Match the folder where product images are stored.
-    match /product-images/{allPaths=**} {
+    match /products/{allPaths=**} {
 
       // Allow anyone to read files from this path.
       // This is necessary to display product images on your public website.
