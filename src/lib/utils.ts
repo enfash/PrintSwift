@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getSafeImageUrl(url: string | undefined | null, seed?: string): string {
-  const fallbackUrl = seed ? `https://picsum.photos/seed/${seed}/600/400` : `https://placehold.co/600x400/e2e8f0/e2e8f0`;
+  const fallbackUrl = `https://placehold.co/600x400/e2e8f0/e2e8f0`;
 
   if (!url || url.trim() === '') {
     return fallbackUrl;
