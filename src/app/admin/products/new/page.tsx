@@ -149,33 +149,21 @@ export default function ProductFormPage() {
     
         const uploadTask = uploadBytesResumable(fileRef, file, metadata);
     
-        const UPLOAD_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
-        let timedOut = false;
-        const timeoutId = setTimeout(() => {
-          timedOut = true;
-          uploadTask.cancel();
-        }, UPLOAD_TIMEOUT_MS);
-    
         uploadTask.on(
           'state_changed',
           (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.debug(`Upload is ${progress.toFixed(1)}% done`, snapshot.state);
+            // Optional: implement progress bar here
           },
           (error) => {
-            clearTimeout(timeoutId);
             console.error('Upload failed', error);
             toast({
               variant: 'destructive',
               title: 'Upload failed',
               description: error?.message || 'An unknown error occurred during upload.'
             });
+            setIsUploading(false);
           },
           async () => {
-            clearTimeout(timeoutId);
-            if (timedOut) {
-              return;
-            }
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               appendImage(downloadURL);
@@ -192,9 +180,8 @@ export default function ProductFormPage() {
       } catch (error) {
         console.error('Upload handler error', error);
         toast({ variant: 'destructive', title: 'Upload error', description: (error as any).message || 'Unknown error' });
+        setIsUploading(false);
         if (event.target) event.target.value = '';
-      } finally {
-          setIsUploading(false);
       }
     };
 
