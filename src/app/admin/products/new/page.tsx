@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
@@ -134,16 +133,18 @@ export default function ProductFormPage() {
 
         try {
             const fileRef = storageRef(storage, `product-images/${productId}/${file.name}-${Date.now()}`);
-            await uploadBytes(fileRef, file);
-            const downloadURL = await getDownloadURL(fileRef);
+            const uploadResult = await uploadBytes(fileRef, file);
+            const downloadURL = await getDownloadURL(uploadResult.ref);
             appendImage(downloadURL);
             toast({ title: 'Upload Successful', description: 'Image has been added to the gallery.' });
         } catch (error) {
             console.error("Upload error:", error);
-            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the image. Please try again.' });
+            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the image. Please check permissions and try again.' });
         } finally {
             setIsUploading(false);
-            event.target.value = '';
+            if (event.target) {
+                event.target.value = '';
+            }
         }
     };
 

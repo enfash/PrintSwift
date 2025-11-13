@@ -15,10 +15,10 @@ service cloud.firestore {
     }
     
     match /products/{product} {
-        allow read, write: if isAdmin();
+        // Admins can do anything
+        allow write: if isAdmin();
         // Allow public reads only for Published products
-        allow get: if resource.data.status == 'Published';
-        allow list: if request.query.get('status') == 'Published' || isAdmin();
+        allow read: if resource.data.status == 'Published' || isAdmin();
     }
 
     match /testimonials/{testimonial} {
@@ -36,7 +36,8 @@ service cloud.firestore {
 
     // --- Admin-only Write/Read Collections ---
     match /quote_requests/{request} {
-        allow read, write: if isAdmin();
+        allow write: if true; // Allow public to submit quote requests
+        allow read, delete: if isAdmin();
     }
 
     match /quotes/{quote} {

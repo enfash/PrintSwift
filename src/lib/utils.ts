@@ -14,9 +14,11 @@ export function getSafeImageUrl(url: string | undefined | null, seed?: string): 
   }
   
   try {
-    // Check for gs:// URLs and treat them as invalid for direct use.
+    // Correctly handle gs:// URLs by converting them to public HTTPS URLs
     if (url.startsWith('gs://')) {
-      return fallbackUrl;
+        const bucket = url.split('/')[2];
+        const path = url.split('/').slice(3).join('/');
+        return `https://storage.googleapis.com/${bucket}/${path}`;
     }
     
     // Validate if the URL is a proper HTTP/HTTPS URL.
