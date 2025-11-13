@@ -369,7 +369,7 @@ function QuoteForm() {
                             <h4 className="text-sm font-medium">Attached files:</h4>
                             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {artworkFields.map((field, index) => {
-                                    const fileName = decodeURIComponent(field.value.split('/').pop()?.split('?')[0] || 'file');
+                                    const fileName = field.value ? decodeURIComponent(field.value.split('/').pop()?.split('?')[0] || 'file') : 'uploading...';
                                     return (
                                         <li key={field.id} className="flex items-center justify-between p-2 rounded-md border bg-muted/50 text-sm">
                                             <div className="flex items-center gap-2 truncate">
