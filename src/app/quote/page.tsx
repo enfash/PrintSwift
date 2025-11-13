@@ -33,8 +33,10 @@ import {
   useFirestore,
   addDocumentNonBlocking,
   useMemoFirebase,
+  useStorage,
 } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const lineItemSchema = z.object({
   productId: z.string({ required_error: 'Please select a product.' }),
@@ -48,7 +50,7 @@ const quoteFormSchema = z.object({
   phone: z.string().min(10, { message: 'Please enter a valid phone number.'}),
   company: z.string().optional(),
   lineItems: z.array(lineItemSchema).min(1, 'Please add at least one product.'),
-  artwork: z.any().optional(),
+  artworkUrls: z.array(z.string()).optional(),
   details: z.string().optional(),
 });
 
@@ -58,6 +60,7 @@ function QuoteForm() {
   const searchParams = useSearchParams();
   const productNameQuery = searchParams.get('product');
   const firestore = useFirestore();
+  const storage = useStorage();
 
   const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
@@ -73,8 +76,11 @@ function QuoteForm() {
   }, [products]);
 
   const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fileList, setFileList] = useState<File[]>([]);
+  
+  // Generate a unique ID for the quote request upfront
+  const [quoteRequestId] = useState(() => firestore ? doc(collection(firestore, 'quote_requests')).id : '');
 
   const form = useForm<QuoteFormData>({
     resolver: zodResolver(quoteFormSchema),
@@ -84,15 +90,21 @@ function QuoteForm() {
       phone: '',
       company: '',
       lineItems: [{ productId: '', productName: '', quantity: 100 }],
+      artworkUrls: [],
       details: '',
     },
   });
-
+  
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'lineItems',
   });
   
+  const { fields: artworkFields, append: appendArtwork, remove: removeArtwork } = useFieldArray({
+    control: form.control,
+    name: 'artworkUrls'
+  });
+
   useEffect(() => {
     if (productNameQuery && uniqueProducts && uniqueProducts.length > 0 && fields.length === 1 && fields[0].productId === '') {
         const product = uniqueProducts.find(p => p.name === productNameQuery);
@@ -102,6 +114,46 @@ function QuoteForm() {
         }
     }
   }, [productNameQuery, uniqueProducts, form, fields]);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!storage || !event.target.files || event.target.files.length === 0) {
+      return;
+    }
+  
+    const files = Array.from(event.target.files);
+    setIsUploading(true);
+    let successfulUploads = 0;
+  
+    await Promise.all(files.map(async (file) => {
+      const MAX_MB = 25;
+      if (file.size > MAX_MB * 1024 * 1024) {
+        toast({ variant: 'destructive', title: 'File too large', description: `"${file.name}" exceeds the ${MAX_MB}MB limit.` });
+        return;
+      }
+      
+      const safeName = encodeURIComponent(file.name.replace(/\s+/g, '_'));
+      const path = `quote-artwork/${quoteRequestId}/${safeName}`;
+      const fileRef = storageRef(storage, path);
+      const uploadTask = uploadBytesResumable(fileRef, file, { contentType: file.type });
+  
+      try {
+        await uploadTask;
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        appendArtwork(downloadURL);
+        successfulUploads++;
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast({ variant: 'destructive', title: `Upload Failed: ${file.name}`, description: (error as Error).message });
+      }
+    }));
+  
+    setIsUploading(false);
+    if (event.target) event.target.value = ''; // Reset file input
+    if (successfulUploads > 0) {
+      toast({ title: 'Upload Complete', description: `${successfulUploads} file(s) uploaded successfully.` });
+    }
+  };
+  
 
   async function onSubmit(values: z.infer<typeof quoteFormSchema>) {
     if (!firestore) {
@@ -115,19 +167,18 @@ function QuoteForm() {
 
     setIsSubmitting(true);
     const quoteRequestsRef = collection(firestore, 'quote_requests');
-
-    const { artwork, ...dataToSave } = values;
-
+    const docToSave = {
+        ...values,
+        id: quoteRequestId,
+        submissionDate: serverTimestamp(),
+        status: 'Pending',
+    }
+    
     try {
-        await addDocumentNonBlocking(quoteRequestsRef, {
-            ...dataToSave,
-            submissionDate: serverTimestamp(),
-            status: 'Pending',
-        });
+        await addDocumentNonBlocking(quoteRequestsRef, docToSave, { id: docToSave.id });
 
         setIsSubmitting(false);
         form.reset();
-        setFileList([]);
         toast({
             title: 'Quote Request Sent!',
             description: "Thank you! We've received your request and will get back to you with a quote within 1-2 business days.",
@@ -142,16 +193,6 @@ function QuoteForm() {
         });
     }
   }
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-        setFileList(prev => [...prev, ...Array.from(event.target.files!)]);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setFileList(prev => prev.filter((_, i) => i !== index));
-  };
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-16 md:py-24">
@@ -297,52 +338,58 @@ function QuoteForm() {
                 </Button>
               </div>
 
-              <FormField
-                control={form.control}
-                name="artwork"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Upload Artwork</FormLabel>
-                        <FormControl>
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <FormItem>
+                    <FormLabel>Upload Artwork</FormLabel>
+                    <FormControl>
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                {isUploading ? (
+                                    <LoaderCircle className="w-8 h-8 mb-3 text-muted-foreground animate-spin"/>
+                                ) : (
                                     <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground"/>
-                                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                    <p className="text-xs text-muted-foreground">PDF, AI, PSD, PNG, JPG (MAX. 25MB)</p>
-                                </div>
-                                <Input 
-                                    type="file" 
-                                    className="hidden"
-                                    multiple
-                                    onChange={handleFileChange}
-                                />
-                            </label>
-                        </FormControl>
-                         {fileList.length > 0 && (
-                            <div className="mt-4 space-y-2">
-                                <h4 className="text-sm font-medium">Selected files:</h4>
-                                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {fileList.map((file, index) => (
-                                        <li key={index} className="flex items-center justify-between p-2 rounded-md border bg-muted/50 text-sm">
+                                )}
+                                <p className="mb-2 text-sm text-muted-foreground">
+                                    <span className="font-semibold">
+                                        {isUploading ? 'Uploading...' : 'Click to upload or drag and drop'}
+                                    </span>
+                                </p>
+                                <p className="text-xs text-muted-foreground">PDF, AI, PSD, PNG, JPG (MAX. 25MB)</p>
+                            </div>
+                            <Input 
+                                type="file" 
+                                className="hidden"
+                                multiple
+                                onChange={handleFileChange}
+                                disabled={isUploading}
+                            />
+                        </label>
+                    </FormControl>
+                        {artworkFields.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                            <h4 className="text-sm font-medium">Attached files:</h4>
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {artworkFields.map((field, index) => {
+                                    const fileName = decodeURIComponent(field.value.split('/').pop()?.split('?')[0] || 'file');
+                                    return (
+                                        <li key={field.id} className="flex items-center justify-between p-2 rounded-md border bg-muted/50 text-sm">
                                             <div className="flex items-center gap-2 truncate">
                                                 <FileIcon className="h-4 w-4 shrink-0" />
-                                                <span className="truncate">{file.name}</span>
+                                                <a href={field.value} target="_blank" rel="noopener noreferrer" className="truncate hover:underline">{fileName}</a>
                                             </div>
-                                            <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFile(index)}>
+                                            <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeArtwork(index)}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                        <FormDescription>
-                            Upload your logo or design files if you have them.
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-              />
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    )}
+                    <FormDescription>
+                        Upload your logo or design files if you have them.
+                    </FormDescription>
+                    <FormMessage />
+                </FormItem>
 
               <FormField
                 control={form.control}
@@ -361,7 +408,7 @@ function QuoteForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isSubmitting} size="lg" className="w-full sm:w-auto">
+              <Button type="submit" disabled={isSubmitting || isUploading} size="lg" className="w-full sm:w-auto">
                 {isSubmitting ? (
                     <>
                         <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -387,5 +434,3 @@ export default function QuotePage() {
         </Suspense>
     )
 }
-
-    

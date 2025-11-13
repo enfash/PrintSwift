@@ -13,15 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar as CalendarIcon, PlusCircle, Trash2, Copy, LoaderCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, PlusCircle, Trash2, Copy, LoaderCircle, Download, File as FileIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useDoc } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 
 const lineItemOptionSchema = z.object({
@@ -52,6 +53,8 @@ const quoteSchema = z.object({
   discount: z.coerce.number().default(0),
   vatRate: z.coerce.number().default(7.5),
   delivery: z.coerce.number().default(0),
+  artworkUrls: z.array(z.string()).optional(),
+  fromRequestId: z.string().optional(),
 });
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
@@ -60,9 +63,14 @@ export default function NewQuotePage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestId = searchParams.get('request_id');
 
   const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
+
+  const quoteRequestRef = useMemoFirebase(() => (firestore && requestId) ? doc(firestore, 'quote_requests', requestId) : null, [firestore, requestId]);
+  const { data: quoteRequest, isLoading: isLoadingQuoteRequest } = useDoc<any>(quoteRequestRef);
   
   const uniqueProducts = useMemo(() => {
     if (!products) return [];
@@ -82,8 +90,31 @@ export default function NewQuotePage() {
       discount: 0,
       vatRate: 7.5,
       delivery: 5000,
+      artworkUrls: [],
     },
   });
+
+  useEffect(() => {
+    if (quoteRequest && uniqueProducts.length > 0) {
+        const lineItemProduct = uniqueProducts.find(p => p.id === quoteRequest.productId);
+        form.reset({
+            email: quoteRequest.email,
+            phone: quoteRequest.phone,
+            company: quoteRequest.company,
+            notesInternal: quoteRequest.details,
+            artworkUrls: quoteRequest.artworkUrls || [],
+            fromRequestId: quoteRequest.id,
+            lineItems: [{
+                productId: quoteRequest.productId,
+                productName: quoteRequest.productName,
+                productDetails: lineItemProduct || null,
+                qty: 100, // default qty
+                options: [],
+                unitPrice: 0,
+            }]
+        });
+    }
+  }, [quoteRequest, uniqueProducts, form]);
 
   const { fields, append, remove, update } = useFieldArray({
     control: form.control,
@@ -94,6 +125,7 @@ export default function NewQuotePage() {
   const discount = form.watch('discount');
   const vatRate = form.watch('vatRate');
   const delivery = form.watch('delivery');
+  const artworkUrls = form.watch('artworkUrls');
 
   const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0 });
 
@@ -139,7 +171,6 @@ export default function NewQuotePage() {
 
   const calculateSummary = useCallback(() => {
     const newSubtotal = lineItems.reduce((acc, item) => {
-      // We read the unit price directly from the form state if it exists, or calculate it.
       const price = item.unitPrice || calculateLineItemPrice(item) || 0;
       return acc + (item.qty * price);
     }, 0);
@@ -232,7 +263,7 @@ export default function NewQuotePage() {
 
     const finalData = {
       ...quoteData,
-      id: newDocRef.id, // Add the unique ID
+      id: newDocRef.id,
       subtotal: summary.subtotal,
       vat: summary.vat,
       total: summary.total,
@@ -462,6 +493,28 @@ export default function NewQuotePage() {
               </div>
             </CardContent>
           </Card>
+           <Card>
+            <CardHeader><CardTitle>Artwork Files</CardTitle></CardHeader>
+            <CardContent>
+                {artworkUrls && artworkUrls.length > 0 ? (
+                    <ul className="space-y-2">
+                        {artworkUrls.map((url, index) => {
+                            const fileName = decodeURIComponent(url.split('/').pop()?.split('?')[0] || 'file');
+                            return (
+                                <li key={index} className="flex items-center justify-between p-2 rounded-md border text-sm">
+                                    <Link href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 truncate hover:underline">
+                                        <FileIcon className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{fileName}</span>
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">No artwork files attached.</p>
+                )}
+            </CardContent>
+           </Card>
         </div>
       </div>
        <Card className="fixed bottom-0 left-0 right-0 border-t rounded-none sm:left-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:left-[var(--sidebar-width)] transition-all duration-300 ease-in-out">

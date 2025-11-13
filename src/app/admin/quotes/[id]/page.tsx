@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar as CalendarIcon, PlusCircle, Trash2, Copy, LoaderCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, PlusCircle, Trash2, Copy, LoaderCircle, Download, File as FileIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useDoc, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 
 const lineItemOptionSchema = z.object({
@@ -51,6 +52,7 @@ const quoteSchema = z.object({
   discount: z.coerce.number().default(0),
   vatRate: z.coerce.number().default(7.5),
   delivery: z.coerce.number().default(0),
+  artworkUrls: z.array(z.string()).optional(),
 });
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
@@ -75,6 +77,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
         delivery: 0,
         vatRate: 7.5,
         status: 'draft',
+        artworkUrls: [],
     }
   });
 
@@ -91,6 +94,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
         discount: quote.discount || 0,
         delivery: quote.delivery || 0,
         vatRate: quote.vatRate || 7.5,
+        artworkUrls: quote.artworkUrls || [],
       });
     }
   }, [quote, form]);
@@ -99,6 +103,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   const discount = form.watch('discount');
   const vatRate = form.watch('vatRate');
   const delivery = form.watch('delivery');
+  const artworkUrls = form.watch('artworkUrls');
 
   const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0 });
 
@@ -466,6 +471,28 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
               </div>
             </CardContent>
           </Card>
+           <Card>
+            <CardHeader><CardTitle>Artwork Files</CardTitle></CardHeader>
+            <CardContent>
+                {artworkUrls && artworkUrls.length > 0 ? (
+                    <ul className="space-y-2">
+                        {artworkUrls.map((url, index) => {
+                            const fileName = decodeURIComponent(url.split('/').pop()?.split('?')[0] || 'file');
+                            return (
+                                <li key={index} className="flex items-center justify-between p-2 rounded-md border text-sm">
+                                    <Link href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 truncate hover:underline">
+                                        <FileIcon className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{fileName}</span>
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">No artwork files attached.</p>
+                )}
+            </CardContent>
+           </Card>
         </div>
       </div>
        <Card className="fixed bottom-0 left-0 right-0 border-t rounded-none sm:left-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:left-[var(--sidebar-width)] transition-all duration-300 ease-in-out">

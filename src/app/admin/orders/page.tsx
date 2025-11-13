@@ -18,7 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft, ChevronRight, FileText, Upload, Download, LoaderCircle } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, FileText, Upload, Download, LoaderCircle, File as FileIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -35,6 +35,7 @@ import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking
 import { collection, query, where, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -242,11 +243,28 @@ export default function OrdersPage() {
                         </CardContent>
                     </Card>
                      <Card>
-                        <CardHeader><CardTitle>Files</CardTitle></CardHeader>
-                        <CardContent className="flex flex-col gap-2">
-                            <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Upload Artwork</Button>
-                            <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Upload Proof</Button>
-                            <Button variant="secondary"><Download className="mr-2 h-4 w-4"/> Download Approved PDF</Button>
+                        <CardHeader><CardTitle>Artwork Files</CardTitle></CardHeader>
+                         <CardContent>
+                            {selectedOrder.artworkUrls && selectedOrder.artworkUrls.length > 0 ? (
+                                <ul className="space-y-2">
+                                    {selectedOrder.artworkUrls.map((url: string, index: number) => {
+                                        const fileName = decodeURIComponent(url.split('/').pop()?.split('?')[0] || 'file');
+                                        return (
+                                            <li key={index} className="flex items-center justify-between p-2 rounded-md border text-sm">
+                                                <Link href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 truncate hover:underline">
+                                                    <FileIcon className="h-4 w-4 shrink-0" />
+                                                    <span className="truncate">{fileName}</span>
+                                                </Link>
+                                                <Button asChild variant="ghost" size="icon" className="h-6 w-6">
+                                                   <a href={url} download={fileName}><Download className="h-4 w-4" /></a>
+                                                </Button>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No artwork files for this order.</p>
+                            )}
                         </CardContent>
                     </Card>
                      <Card>
