@@ -14,7 +14,7 @@ import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 
 const categorySchema = z.object({
   name: z.string().min(3, 'Category name must be at least 3 characters.'),
@@ -22,7 +22,9 @@ const categorySchema = z.object({
 });
 
 
-export default function CategoryEditPage({ params: { id } }: { params: { id: string } }) {
+export default function CategoryEditPage({ params: paramsProp }: { params: { id: string } }) {
+    const params = use(paramsProp);
+    const id = params.id;
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();

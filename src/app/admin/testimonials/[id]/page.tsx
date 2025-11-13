@@ -14,7 +14,7 @@ import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,7 +30,8 @@ const testimonialSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
-export default function EditTestimonialPage({ params }: { params: { id: string } }) {
+export default function EditTestimonialPage({ params: paramsProp }: { params: { id: string } }) {
+    const params = use(paramsProp);
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
@@ -265,4 +266,3 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
         </Form>
     );
 }
-

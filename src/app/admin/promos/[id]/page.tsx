@@ -14,7 +14,7 @@ import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect } from 'react';
+import { useEffect, use } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -34,7 +34,8 @@ const promoSchema = z.object({
   endDate: z.date().optional(),
 });
 
-export default function EditPromoPage({ params }: { params: { id: string } }) {
+export default function EditPromoPage({ params: paramsProp }: { params: { id: string } }) {
+    const params = use(paramsProp);
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();

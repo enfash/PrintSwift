@@ -75,7 +75,8 @@ const productSchema = z.object({
   pricing: pricingSchema.optional(),
 });
 
-export default function ProductEditPage({ params }: { params: { id: string } }) {
+export default function ProductEditPage({ params: paramsProp }: { params: { id: string } }) {
+    const params = use(paramsProp);
     const productId = params.id;
     const firestore = useFirestore();
     const storage = useStorage();
