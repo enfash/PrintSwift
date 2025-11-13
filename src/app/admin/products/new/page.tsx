@@ -88,7 +88,6 @@ export default function ProductFormPage() {
     const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [productId] = useState(() => doc(collection(firestore, 'products')).id); // Generate ID once
 
@@ -169,7 +168,6 @@ export default function ProductFormPage() {
 
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
         if (!firestore) return;
-        setIsSubmitting(true);
         
         const finalProductData = {
             id: productId,
@@ -185,7 +183,6 @@ export default function ProductFormPage() {
         } catch (error) {
             console.error("Error saving product:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not save the product.' });
-            setIsSubmitting(false);
         }
     };
 
@@ -202,6 +199,7 @@ export default function ProductFormPage() {
     };
 
     const mainImageIndex = form.watch('mainImageIndex');
+    const isSubmitting = form.formState.isSubmitting;
     const currentTiers = form.watch('pricing.tiers');
 
     return (
