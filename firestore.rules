@@ -11,27 +11,31 @@ service cloud.firestore {
 
     // --- Public Read Collections ---
     match /product_categories/{category} {
-        allow read, write: if isAdmin();
+        // Allow public read access to all categories.
+        allow read: if true;
+        // Only admins can write to categories.
+        allow write: if isAdmin();
     }
     
     match /products/{product} {
-        // Admins can do anything
+        // Admins can do anything.
         allow write: if isAdmin();
-        // Allow public reads only for Published products
+        // Allow public read access (get or list) for Published products.
         allow read: if resource.data.status == 'Published' || isAdmin();
     }
 
     match /testimonials/{testimonial} {
+      // Allow public read access (get or list) for visible testimonials.
       allow read: if resource.data.visible == true || isAdmin();
+      // Only admins can write.
       allow write: if isAdmin();
     }
 
     match /promos/{promo} {
         // Admins can do anything.
-        allow read, write: if isAdmin();
-        // Non-admins can ONLY list promos that are active.
-        // Date checks must be performed client-side.
-        allow list: if request.query.get('active') == true;
+        allow write: if isAdmin();
+        // Non-admins can read active promos. This covers get and list.
+        allow read: if resource.data.active == true;
     }
 
     // --- Admin-only Write/Read Collections ---
