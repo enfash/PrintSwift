@@ -1,12 +1,33 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // WARNING: This is a temporary, insecure rule for debugging.
-    // It allows any authenticated user to read and write all files.
+    
+    // Helper function to check for admin role
+    function isAdmin() {
+      // Assumes an 'roles_admin' collection in Firestore where admin UIDs are stored.
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    // Products: Admins can write, anyone can read.
+    match /products/{productId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Quote Artwork: Anyone can upload, only admins can read/delete.
+    // This allows the public quote form to upload files.
+    match /quote-artwork/{quoteRequestId}/{allPaths=**} {
+      // Allow public writes (uploads)
+      allow write: if true;
+      // Only allow admins to read or delete existing files.
+      allow read, delete: if isAdmin();
+    }
+    
+    // --- Fallback/Default deny ---
+    // Deny all other paths that are not explicitly matched above.
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }
