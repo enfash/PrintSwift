@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { cn } from '@/lib/utils';
+import { cn, getSafeImageUrl } from '@/lib/utils';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -330,11 +330,10 @@ export default function ProductFormPage() {
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
-                                        if (!field.value) return null;
                                         return (
                                         <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
                                             <Image 
-                                                src={field.value}
+                                                src={getSafeImageUrl(field.value, field.id)}
                                                 alt={`Product image ${index + 1}`} 
                                                 fill 
                                                 className="object-cover rounded-md"
