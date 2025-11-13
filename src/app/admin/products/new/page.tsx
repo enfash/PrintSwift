@@ -316,20 +316,19 @@ export default function ProductFormPage() {
                                 </div>
                                 <FormField control={form.control} name="imageUrls" render={() => (<FormItem><FormMessage /></FormItem>)}/>
                                 
-                                <Tabs defaultValue="upload" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="upload" disabled={isUploading}><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
-                                        <TabsTrigger value="url" disabled={isUploading}><Link2 className="mr-2 h-4 w-4"/>Add URL</TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="upload" className="pt-4">
-                                         <label className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
+                                <div className="flex gap-2">
+                                    <label className="flex-1">
+                                        <div className={cn(
+                                            "flex items-center justify-center w-full h-10 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition",
+                                            isUploading && "opacity-50 cursor-not-allowed"
+                                        )}>
                                             <div className="flex items-center justify-center text-muted-foreground">
                                                 {isUploading ? (
                                                      <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
                                                 ) : (
                                                     <UploadCloud className="mr-2 h-5 w-5"/>
                                                 )}
-                                                <p className="font-semibold">{isUploading ? 'Uploading...' : 'Click to upload'}</p>
+                                                <p className="font-semibold text-sm">{isUploading ? 'Uploading...' : 'Upload Image'}</p>
                                             </div>
                                             <Input 
                                                 id="imageUpload"
@@ -339,23 +338,17 @@ export default function ProductFormPage() {
                                                 onChange={handleFileSelect}
                                                 disabled={imageFields.length >= 6 || isUploading}
                                             />
-                                        </label>
-                                    </TabsContent>
-                                     <TabsContent value="url" className="pt-2">
-                                        <FormLabel>Image URL</FormLabel>
-                                        <div className="flex gap-2">
-                                            <Input 
-                                                id="imageUrlInput"
-                                                placeholder="https://..."
-                                            />
-                                            <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
                                         </div>
-                                        <FormDescription className="text-xs mt-2">
-                                            Paste a link to an image hosted elsewhere (e.g., Imgur, Dropbox).
-                                        </FormDescription>
-                                    </TabsContent>
-                                </Tabs>
-
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="imageUrlInput"
+                                            placeholder="https://..."
+                                            className="h-10"
+                                        />
+                                        <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add URL</Button>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                          <Card>
@@ -572,3 +565,4 @@ export default function ProductFormPage() {
         </Form>
     );
 }
+
