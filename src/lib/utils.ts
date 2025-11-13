@@ -10,11 +10,12 @@ export function getSafeImageUrl(url: string | undefined | null, seed?: string): 
   const fallbackUrl = `https://placehold.co/600x400/e2e8f0/e2e8f0`;
   
   if (!url) {
-    return fallbackUrl;
+    // If a seed is provided, use picsum for a unique placeholder. Otherwise, use the static one.
+    return seed ? `https://picsum.photos/seed/${seed}/600/400` : fallbackUrl;
   }
   
   try {
-    // Correctly handle gs:// URLs by converting them to public HTTPS URLs
+    // This will handle both gs:// and https:// URLs correctly now.
     if (url.startsWith('gs://')) {
         const bucket = url.split('/')[2];
         const path = url.split('/').slice(3).join('/');

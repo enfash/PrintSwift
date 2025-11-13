@@ -46,7 +46,6 @@ import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
-import { getSafeImageUrl } from '@/lib/utils';
 
 const ProductsList = () => {
     const firestore = useFirestore();
@@ -279,7 +278,8 @@ const ProductsList = () => {
                                     ? product.imageUrls[product.mainImageIndex || 0] 
                                     : null;
 
-                                const mainImageUrl = getSafeImageUrl(rawUrl, product.id);
+                                const mainImageUrl = rawUrl || `https://placehold.co/40x40/e2e8f0/e2e8f0`;
+
 
                                 return (
                                 <TableRow key={product.id} data-state={selectedProducts.includes(product.id) ? "selected" : ""}>

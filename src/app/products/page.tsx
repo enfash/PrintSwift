@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { getSafeImageUrl } from '@/lib/utils';
 
 function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
@@ -201,7 +200,7 @@ function ProductsComponent() {
                                 const rawUrl = product.imageUrls && product.imageUrls.length > 0
                                     ? product.imageUrls[product.mainImageIndex || 0]
                                     : null;
-                                const mainImageUrl = getSafeImageUrl(rawUrl, product.id);
+                                const mainImageUrl = rawUrl || `https://placehold.co/600x400/e2e8f0/e2e8f0`;
 
                                 return (
                                     <Link key={product.id} href={`/products/${product.slug}`} className="block">

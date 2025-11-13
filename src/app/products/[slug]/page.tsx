@@ -13,7 +13,7 @@ import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { cn, getSafeImageUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Counter } from '@/components/ui/counter';
 
@@ -198,10 +198,8 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
   const category = categories?.find(c => c.id === product.categoryId);
   const minQty = getMinQuantity();
 
-  const mainImageUrl = getSafeImageUrl(
-    product.imageUrls?.[selectedImage],
-    `${product.id}-${selectedImage}`
-  );
+  const mainImageUrl = product.imageUrls?.[selectedImage] || `https://placehold.co/600x400/e2e8f0/e2e8f0`;
+
 
   return (
     <div className="bg-background">
@@ -230,7 +228,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
             </div>
              <div className="grid grid-cols-5 gap-2">
                 {product.imageUrls?.map((url: string, index: number) => {
-                    const thumbnailUrl = getSafeImageUrl(url, `${product.id}-${index}`);
+                    const thumbnailUrl = url || `https://placehold.co/100x100/e2e8f0/e2e8f0`;
                     return (
                         <button
                             key={index}

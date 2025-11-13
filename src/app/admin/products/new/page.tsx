@@ -281,16 +281,13 @@ export default function ProductFormPage() {
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
-                                         const finalImageUrl = getSafeImageUrl(field.value);
-
                                         return (
                                         <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
                                             <Image 
-                                                src={finalImageUrl}
+                                                src={field.value}
                                                 alt={`Product image ${index + 1}`} 
                                                 fill 
                                                 className="object-cover rounded-md"
-                                                onError={(e) => { e.currentTarget.srcset = getSafeImageUrl(null); }}
                                             />
                                             {mainImageIndex === index && (<Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>)}
                                             <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeImage(index); }}>

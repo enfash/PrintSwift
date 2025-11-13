@@ -23,7 +23,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getSafeImageUrl } from '@/lib/utils';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { cn } from '@/lib/utils';
 
@@ -333,12 +332,10 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
-                                        const finalImageUrl = getSafeImageUrl(field.value);
-
                                         return (
                                             <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
                                                 <Image
-                                                    src={finalImageUrl}
+                                                    src={field.value}
                                                     alt={`Product image ${index + 1}`}
                                                     fill
                                                     className="object-cover rounded-md"
