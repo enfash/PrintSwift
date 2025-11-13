@@ -24,7 +24,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getSafeImageUrl, cn } from '@/lib/utils';
+import { getSafeImageUrl } from '@/lib/utils';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const detailValueSchema = z.object({
@@ -145,22 +145,6 @@ export default function ProductFormPage() {
             event.target.value = '';
         }
     };
-
-    const handleAddImageUrl = (url: string) => {
-        try {
-            z.string().url().parse(url);
-             if (imageFields.length < 6) {
-                appendImage(url);
-            } else {
-                toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
-            }
-            const input = document.getElementById('imageUrlInput') as HTMLInputElement;
-            if (input) input.value = '';
-        } catch {
-            toast({ variant: 'destructive', title: "Invalid URL", description: "Please enter a valid image URL."});
-        }
-    }
-
 
     const { fields: detailFields, append: appendDetail, remove: removeDetail } = useFieldArray({
         control: form.control,
@@ -316,39 +300,28 @@ export default function ProductFormPage() {
                                 </div>
                                 <FormField control={form.control} name="imageUrls" render={() => (<FormItem><FormMessage /></FormItem>)}/>
                                 
-                                <div className="flex gap-2">
-                                    <label className="flex-1">
-                                        <div className={cn(
-                                            "flex items-center justify-center w-full h-10 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition",
-                                            isUploading && "opacity-50 cursor-not-allowed"
-                                        )}>
-                                            <div className="flex items-center justify-center text-muted-foreground">
-                                                {isUploading ? (
-                                                     <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-                                                ) : (
-                                                    <UploadCloud className="mr-2 h-5 w-5"/>
-                                                )}
-                                                <p className="font-semibold text-sm">{isUploading ? 'Uploading...' : 'Upload Image'}</p>
-                                            </div>
-                                            <Input 
-                                                id="imageUpload"
-                                                type="file"
-                                                className="hidden"
-                                                accept="image/*"
-                                                onChange={handleFileSelect}
-                                                disabled={imageFields.length >= 6 || isUploading}
-                                            />
-                                        </div>
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            id="imageUrlInput"
-                                            placeholder="https://..."
-                                            className="h-10"
-                                        />
-                                        <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add URL</Button>
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        {isUploading ? (
+                                            <LoaderCircle className="w-8 h-8 mb-3 text-muted-foreground animate-spin"/>
+                                        ) : (
+                                            <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground"/>
+                                        )}
+                                        <p className="mb-2 text-sm text-muted-foreground">
+                                            <span className="font-semibold">
+                                                {isUploading ? 'Uploading...' : 'Click to upload or drag and drop'}
+                                            </span>
+                                        </p>
                                     </div>
-                                </div>
+                                    <Input 
+                                        id="imageUpload"
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleFileSelect}
+                                        disabled={imageFields.length >= 6 || isUploading}
+                                    />
+                                </label>
                             </CardContent>
                         </Card>
                          <Card>
@@ -565,4 +538,3 @@ export default function ProductFormPage() {
         </Form>
     );
 }
-

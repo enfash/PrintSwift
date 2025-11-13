@@ -18,7 +18,7 @@ import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState, use, useCallback } from 'react';
+import { useEffect, useState, use } from 'react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -77,7 +77,7 @@ const productSchema = z.object({
 });
 
 export default function ProductEditPage({ params }: { params: { id: string } }) {
-    const { id: productId } = use(params);
+    const productId = use(params).id;
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();
@@ -139,22 +139,6 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
             event.target.value = '';
         }
     };
-
-    const handleAddImageUrl = (url: string) => {
-        try {
-            z.string().url().parse(url);
-            if (imageFields.length < 6) {
-                appendImage(url);
-            } else {
-                toast({ variant: 'destructive', title: "Too many images", description: "You can add a maximum of 6 images."});
-            }
-            const input = document.getElementById('imageUrlInput') as HTMLInputElement;
-            if (input) input.value = '';
-        } catch {
-            toast({ variant: 'destructive', title: "Invalid URL", description: "Please enter a valid image URL."});
-        }
-    }
-
 
     const { fields: detailFields, append: appendDetail, remove: removeDetail } = useFieldArray({
         control: form.control,
@@ -384,45 +368,28 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                                     )}
                                 />
 
-                                <Tabs defaultValue="upload" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="upload" disabled={isUploading}><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
-                                        <TabsTrigger value="url" disabled={isUploading}><Link2 className="mr-2 h-4 w-4"/>Add URL</TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="upload" className="pt-4">
-                                        <label className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
-                                            <div className="flex items-center justify-center text-muted-foreground">
-                                                {isUploading ? (
-                                                     <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-                                                ) : (
-                                                    <UploadCloud className="mr-2 h-5 w-5"/>
-                                                )}
-                                                <p className="font-semibold">{isUploading ? 'Uploading...' : 'Click to upload'}</p>
-                                            </div>
-                                            <Input 
-                                                id="imageUpload"
-                                                type="file"
-                                                className="hidden"
-                                                accept="image/*"
-                                                onChange={handleFileSelect}
-                                                disabled={imageFields.length >= 6 || isUploading}
-                                            />
-                                        </label>
-                                    </TabsContent>
-                                     <TabsContent value="url" className="pt-2">
-                                        <FormLabel>Image URL</FormLabel>
-                                        <div className="flex gap-2">
-                                            <Input 
-                                                id="imageUrlInput"
-                                                placeholder="https://..."
-                                            />
-                                            <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
-                                        </div>
-                                        <FormDescription className="text-xs mt-2">
-                                            Paste a link to an image hosted elsewhere (e.g., Imgur, Dropbox).
-                                        </FormDescription>
-                                    </TabsContent>
-                                </Tabs>
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        {isUploading ? (
+                                            <LoaderCircle className="w-8 h-8 mb-3 text-muted-foreground animate-spin"/>
+                                        ) : (
+                                            <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground"/>
+                                        )}
+                                        <p className="mb-2 text-sm text-muted-foreground">
+                                            <span className="font-semibold">
+                                                {isUploading ? 'Uploading...' : 'Click to upload or drag and drop'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <Input 
+                                        id="imageUpload"
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleFileSelect}
+                                        disabled={imageFields.length >= 6 || isUploading}
+                                    />
+                                </label>
 
                             </CardContent>
                         </Card>
