@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoaderCircle, X, PlusCircle, Trash2, UploadCloud, Link2 } from 'lucide-react';
+import { LoaderCircle, X, PlusCircle, Trash2, UploadCloud } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useStorage } from '@/firebase';
@@ -18,7 +18,7 @@ import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getSafeImageUrl } from '@/lib/utils';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { cn } from '@/lib/utils';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -300,7 +301,10 @@ export default function ProductFormPage() {
                                 </div>
                                 <FormField control={form.control} name="imageUrls" render={() => (<FormItem><FormMessage /></FormItem>)}/>
                                 
-                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
+                                <label className={cn(
+                                    "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition",
+                                    isUploading && "opacity-50 cursor-not-allowed"
+                                )}>
                                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                         {isUploading ? (
                                             <LoaderCircle className="w-8 h-8 mb-3 text-muted-foreground animate-spin"/>
