@@ -330,6 +330,7 @@ export default function ProductFormPage() {
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                      {imageFields.map((field, index) => {
+                                        if (!field.value) return null;
                                         return (
                                         <div key={field.id} className="relative aspect-square group cursor-pointer" onClick={() => setMainImage(index)}>
                                             <Image 
