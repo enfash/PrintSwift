@@ -38,18 +38,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc, writeBatch } from 'firebase/firestore';
+import { collection, doc, writeBatch, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import * as z from 'zod';
 import Papa from 'papaparse';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import FaqForm from '@/components/admin/faq/FaqForm';
 
 const faqSchema = z.object({
   question: z.string().min(10, 'Question must be at least 10 characters.'),
@@ -57,113 +53,6 @@ const faqSchema = z.object({
   category: z.string().min(2, 'Category is required.'),
   visible: z.boolean().default(true),
 });
-
-type FaqFormValues = z.infer<typeof faqSchema>;
-
-function FaqForm({ onFinished, currentFaq }: { onFinished: () => void, currentFaq?: any }) {
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const form = useForm<FaqFormValues>({
-        resolver: zodResolver(faqSchema),
-        defaultValues: currentFaq || {
-            question: '',
-            answer: '',
-            category: 'General',
-            visible: true,
-        }
-    });
-
-    const onSubmit = async (values: FaqFormValues) => {
-        if (!firestore) return;
-        setIsSubmitting(true);
-
-        try {
-            if (currentFaq?.id) {
-                const faqDocRef = doc(firestore, 'faqs', currentFaq.id);
-                await updateDocumentNonBlocking(faqDocRef, values);
-                toast({ title: 'FAQ Updated' });
-            } else {
-                const faqsCollection = collection(firestore, 'faqs');
-                const newDocRef = doc(faqsCollection);
-                await updateDocumentNonBlocking(doc(firestore, 'faqs', newDocRef.id), { ...values, id: newDocRef.id });
-                toast({ title: 'FAQ Created' });
-            }
-            onFinished();
-        } catch (error) {
-            console.error("Error saving FAQ:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the FAQ.' });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-    
-    const title = currentFaq ? 'Edit FAQ' : 'Add New FAQ';
-
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
-                </DialogHeader>
-                <FormField
-                    control={form.control}
-                    name="question"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Question</FormLabel>
-                            <FormControl><Input placeholder="e.g., What is your turnaround time?" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="answer"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Answer</FormLabel>
-                            <FormControl><Textarea rows={5} placeholder="Our standard turnaround is..." {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-2 gap-6">
-                     <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <FormControl><Input placeholder="e.g., Shipping" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="visible"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                                <div className="space-y-0.5">
-                                    <FormLabel>Visible</FormLabel>
-                                </div>
-                                <FormControl>
-                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                    Save FAQ
-                </Button>
-            </form>
-        </Form>
-    );
-}
 
 
 export default function FaqAdminPage() {
