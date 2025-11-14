@@ -1,12 +1,11 @@
 
 'use client';
-import { useState, useMemo } from 'react';
-import Image from 'next/image';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import Papa from 'papaparse';
 
 import {
@@ -31,10 +30,10 @@ import {
   MoreHorizontal,
   LoaderCircle,
   Trash2,
-  Download,
-  Upload,
   Search,
   Eye,
+  MessageSquare,
+  FilePlus2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -54,11 +53,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useRouter } from 'next/navigation';
 
 
 const CustomerTable = () => {
+    const router = useRouter();
     const firestore = useFirestore();
     const { toast } = useToast();
     const customersRef = useMemoFirebase(() => firestore ? collection(firestore, 'customers') : null, [firestore]);
@@ -151,19 +162,39 @@ const CustomerTable = () => {
         const a = document.createElement('a');
         a.href = url; a.download = `bomedia-customers-${Date.now()}.csv`; a.click();
         URL.revokeObjectURL(url);
-        toast({ title: 'Export Successful' });
     }
+    
+    useEffect(() => {
+        const handler = () => exportCSV();
+        document.addEventListener('export-customers-csv', handler);
+        return () => document.removeEventListener('export-customers-csv', handler);
+    }, [exportCSV]);
 
     if (customersError) {
         return <p>Error: {customersError.message}</p>;
     }
+    
+    const SkeletonRow = () => (
+      <TableRow>
+        <TableCell className="w-[40px]"><Skeleton className="h-4 w-4" /></TableCell>
+        <TableCell className="font-medium flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-[120px]" />
+            <Skeleton className="h-3 w-[150px]" />
+          </div>
+        </TableCell>
+        <TableCell><Skeleton className="h-4 w-[180px]" /></TableCell>
+        <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+        <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+        <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+      </TableRow>
+    );
 
     return (
-        <Card className="mt-6">
+        <Card className="mt-6 shadow-sm">
             <CardHeader>
-                <CardTitle>All Customers</CardTitle>
-                <CardDescription>View, manage, and export customer data.</CardDescription>
-                <div className="flex items-center gap-2 pt-4">
+                <div className="flex items-center gap-2">
                     <div className="relative flex-grow">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input 
@@ -173,7 +204,7 @@ const CustomerTable = () => {
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    {selectedCustomers.length > 0 ? (
+                     {selectedCustomers.length > 0 && (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive">
@@ -196,15 +227,6 @@ const CustomerTable = () => {
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                    ) : (
-                        <>
-                            <Button variant="outline" onClick={() => toast({ title: 'Coming Soon!', description: 'CSV import will be available in a future update.'})}>
-                                <Upload className="mr-2 h-4 w-4" /> Import
-                            </Button>
-                            <Button variant="outline" onClick={exportCSV}>
-                                <Download className="mr-2 h-4 w-4" /> Export
-                            </Button>
-                        </>
                     )}
                 </div>
             </CardHeader>
@@ -228,11 +250,7 @@ const CustomerTable = () => {
                     </TableHeader>
                     <TableBody>
                         {isLoadingCustomers ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
-                                    <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
-                                </TableCell>
-                            </TableRow>
+                            Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
                         ) : paginatedCustomers.length > 0 ? paginatedCustomers.map(customer => (
                             <TableRow key={customer.id} data-state={selectedCustomers.includes(customer.id) && "selected"}>
                                 <TableCell>
@@ -246,15 +264,31 @@ const CustomerTable = () => {
                                   <Avatar>
                                     <AvatarFallback>{customer.name?.charAt(0).toUpperCase()}</AvatarFallback>
                                   </Avatar>
-                                  {customer.name}
+                                   <div>
+                                    {customer.name}
+                                    <div className="text-xs text-muted-foreground">{customer.email}</div>
+                                  </div>
                                 </TableCell>
                                 <TableCell>
-                                    <div className="text-sm">{customer.email}</div>
-                                    <div className="text-xs text-muted-foreground">{customer.phone}</div>
+                                    <div className="flex items-center justify-between">
+                                        <span>{customer.phone}</span>
+                                        <a href={`https://wa.me/${customer.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="ml-2">
+                                            <MessageSquare className="h-4 w-4 text-green-500 hover:text-green-600"/>
+                                        </a>
+                                    </div>
                                 </TableCell>
                                 <TableCell>{customer.company || 'N/A'}</TableCell>
                                 <TableCell className="text-muted-foreground text-xs">
-                                    {customer.createdAt ? `${formatDistanceToNow(customer.createdAt.toDate())} ago` : 'N/A'}
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                {customer.createdAt ? `${formatDistanceToNow(customer.createdAt.toDate())} ago` : 'N/A'}
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{customer.createdAt ? format(customer.createdAt.toDate(), 'PPP p') : 'No date'}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <Dialog>
@@ -304,6 +338,11 @@ const CustomerTable = () => {
                                           <p><strong>Notes:</strong> {customer.notes || 'No notes.'}</p>
                                           <p className="text-xs text-muted-foreground">Joined: {customer.createdAt ? customer.createdAt.toDate().toLocaleDateString() : 'N/A'}</p>
                                       </div>
+                                      <DialogFooter>
+                                        <Button onClick={() => router.push(`/admin/quotes/new?customer_id=${customer.id}`)}>
+                                            <FilePlus2 className="mr-2 h-4 w-4"/> Create Quote
+                                        </Button>
+                                      </DialogFooter>
                                     </DialogContent>
                                   </Dialog>
                                 </TableCell>
