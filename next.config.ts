@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
         'firebasestorage.googleapis.com',
     ],
   },
+  devIndicators: {
+    allowedDevOrigins: [
+        'https://6000-firebase-studio-1762651024713.cluster-64pjnskmlbaxowh5lzq6i7v4ra.cloudworkstations.dev',
+    ]
+  },
 };
 
 export default nextConfig;
