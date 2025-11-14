@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 async function getProductBySlug(firestore: any, slug: string) {
     if (!firestore || !slug) return null;
     const productsRef = collection(firestore, 'products');
-    const q = query(productsRef, where("slug", "==", slug), limit(1));
+    const q = query(productsRef, where("slug", "==", slug), where("status", "==", "Published"), limit(1));
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
         return null;
@@ -411,3 +411,5 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     </div>
   );
 }
+
+    
