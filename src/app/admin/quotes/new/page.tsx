@@ -58,7 +58,7 @@ const quoteSchema = z.object({
   delivery: z.coerce.number().default(0),
   artworkUrls: z.array(z.string()).optional(),
   fromRequestId: z.string().optional(),
-  depositPercentage: z.coerce.number().optional(),
+  depositPercentage: z.coerce.number().default(0).optional(),
 });
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
@@ -268,10 +268,26 @@ export default function NewQuotePage() {
     update(lineIndex, { ...updatedItem, unitPrice: newUnitPrice });
   };
   
-  const showNotImplementedToast = (feature: string) => {
+  const handleSendEmail = () => {
+    const { email, company } = form.getValues();
+
+    if (!email) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Email',
+        description: 'Please enter a customer email address before sending.',
+      });
+      return;
+    }
+
+    const subject = `Your Quote from BOMedia`;
+    const body = `Hi ${company || 'there'},\n\nPlease find your quote attached.\n\nLet us know if you have any questions.\n\nBest regards,\nThe BOMedia Team`;
+    
+    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
     toast({
-        title: 'Coming Soon!',
-        description: `${feature} functionality is not yet implemented.`
+      title: 'Email Client Opening',
+      description: 'Your email client has been opened with a pre-filled draft.',
     });
   };
 
@@ -587,10 +603,10 @@ export default function NewQuotePage() {
       </div>
        <Card className="fixed bottom-0 left-0 right-0 border-t rounded-none sm:left-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:left-[var(--sidebar-width)] transition-all duration-300 ease-in-out">
             <CardContent className="p-4 flex items-center justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={() => showNotImplementedToast('Send Quote Email')}>Send Quote Email</Button>
-                <Button type="button" variant="secondary" onClick={() => showNotImplementedToast('Generate PDF')}>Generate PDF</Button>
-                <Button type="button" onClick={() => showNotImplementedToast('Convert to Order')}>Convert to Order</Button>
-                <Button type="button" variant="ghost" className="text-muted-foreground" onClick={() => showNotImplementedToast('Archive')}>Archive</Button>
+                <Button type="button" variant="secondary" onClick={handleSendEmail}>Send Quote Email</Button>
+                <Button type="button" variant="secondary" onClick={() => toast({ title: 'Coming Soon!', description: 'PDF Generation is not yet implemented.' })}>Generate PDF</Button>
+                <Button type="button" onClick={() => toast({ title: 'Coming Soon!', description: 'Convert to Order functionality is not yet implemented.' })}>Convert to Order</Button>
+                <Button type="button" variant="ghost" className="text-muted-foreground" onClick={() => toast({ title: 'Coming Soon!', description: 'Archive functionality is not yet implemented.' })}>Archive</Button>
             </CardContent>
         </Card>
     </form>
