@@ -17,7 +17,7 @@ import {
     LoaderCircle
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 
 function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
@@ -47,7 +47,7 @@ function ProductsComponent() {
     const categoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesQuery);
 
-    const productsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
+    const productsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('status', '==', 'Published')) : null, [firestore]);
     const { data: allProducts, isLoading: isLoadingProducts } = useCollection<any>(productsQuery);
 
     useEffect(() => {

@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useDoc, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Counter } from '@/components/ui/counter';
@@ -65,7 +65,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   const firestore = useFirestore();
   const router = useRouter();
 
-  const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
+  const productsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('status', '==', 'Published')) : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
 
   const customersRef = useMemoFirebase(() => firestore ? collection(firestore, 'customers') : null, [firestore]);
