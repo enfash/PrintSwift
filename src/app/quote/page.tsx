@@ -37,6 +37,7 @@ import {
 } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { createCustomer } from '@/lib/firebase/customers';
 
 const lineItemSchema = z.object({
   productId: z.string({ required_error: 'Please select a product.' }),
@@ -166,6 +167,21 @@ function QuoteForm() {
     }
 
     setIsSubmitting(true);
+    
+    // 1. Save customer information
+    try {
+        await createCustomer(firestore, {
+            name: values.name,
+            email: values.email,
+            phone: values.phone,
+            company: values.company
+        });
+    } catch (error) {
+        console.warn("Could not save customer info, but proceeding with quote request:", error);
+        // We don't block quote submission if customer creation fails.
+    }
+    
+    // 2. Save the quote request
     const quoteRequestsRef = collection(firestore, 'quote_requests');
     const docToSave = {
         ...values,

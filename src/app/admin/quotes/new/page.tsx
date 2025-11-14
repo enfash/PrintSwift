@@ -23,6 +23,7 @@ import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, u
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { createCustomer } from '@/lib/firebase/customers';
 
 
 const lineItemOptionSchema = z.object({
@@ -257,6 +258,16 @@ export default function NewQuotePage() {
 
     form.setValue('status', status);
     const quoteData = form.getValues();
+
+    // Save customer info from the quote
+    if (quoteData.email) {
+      await createCustomer(firestore, {
+        name: quoteData.company || quoteData.email, // Fallback to email if no name/company
+        email: quoteData.email,
+        phone: quoteData.phone,
+        company: quoteData.company,
+      });
+    }
     
     const quotesCollection = collection(firestore, 'quotes');
     const newDocRef = doc(quotesCollection);
