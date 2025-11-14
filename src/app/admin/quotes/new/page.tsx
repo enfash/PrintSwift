@@ -373,7 +373,7 @@ export default function NewQuotePage() {
         });
         customerId = customerRef.id;
       } catch (error) {
-        console.error("Failed to create or update customer:", error);
+        console.error("Failed to create customer:", error);
         toast({ variant: 'destructive', title: 'Customer Error', description: 'Could not save customer details.' });
         return; // Stop if customer can't be saved
       }
@@ -409,38 +409,38 @@ export default function NewQuotePage() {
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true);
     try {
-        const doc = new jsPDF();
+        const docPDF = new jsPDF();
         const quoteData = form.getValues();
         const quoteId = quoteData.id?.substring(0, 8).toUpperCase() || 'NEW';
         
         // --- Header ---
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        doc.text("BOMedia - Quote", 14, 22);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text("Lagos, Nigeria", 14, 30);
-        doc.text("info@bomedia.com", 14, 34);
-        doc.text("+234 802 224 7567", 14, 38);
+        docPDF.setFontSize(20);
+        docPDF.setFont('helvetica', 'bold');
+        docPDF.text("BOMedia - Quote", 14, 22);
+        docPDF.setFont('helvetica', 'normal');
+        docPDF.setFontSize(10);
+        docPDF.text("Lagos, Nigeria", 14, 30);
+        docPDF.text("info@bomedia.com", 14, 34);
+        docPDF.text("+234 802 224 7567", 14, 38);
 
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`QUOTE #${quoteId}`, 200, 22, { align: 'right' });
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text(`Date: ${format(new Date(), 'PP')}`, 200, 30, { align: 'right' });
+        docPDF.setFontSize(16);
+        docPDF.setFont('helvetica', 'bold');
+        docPDF.text(`QUOTE #${quoteId}`, 200, 22, { align: 'right' });
+        docPDF.setFont('helvetica', 'normal');
+        docPDF.setFontSize(10);
+        docPDF.text(`Date: ${format(new Date(), 'PP')}`, 200, 30, { align: 'right' });
         if (quoteData.dueDate) {
-          doc.text(`Valid Until: ${format(quoteData.dueDate, 'PP')}`, 200, 34, { align: 'right' });
+          docPDF.text(`Valid Until: ${format(quoteData.dueDate, 'PP')}`, 200, 34, { align: 'right' });
         }
         
         // --- Customer Info ---
-        doc.setLineWidth(0.5);
-        doc.line(14, 45, 200, 45);
-        doc.setFontSize(10);
-        doc.text("BILLED TO:", 14, 52);
-        doc.text(quoteData.company || quoteData.email, 14, 58);
-        if(quoteData.company) doc.text(quoteData.email, 14, 62);
-        if(quoteData.phone) doc.text(quoteData.phone, 14, 66);
+        docPDF.setLineWidth(0.5);
+        docPDF.line(14, 45, 200, 45);
+        docPDF.setFontSize(10);
+        docPDF.text("BILLED TO:", 14, 52);
+        docPDF.text(quoteData.company || quoteData.email, 14, 58);
+        if(quoteData.company) docPDF.text(quoteData.email, 14, 62);
+        if(quoteData.phone) docPDF.text(quoteData.phone, 14, 66);
         
         // --- Line Items Table ---
         const tableBody = quoteData.lineItems.map(item => {
@@ -453,7 +453,7 @@ export default function NewQuotePage() {
             ];
         });
 
-        (doc as any).autoTable({
+        (docPDF as any).autoTable({
             startY: 75,
             head: [['Description', 'Qty', 'Unit Price', 'Total']],
             body: tableBody,
@@ -462,12 +462,12 @@ export default function NewQuotePage() {
         });
         
         // --- Totals ---
-        let finalY = (doc as any).lastAutoTable.finalY + 10;
-        doc.setFontSize(10);
+        let finalY = (docPDF as any).lastAutoTable.finalY + 10;
+        docPDF.setFontSize(10);
         
         const addTotalLine = (label: string, value: string) => {
-            doc.text(label, 140, finalY, { align: 'left' });
-            doc.text(value, 200, finalY, { align: 'right' });
+            docPDF.text(label, 140, finalY, { align: 'left' });
+            docPDF.text(value, 200, finalY, { align: 'right' });
             finalY += 7;
         };
 
@@ -480,31 +480,31 @@ export default function NewQuotePage() {
         }
         addTotalLine(`VAT (${vatRate}%):`, `₦${summary.vat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
         
-        doc.setLineWidth(0.5);
-        doc.line(140, finalY - 3, 200, finalY - 3);
+        docPDF.setLineWidth(0.5);
+        docPDF.line(140, finalY - 3, 200, finalY - 3);
         
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
+        docPDF.setFontSize(12);
+        docPDF.setFont('helvetica', 'bold');
         addTotalLine("TOTAL:", `₦${summary.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
         
-        doc.setFont('helvetica', 'normal');
+        docPDF.setFont('helvetica', 'normal');
         
         if(summary.depositAmount > 0) {
             finalY += 4;
             addTotalLine("Deposit Due:", `₦${summary.depositAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            doc.setFont('helvetica', 'bold');
+            docPDF.setFont('helvetica', 'bold');
             addTotalLine("Balance Remaining:", `₦${summary.remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
         }
 
         // --- Footer Notes ---
         if (quoteData.notesCustomer) {
             finalY = Math.max(finalY, 250);
-            doc.setFontSize(9);
-            doc.text("Notes:", 14, finalY);
-            doc.text(doc.splitTextToSize(quoteData.notesCustomer, 180), 14, finalY + 4);
+            docPDF.setFontSize(9);
+            docPDF.text("Notes:", 14, finalY);
+            docPDF.text(docPDF.splitTextToSize(quoteData.notesCustomer, 180), 14, finalY + 4);
         }
         
-        doc.save(`Quote-BOMedia-${quoteId}.pdf`);
+        docPDF.save(`Quote-BOMedia-${quoteId}.pdf`);
 
         toast({ title: 'PDF Generated', description: 'Your PDF has been downloaded.' });
     } catch (error) {
