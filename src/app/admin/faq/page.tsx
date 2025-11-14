@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, LoaderCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, LoaderCircle, Upload, Download } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -38,13 +38,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import Papa from 'papaparse';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -169,9 +170,10 @@ export default function FaqAdminPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const faqsRef = useMemoFirebase(() => firestore ? collection(firestore, 'faqs') : null, [firestore]);
-  const { data: faqs, isLoading } = useCollection<any>(faqsRef);
+  const { data: faqs, isLoading, forceRefetch } = useCollection<any>(faqsRef);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingFaq, setEditingFaq] = useState<any | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const toggleVisibility = (id: string, currentVisibility: boolean) => {
     if (!firestore) return;
@@ -196,14 +198,96 @@ export default function FaqAdminPage() {
     setEditingFaq(null);
     setIsFormOpen(true);
   }
+  
+  const handleExport = () => {
+    if (!faqs || faqs.length === 0) {
+        toast({ variant: 'destructive', title: 'Export Failed', description: 'No FAQs to export.' });
+        return;
+    }
+    const csv = Papa.unparse(faqs.map(faq => ({
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category,
+        visible: faq.visible,
+    })));
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bomedia-faqs-${Date.now()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: 'Export Successful', description: 'Your FAQs have been downloaded as a CSV file.'});
+  };
+  
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!firestore || !event.target.files || event.target.files.length === 0) return;
+    
+    const file = event.target.files[0];
+    
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+            const batch = writeBatch(firestore);
+            let importedCount = 0;
+            
+            for (const row of results.data as any[]) {
+                try {
+                    const validatedRow = faqSchema.parse({
+                        ...row,
+                        visible: row.visible?.toString().toLowerCase() === 'true',
+                    });
+                    const newFaqRef = doc(collection(firestore, 'faqs'));
+                    batch.set(newFaqRef, { ...validatedRow, id: newFaqRef.id });
+                    importedCount++;
+                } catch (e) {
+                    console.warn('Skipping invalid row:', row, e);
+                }
+            }
+
+            if (importedCount > 0) {
+                await batch.commit();
+                toast({ title: 'Import Successful', description: `${importedCount} FAQs have been imported.`});
+                if (forceRefetch) forceRefetch();
+            } else {
+                toast({ variant: 'destructive', title: 'Import Failed', description: 'No valid FAQs were found in the file.'});
+            }
+        },
+        error: (error) => {
+             toast({ variant: 'destructive', title: 'Import Error', description: `Failed to parse CSV file: ${error.message}`});
+        }
+    });
+
+    // Reset the input value to allow re-uploading the same file
+    if(event.target) event.target.value = '';
+  };
+
 
   return (
     <>
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Manage FAQs</h1>
-        <Button onClick={handleAddNew}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add FAQ
-        </Button>
+        <div className="flex items-center gap-2">
+            <input
+                type="file"
+                ref={importInputRef}
+                className="hidden"
+                accept=".csv"
+                onChange={handleImport}
+            />
+            <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" /> Import
+            </Button>
+             <Button variant="outline" size="sm" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" /> Export
+            </Button>
+            <Button onClick={handleAddNew}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add FAQ
+            </Button>
+        </div>
       </div>
        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent>
