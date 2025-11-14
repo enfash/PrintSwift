@@ -46,7 +46,11 @@
         },
         "description": {
           "type": "string",
-          "description": "Detailed description of the product."
+          "description": "Short description of the product for cards."
+        },
+        "longDescription": {
+          "type": "string",
+          "description": "Detailed description for the product page, supports HTML."
         },
         "imageUrls": {
           "type": "array",
@@ -506,6 +510,20 @@
         "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp when the customer was last updated." }
       },
       "required": ["id", "name", "email", "createdAt", "updatedAt"]
+    },
+    "FAQ": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "FAQ",
+        "type": "object",
+        "description": "Represents a frequently asked question.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the FAQ." },
+            "question": { "type": "string", "description": "The question text." },
+            "answer": { "type": "string", "description": "The answer text." },
+            "category": { "type": "string", "description": "Category for the FAQ (e.g., Shipping, Payment)." },
+            "visible": { "type": "boolean", "description": "Controls if the FAQ is visible to the public." }
+        },
+        "required": ["id", "question", "answer", "category", "visible"]
     }
   },
   "auth": {
@@ -643,8 +661,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/faqs/{faqId}",
+        "definition": {
+          "entityName": "FAQ",
+          "schema": {
+            "$ref": "#/backend/entities/FAQ"
+          },
+          "description": "Collection to store frequently asked questions. Publicly readable if visible, writeable by admins.",
+          "params": [
+            {
+              "name": "faqId",
+              "description": "Unique identifier for the FAQ."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "This Firestore structure prioritizes security, scalability, and ease of debugging, adhering to the core design principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It addresses the user's requirement for a secure admin page to manage products, categories, and customer quote requests, along with a summary dashboard.\n\n**Authorization Independence:**\n*   Admin Access: The `/roles_admin/{uid}` collection grants admin privileges. The existence of a document for a user ID in this collection signifies admin access. No data from other documents is required to validate admin privileges.\n\n*   No Hierarchical `get()` calls: All paths are independent and do not require reading parent documents to determine authorization.\n\n**Structural Segregation:**\n*   Admin Data Segregation: Admin-managed data (products, categories, quote requests, promos) is stored separately, allowing specific security rules to be applied.\n\n**Access Modeling:**\n*   Global Roles (DBAC): Admin roles are managed using the `/roles_admin/{uid}` collection, enabling simple existence-based security rules.\n\n**QAPs (Rules Are Not Filters):**\n*   The segregation of data into different collections based on access requirements supports secure `list` operations. For example, listing products or categories only requires read access to those specific collections, which is granted based on admin role.\n\n**Specific Path Explanations:**\n*   `/roles_admin/{uid}`:  This collection uses **Existence over Content** to assign admin roles. The existence of a document with a specific `uid` grants admin privileges to that user.\n*   `/product_categories/{productCategoryId}`: Stores product category information. Only admins can create, read, update, or delete documents in this collection.\n*   `/products/{productId}`: Stores product information. Only admins can create, read, update, or delete documents in this collection. \n*   `/quote_requests/{quoteRequestId}`: Stores customer quote requests. Only admins can read requests.\n"
+    "reasoning": "This Firestore structure prioritizes security, scalability, and ease of debugging, adhering to the core design principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It addresses the user's requirement for a secure admin page to manage products, categories, and customer quote requests, along with a summary dashboard.\n\n**Authorization Independence:**\n*   Admin Access: The `/roles_admin/{uid}` collection grants admin privileges. The existence of a document for a user ID in this collection signifies admin access. No data from other documents is required to validate admin privileges.\n\n*   No Hierarchical `get()` calls: All paths are independent and do not require reading parent documents to determine authorization.\n\n**Structural Segregation:**\n*   Admin Data Segregation: Admin-managed data (products, categories, quote requests, promos) is stored separately, allowing specific security rules to be applied.\n\n**Access Modeling:**\n*   Global Roles (DBAC): Admin roles are managed using the `/roles_admin/{uid}` collection, enabling simple existence-based security rules.\n\n**QAPs (Rules Are Not Filters):**\n*   The segregation of data into different collections based on access requirements supports secure `list` operations. For example, listing products or categories only requires read access to those specific collections, which is granted based on admin role.\n\n**Specific Path Explanations:**\n*   `/roles_admin/{uid}`:  This collection uses **Existence over Content** to assign admin roles. The existence of a document with a specific `uid` grants admin privileges to that user.\n*   `/product_categories/{productCategoryId}`: Stores product category information. Only admins can create, read, update, or delete documents in this collection.\n*   `/products/{productId}`: Stores product information. Only admins can create, read, update, or delete documents in this collection. \n*   `/quote_requests/{quoteRequestId}`: Stores customer quote requests. Only admins can read requests.\n*   `/faqs/{faqId}`: Stores frequently asked questions. Publicly readable if visible, writeable by admins.\n"
   }
 }

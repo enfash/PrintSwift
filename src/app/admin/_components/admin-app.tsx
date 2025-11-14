@@ -27,6 +27,7 @@ import {
   Home,
   FileQuestion,
   Book,
+  HelpCircle,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -80,6 +81,7 @@ const toolsItems = [
     { href: '/admin/artwork', label: 'Artwork', icon: Palette },
     { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
     { href: '/admin/promos', label: 'Promos', icon: Megaphone },
+    { href: '/admin/faq', label: 'FAQs', icon: HelpCircle },
     { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
 ];
 

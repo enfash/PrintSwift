@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useEffect, useState, useCallback, use } from 'react';
 import { notFound } from 'next/navigation';
@@ -16,6 +15,8 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Counter } from '@/components/ui/counter';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 async function getProductBySlug(firestore: any, slug: string) {
     if (!firestore || !slug) return null;
@@ -27,6 +28,27 @@ async function getProductBySlug(firestore: any, slug: string) {
     }
     const productDoc = querySnapshot.docs[0];
     return { ...productDoc.data(), id: productDoc.id };
+}
+
+function FaqSection() {
+    const firestore = useFirestore();
+    const faqsRef = useMemoFirebase(() => firestore ? collection(firestore, 'faqs') : null, [firestore]);
+    const { data: faqs, isLoading } = useCollection<any>(faqsRef);
+
+    if (isLoading) {
+        return <LoaderCircle className="animate-spin" />
+    }
+
+    return (
+        <Accordion type="single" collapsible className="w-full">
+            {faqs?.filter(faq => faq.visible).map(faq => (
+                <AccordionItem value={faq.id} key={faq.id}>
+                    <AccordionTrigger>{faq.question}</AccordionTrigger>
+                    <AccordionContent>{faq.answer}</AccordionContent>
+                </AccordionItem>
+            ))}
+        </Accordion>
+    )
 }
 
 export default function ProductDetailPage({ params: paramsProp }: { params: { slug: string } }) {
@@ -255,9 +277,6 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold font-headline">{product.name}</h1>
-              <p className="mt-2 text-lg text-muted-foreground">
-                {product.description}
-              </p>
                <div className="mt-3 flex items-center gap-2">
                     <div className="flex items-center">
                         {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}
@@ -265,8 +284,6 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                     <span className="text-sm text-muted-foreground">4.8 (1,288 reviews)</span>
                 </div>
             </div>
-
-            <Separator />
             
             <div className="space-y-6">
                 <h2 className="text-2xl font-semibold">Customize Your Order</h2>
@@ -315,6 +332,24 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                 </Button>
             </div>
           </div>
+        </div>
+        <div className="mt-16">
+            <Tabs defaultValue="description">
+                <TabsList>
+                    <TabsTrigger value="description">Description</TabsTrigger>
+                    <TabsTrigger value="details">Product Details</TabsTrigger>
+                    <TabsTrigger value="faq">FAQ</TabsTrigger>
+                </TabsList>
+                <TabsContent value="description" className="py-6 prose max-w-none">
+                    <p>{product.description}</p>
+                </TabsContent>
+                <TabsContent value="details" className="py-6 prose max-w-none">
+                    <div dangerouslySetInnerHTML={{ __html: product.longDescription || '<p>No details provided.</p>' }} />
+                </TabsContent>
+                <TabsContent value="faq" className="py-6">
+                    <FaqSection />
+                </TabsContent>
+            </Tabs>
         </div>
       </div>
     </div>

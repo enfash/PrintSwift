@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Phone } from 'lucide-react';
+import { Menu, Phone, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/logo';
@@ -11,6 +11,7 @@ import React from 'react';
 const navLinks = [
   { href: '/products', label: 'Products' },
   { href: '/tracking', label: 'Tracking' },
+  { href: '/faq', label: 'FAQ' },
   { href: '/contact', label: 'Contact' },
 ];
 

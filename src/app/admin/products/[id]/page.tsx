@@ -67,6 +67,7 @@ const productSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
   categoryId: z.string({ required_error: 'Please select a category.' }),
   description: z.string().optional(),
+  longDescription: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
   featured: z.boolean().default(false),
   imageUrls: z.array(z.string()).min(1, "Product must have at least one image.").max(6, "You can add a maximum of 6 images."),
@@ -96,6 +97,7 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
             slug: '',
             name: '',
             description: '',
+            longDescription: '',
             imageUrls: [],
             mainImageIndex: 0,
             featured: false,
@@ -198,6 +200,7 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                 slug: product.slug || '',
                 name: product.name || '',
                 description: product.description || '',
+                longDescription: product.longDescription || '',
                 categoryId: product.categoryId || '',
                 status: product.status || 'Draft',
                 featured: product.featured || false,
@@ -354,8 +357,20 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                                     name="description"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Description</FormLabel>
+                                            <FormLabel>Short Description (for product card)</FormLabel>
                                             <FormControl><Textarea placeholder="A brief summary of the product." {...field} value={field.value || ''} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="longDescription"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Full Description / Product Details</FormLabel>
+                                            <FormControl><Textarea rows={8} placeholder="Provide detailed information about the product. You can use HTML here for formatting." {...field} value={field.value || ''} /></FormControl>
+                                            <FormDescription>This will appear in the 'Product Details' tab. HTML is supported.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
