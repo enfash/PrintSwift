@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar as CalendarIcon, PlusCircle, Trash2, Copy, LoaderCircle, Download, File as FileIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, PlusCircle, Trash2, Copy, LoaderCircle, Download, File as FileIcon, FileDown } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,8 @@ import Link from 'next/link';
 import { createCustomer } from '@/lib/firebase/customers';
 import { Counter } from '@/components/ui/counter';
 import { Combobox } from '@/components/ui/combobox';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 
 const lineItemOptionSchema = z.object({
@@ -69,6 +71,7 @@ export default function NewQuotePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestId = searchParams.get('request_id');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const productsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('status', '==', 'Published')) : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
@@ -342,6 +345,36 @@ export default function NewQuotePage() {
     }
   }
   
+  const handleGeneratePdf = async () => {
+    const summaryElement = document.getElementById('quote-summary-card');
+    if (!summaryElement) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not find the summary card to generate PDF.' });
+        return;
+    }
+    setIsGeneratingPdf(true);
+
+    try {
+        const canvas = await html2canvas(summaryElement, {
+            scale: 2, // Increase resolution
+            useCORS: true,
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`Quote-BOMedia-New.pdf`);
+        toast({ title: 'PDF Generated', description: 'Your PDF has been downloaded.' });
+    } catch (error) {
+        console.error("PDF Generation Error:", error);
+        toast({ variant: 'destructive', title: 'PDF Error', description: 'Failed to generate PDF.' });
+    } finally {
+        setIsGeneratingPdf(false);
+    }
+  };
+
   const onSubmit = () => saveQuote('sent');
   const onSaveDraft = () => saveQuote('draft');
 
@@ -532,7 +565,7 @@ export default function NewQuotePage() {
         </div>
         {/* Right Column */}
         <div className="col-span-1 space-y-6">
-          <Card className="sticky top-24">
+          <Card className="sticky top-24" id="quote-summary-card">
             <CardHeader><CardTitle>Quote Summary</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
@@ -604,7 +637,10 @@ export default function NewQuotePage() {
        <Card className="fixed bottom-0 left-0 right-0 border-t rounded-none sm:left-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:left-[var(--sidebar-width)] transition-all duration-300 ease-in-out">
             <CardContent className="p-4 flex items-center justify-end gap-2">
                 <Button type="button" variant="secondary" onClick={handleSendEmail}>Send Quote Email</Button>
-                <Button type="button" variant="secondary" onClick={() => toast({ title: 'Coming Soon!', description: 'PDF Generation is not yet implemented.' })}>Generate PDF</Button>
+                <Button type="button" variant="secondary" onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
+                    {isGeneratingPdf ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                    Generate PDF
+                </Button>
                 <Button type="button" onClick={() => toast({ title: 'Coming Soon!', description: 'Convert to Order functionality is not yet implemented.' })}>Convert to Order</Button>
                 <Button type="button" variant="ghost" className="text-muted-foreground" onClick={() => toast({ title: 'Coming Soon!', description: 'Archive functionality is not yet implemented.' })}>Archive</Button>
             </CardContent>
