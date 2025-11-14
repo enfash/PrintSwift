@@ -32,16 +32,20 @@ async function getProductBySlug(firestore: any, slug: string) {
 
 function FaqSection() {
     const firestore = useFirestore();
-    const faqsRef = useMemoFirebase(() => firestore ? collection(firestore, 'faqs') : null, [firestore]);
+    const faqsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'faqs'), where('visible', '==', true)) : null, [firestore]);
     const { data: faqs, isLoading } = useCollection<any>(faqsRef);
 
     if (isLoading) {
         return <LoaderCircle className="animate-spin" />
     }
 
+    if (!faqs || faqs.length === 0) {
+        return <p className="text-muted-foreground">No frequently asked questions found.</p>
+    }
+
     return (
         <Accordion type="single" collapsible className="w-full">
-            {faqs?.filter(faq => faq.visible).map(faq => (
+            {faqs.map(faq => (
                 <AccordionItem value={faq.id} key={faq.id}>
                     <AccordionTrigger>{faq.question}</AccordionTrigger>
                     <AccordionContent>{faq.answer}</AccordionContent>
@@ -355,3 +359,5 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     </div>
   );
 }
+
+    
