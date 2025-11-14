@@ -223,7 +223,7 @@ export default function AnalyticsPage() {
          <Card className="lg:col-span-2">
           <CardHeader><CardTitle>Quote Funnel</CardTitle></CardHeader>
            <CardContent>
-            {quoteFunnelData[0].value > 0 ? (
+            {quoteFunnelData.length > 0 && quoteFunnelData[0].value > 0 ? (
                 <ChartContainer config={{}} className="h-[250px] w-full">
                     <BarChart data={quoteFunnelData} layout="vertical" margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                         <CartesianGrid horizontal={false} />
