@@ -223,7 +223,7 @@ export default function Dashboard() {
                     )}
                     
                     <h4 className="font-semibold mt-6 mb-2">New Quote Requests</h4>
-                    {recentRequests.length > 0 ? (
+                    {recentRequests && recentRequests.length > 0 ? (
                         <Table>
                              <TableBody>
                                 {recentRequests.map(req => (
