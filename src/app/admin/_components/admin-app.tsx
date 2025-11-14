@@ -54,7 +54,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import LoginPage from '../login/page';
 import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
@@ -200,18 +200,16 @@ function SidebarMenuContent() {
 function MobileSidebar() {
   return (
     <Sheet>
-      <Button asChild size="icon" variant="outline" className="sm:hidden">
-        {/*
-// @ts-ignore */}
-        <SheetTrigger>
+      <SheetTrigger asChild>
+        <Button size="icon" variant="outline" className="sm:hidden">
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle Menu</span>
-        </SheetTrigger>
-      </Button>
+        </Button>
+      </SheetTrigger>
       <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
         <SheetHeader>
-          <SheetTitle>Admin Menu</SheetTitle>
-          <SheetDescription>
+          <SheetTitle className="sr-only">Admin Menu</SheetTitle>
+          <SheetDescription className="sr-only">
             Navigation links for the admin dashboard.
           </SheetDescription>
         </SheetHeader>
