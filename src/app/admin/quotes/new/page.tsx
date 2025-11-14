@@ -25,8 +25,7 @@ import Link from 'next/link';
 import { createCustomer } from '@/lib/firebase/customers';
 import { Counter } from '@/components/ui/counter';
 import { Combobox } from '@/components/ui/combobox';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import InvoiceGenerator from '@/components/admin/quotes/InvoiceGenerator';
 
 
 const lineItemOptionSchema = z.object({
@@ -62,7 +61,7 @@ const quoteSchema = z.object({
   depositPercentage: z.coerce.number().default(0).optional(),
 });
 
-type QuoteFormValues = z.infer<typeof quoteSchema>;
+export type QuoteFormValues = z.infer<typeof quoteSchema>;
 
 export default function NewQuotePage() {
   const { toast } = useToast();
@@ -70,7 +69,6 @@ export default function NewQuotePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestId = searchParams.get('request_id');
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const productsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('status', '==', 'Published')) : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
@@ -322,126 +320,18 @@ export default function NewQuotePage() {
         toast({ variant: 'destructive', title: 'Error', description: `Could not save the quote.` });
     }
   }
-  
-  const handleGeneratePdf = async () => {
-    setIsGeneratingPdf(true);
-    try {
-        const docPDF = new jsPDF();
-        const quoteData = form.getValues();
-        const quoteId = quoteData.id?.substring(0, 8).toUpperCase() || 'NEW';
-        
-        // --- Header ---
-        docPDF.setFontSize(20);
-        docPDF.setFont('helvetica', 'bold');
-        docPDF.text("BOMedia - Quote", 14, 22);
-        docPDF.setFont('helvetica', 'normal');
-        docPDF.setFontSize(10);
-        docPDF.text("Lagos, Nigeria", 14, 30);
-        docPDF.text("info@bomedia.com", 14, 34);
-        docPDF.text("+234 802 224 7567", 14, 38);
-
-        docPDF.setFontSize(16);
-        docPDF.setFont('helvetica', 'bold');
-        docPDF.text(`QUOTE #${quoteId}`, 200, 22, { align: 'right' });
-        docPDF.setFont('helvetica', 'normal');
-        docPDF.setFontSize(10);
-        docPDF.text(`Date: ${format(new Date(), 'PP')}`, 200, 30, { align: 'right' });
-        if (quoteData.dueDate) {
-          docPDF.text(`Valid Until: ${format(quoteData.dueDate, 'PP')}`, 200, 34, { align: 'right' });
-        }
-        
-        // --- Customer Info ---
-        docPDF.setLineWidth(0.5);
-        docPDF.line(14, 45, 200, 45);
-        docPDF.setFontSize(10);
-        docPDF.text("BILLED TO:", 14, 52);
-        docPDF.text(quoteData.company || quoteData.email, 14, 58);
-        if(quoteData.company) docPDF.text(quoteData.email, 14, 62);
-        if(quoteData.phone) docPDF.text(quoteData.phone, 14, 66);
-        
-        // --- Line Items Table ---
-        const tableBody = quoteData.lineItems.map(item => {
-            const optionsString = item.options?.map(o => `${o.label}: ${o.value}`).join('\n') || '';
-            return [
-                { content: `${item.productName}\n${optionsString}`, styles: { fontSize: 9 } },
-                item.qty,
-                { content: `₦${item.unitPrice.toFixed(2)}`, styles: { halign: 'right' } },
-                { content: `₦${(item.qty * item.unitPrice).toFixed(2)}`, styles: { halign: 'right' } },
-            ];
-        });
-
-        (docPDF as any).autoTable({
-            startY: 75,
-            head: [['Description', 'Qty', 'Unit Price', 'Total']],
-            body: tableBody,
-            theme: 'striped',
-            headStyles: { fillColor: [33, 37, 41] },
-        });
-        
-        // --- Totals ---
-        let finalY = (docPDF as any).lastAutoTable.finalY + 10;
-        docPDF.setFontSize(10);
-        
-        const addTotalLine = (label: string, value: string) => {
-            docPDF.text(label, 140, finalY, { align: 'left' });
-            docPDF.text(value, 200, finalY, { align: 'right' });
-            finalY += 7;
-        };
-
-        addTotalLine("Subtotal:", `₦${summary.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-        if (summary.discount > 0) {
-            addTotalLine("Discount:", `- ₦${summary.discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-        }
-        if (summary.delivery > 0) {
-            addTotalLine("Delivery:", `₦${summary.delivery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-        }
-        addTotalLine(`VAT (${vatRate}%):`, `₦${summary.vat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-        
-        docPDF.setLineWidth(0.5);
-        docPDF.line(140, finalY - 3, 200, finalY - 3);
-        
-        docPDF.setFontSize(12);
-        docPDF.setFont('helvetica', 'bold');
-        addTotalLine("TOTAL:", `₦${summary.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-        
-        docPDF.setFont('helvetica', 'normal');
-        
-        if(summary.depositAmount > 0) {
-            finalY += 4;
-            addTotalLine("Deposit Due:", `₦${summary.depositAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            docPDF.setFont('helvetica', 'bold');
-            addTotalLine("Balance Remaining:", `₦${summary.remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-        }
-
-        // --- Footer Notes ---
-        if (quoteData.notesCustomer) {
-            finalY = Math.max(finalY, 250);
-            docPDF.setFontSize(9);
-            docPDF.text("Notes:", 14, finalY);
-            docPDF.text(docPDF.splitTextToSize(quoteData.notesCustomer, 180), 14, finalY + 4);
-        }
-        
-        docPDF.save(`Quote-BOMedia-${quoteId}.pdf`);
-
-        toast({ title: 'PDF Generated', description: 'Your PDF has been downloaded.' });
-    } catch (error) {
-        console.error("PDF Generation Error:", error);
-        toast({ variant: 'destructive', title: 'PDF Error', description: 'Failed to generate PDF.' });
-    } finally {
-        setIsGeneratingPdf(false);
-    }
-  };
 
   const onSubmit = () => saveQuote('sent');
   const onSaveDraft = () => saveQuote('draft');
+  const isSubmitting = form.formState.isSubmitting;
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">New Quote</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" type="button" onClick={onSaveDraft}>Save Draft</Button>
-          <Button type="submit">Submit</Button>
+          <Button variant="outline" type="button" onClick={onSaveDraft} disabled={isSubmitting}>Save Draft</Button>
+          <Button type="submit" disabled={isSubmitting}>Submit</Button>
         </div>
       </div>
 
@@ -693,10 +583,11 @@ export default function NewQuotePage() {
       </div>
        <Card className="fixed bottom-0 left-0 right-0 border-t rounded-none sm:left-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:left-[var(--sidebar-width)] transition-all duration-300 ease-in-out">
             <CardContent className="p-4 flex items-center justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
-                    {isGeneratingPdf ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
-                    Generate PDF
-                </Button>
+                <InvoiceGenerator 
+                    quote={form.getValues()} 
+                    summary={summary}
+                    fileName={`BOMedia-Quote-${form.getValues('id')?.substring(0,6) || 'NEW'}.pdf`} 
+                />
                 <Button type="button" onClick={() => toast({ title: 'Coming Soon!', description: 'Convert to Order functionality is not yet implemented.' })}>Convert to Order</Button>
                 <Button type="button" variant="ghost" className="text-muted-foreground" onClick={() => toast({ title: 'Coming Soon!', description: 'Archive functionality is not yet implemented.' })}>Archive</Button>
             </CardContent>
