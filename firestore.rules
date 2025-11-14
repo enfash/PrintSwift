@@ -38,6 +38,13 @@ service cloud.firestore {
         allow read: if resource.data.active == true;
     }
 
+    // --- Customer Management ---
+    // DEV ONLY: Open access for development. 
+    // WARNING: SECURE THIS BEFORE PRODUCTION by replacing with `if isAdmin()`.
+    match /customers/{customerId} {
+      allow read, write: if true; 
+    }
+
     // --- Admin-only Write/Read Collections ---
     match /quote_requests/{request} {
         allow write: if true; // Allow public to submit quote requests

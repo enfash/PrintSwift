@@ -54,7 +54,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger as MobileSheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import LoginPage from '../login/page';
 import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
@@ -73,6 +73,7 @@ const orderManagementItems = [
     { href: '/admin/quote-requests', label: 'Quote Requests', icon: FileQuestion },
     { href: '/admin/quotes', label: 'Quotes', icon: FileText },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+    { href: '/admin/customers', label: 'Customers', icon: Users },
 ]
 
 const toolsItems = [
@@ -199,16 +200,18 @@ function SidebarMenuContent() {
 function MobileSidebar() {
   return (
     <Sheet>
-      <MobileSheetTrigger asChild>
-        <Button size="icon" variant="outline" className="sm:hidden">
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
-      </MobileSheetTrigger>
+      <Button asChild size="icon" variant="outline" className="sm:hidden">
+        {/*
+// @ts-ignore */}
+        <SheetTrigger>
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle Menu</span>
+        </SheetTrigger>
+      </Button>
       <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
         <SheetHeader>
-          <SheetTitle className="sr-only">Admin Menu</SheetTitle>
-          <SheetDescription className="sr-only">
+          <SheetTitle>Admin Menu</SheetTitle>
+          <SheetDescription>
             Navigation links for the admin dashboard.
           </SheetDescription>
         </SheetHeader>
@@ -352,7 +355,3 @@ export default function AdminApp({
     </FirebaseClientProvider>
   );
 }
-
-    
-
-    
