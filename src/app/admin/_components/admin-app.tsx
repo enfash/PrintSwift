@@ -71,9 +71,6 @@ const menuItems = [
     ]
   },
   { href: '/admin/categories', label: 'Categories', icon: Tags },
-  { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
-  { href: '/admin/promos', label: 'Promos', icon: Megaphone },
-  { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
 ];
 
 const orderManagementItems = [
@@ -84,6 +81,9 @@ const orderManagementItems = [
 
 const toolsItems = [
     { href: '/admin/artwork', label: 'Artwork', icon: Palette },
+    { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
+    { href: '/admin/promos', label: 'Promos', icon: Megaphone },
+    { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
 ];
 
 const insightsItems = [
@@ -374,5 +374,7 @@ export default function AdminApp({
     </FirebaseClientProvider>
   );
 }
+
+    
 
     
