@@ -23,6 +23,7 @@ import { useCollection, useFirestore, useMemoFirebase, useDoc, updateDocumentNon
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Counter } from '@/components/ui/counter';
 
 
 const lineItemOptionSchema = z.object({
@@ -359,7 +360,14 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
                           control={form.control}
                           name={`lineItems.${index}.qty`}
                           render={({ field }) => (
-                            <Input type="number" placeholder="Qty" {...field} />
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor={`lineItems.${index}.qty`} className="shrink-0">Qty:</Label>
+                                <Counter
+                                    value={field.value}
+                                    setValue={field.onChange}
+                                    min={1}
+                                />
+                            </div>
                           )}
                         />
                     </div>
