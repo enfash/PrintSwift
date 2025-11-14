@@ -117,7 +117,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   const artworkUrls = form.watch('artworkUrls');
   const depositPercentage = form.watch('depositPercentage');
 
-  const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0, depositAmount: 0, remainingBalance: 0 });
+  const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0, delivery: 0, depositAmount: 0, remainingBalance: 0 });
 
   const calculateLineItemPrice = useCallback((item: any) => {
     if (!item.productDetails || !item.productDetails.pricing || !item.productDetails.pricing.tiers) {
@@ -160,7 +160,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   }, []);
 
   const calculateSummary = useCallback(() => {
-    if (!lineItems) return; // Add this guard clause
+    if (!lineItems) return;
     const newSubtotal = lineItems.reduce((acc, item) => {
       const price = item.unitPrice || calculateLineItemPrice(item) || 0;
       return acc + (item.qty * price);
@@ -173,8 +173,9 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
     const depositAmount = total * ((depositPercentage || 0) / 100);
     const remainingBalance = total - depositAmount;
     
-    setSummary({ subtotal: newSubtotal, vat, total, depositAmount, remainingBalance });
+    setSummary({ subtotal: newSubtotal, vat, total, delivery, depositAmount, remainingBalance });
   }, [lineItems, discount, vatRate, delivery, depositPercentage, calculateLineItemPrice]);
+
 
   useEffect(() => {
     calculateSummary();
