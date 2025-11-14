@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     Card,
     CardContent,
@@ -18,7 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft, ChevronRight, FileText, Upload, Download, LoaderCircle, File as FileIcon } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, FileText, Upload, Download, LoaderCircle, File as FileIcon, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -56,12 +56,35 @@ export default function OrdersPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     const ordersQuery = useMemoFirebase(
         () => firestore ? query(collection(firestore, 'quotes'), where('status', '==', 'won')) : null,
         [firestore]
     );
     const { data: orders, isLoading } = useCollection<any>(ordersQuery);
+
+    const filteredOrders = useMemo(() => {
+        if (!orders) return [];
+        
+        let filtered = orders;
+
+        if (searchTerm) {
+            const lowercasedTerm = searchTerm.toLowerCase();
+            filtered = filtered.filter(order =>
+                order.id.toLowerCase().includes(lowercasedTerm) ||
+                order.company?.toLowerCase().includes(lowercasedTerm) ||
+                order.email?.toLowerCase().includes(lowercasedTerm)
+            );
+        }
+
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(order => (order.productionStatus || 'Awaiting Artwork') === statusFilter);
+        }
+
+        return filtered;
+    }, [orders, searchTerm, statusFilter]);
 
     const handleSelectOrder = (order: any) => {
         setSelectedOrder(order);
@@ -91,9 +114,24 @@ export default function OrdersPage() {
                             <CardDescription>View and manage all active customer orders.</CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             <Input placeholder="Search..." className="w-64" />
-                             <Select><SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger></Select>
-                             <Select><SelectTrigger className="w-40"><SelectValue placeholder="Date" /></SelectTrigger></Select>
+                             <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Search..." 
+                                    className="w-64 pl-8"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                             </div>
+                             <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                 <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+                                 <SelectContent>
+                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    {productionStatuses.map(status => (
+                                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                                    ))}
+                                 </SelectContent>
+                             </Select>
                         </div>
                     </div>
                 </CardHeader>
@@ -116,8 +154,8 @@ export default function OrdersPage() {
                                         <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
                                     </TableCell>
                                 </TableRow>
-                            ) : orders && orders.length > 0 ? (
-                                orders.map(order => (
+                            ) : filteredOrders && filteredOrders.length > 0 ? (
+                                filteredOrders.map(order => (
                                 <TableRow key={order.id} className="cursor-pointer" onClick={() => handleSelectOrder(order)}>
                                     <TableCell className="font-medium">#{order.id.substring(0, 6)}</TableCell>
                                     <TableCell>{order.company || order.email}</TableCell>
