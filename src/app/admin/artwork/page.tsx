@@ -25,6 +25,9 @@ import {
   ZoomIn,
   ZoomOut,
   FileCheck2,
+  Download,
+  File as FileIcon,
+  LoaderCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -38,25 +41,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-
-const artworkQueue = [
-  {
-    id: 201,
-    orderId: '#412',
-    customer: 'Ada Ventures',
-    file: 'card-v1.pdf',
-    stage: 'Preflight',
-    assignee: 'Tola',
-  },
-  {
-    id: 202,
-    orderId: '#413',
-    customer: 'Jide Stores',
-    file: 'banner.ai',
-    stage: 'Proofing',
-    assignee: 'Uche',
-  },
-];
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { useState } from 'react';
+import Link from 'next/link';
 
 const preflightChecks = [
     { text: 'Size matches product (90x54mm + 3mm bleed)', status: 'pass' },
@@ -75,12 +63,23 @@ const getStatusIcon = (status:string) => {
 }
 
 export default function ArtworkPage() {
+    const firestore = useFirestore();
+    const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
+    const ordersWithArtworkQuery = useMemoFirebase(
+        () => firestore ? query(collection(firestore, 'quotes'), where('status', '==', 'won'), where('artworkUrls', '!=', [])) : null,
+        [firestore]
+    );
+
+    const { data: artworkQueue, isLoading } = useCollection<any>(ordersWithArtworkQuery);
+
+
   return (
     <div className="grid gap-6">
       <h1 className="text-3xl font-bold tracking-tight">Artwork</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Upload / Queue</CardTitle>
+          <CardTitle>Manual Artwork Upload</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition">
@@ -100,59 +99,85 @@ export default function ArtworkPage() {
         <Card>
           <CardHeader>
             <CardTitle>Artwork Queue</CardTitle>
+            <CardDescription>Orders with customer-supplied artwork awaiting review.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
                   <TableHead>Order #</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>File</TableHead>
+                  <TableHead>Files</TableHead>
                   <TableHead>Stage</TableHead>
                   <TableHead>Assignee</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {artworkQueue.map((item) => (
-                  <SheetTrigger asChild key={item.id}>
-                    <TableRow className="cursor-pointer">
-                      <TableCell>{item.id}</TableCell>
-                      <TableCell>{item.orderId}</TableCell>
-                      <TableCell>{item.customer}</TableCell>
-                      <TableCell>{item.file}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{item.stage}</Badge>
-                      </TableCell>
-                      <TableCell>{item.assignee}</TableCell>
+                {isLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                            <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
+                        </TableCell>
                     </TableRow>
-                  </SheetTrigger>
-                ))}
+                ) : artworkQueue && artworkQueue.length > 0 ? (
+                    artworkQueue.map((item) => (
+                    <SheetTrigger asChild key={item.id} onClick={() => setSelectedOrder(item)}>
+                        <TableRow className="cursor-pointer">
+                            <TableCell>#{item.id.substring(0, 6)}</TableCell>
+                            <TableCell>{item.company || item.email}</TableCell>
+                            <TableCell>{item.artworkUrls?.length || 0}</TableCell>
+                            <TableCell>
+                                <Badge variant="secondary">{item.productionStatus || 'Awaiting Artwork'}</Badge>
+                            </TableCell>
+                            <TableCell>Unassigned</TableCell>
+                        </TableRow>
+                    </SheetTrigger>
+                    ))
+                ) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                            No orders with artwork in the queue.
+                        </TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
+        {selectedOrder && (
         <SheetContent className="w-full sm:max-w-2xl p-0">
           <SheetHeader className="p-6 border-b">
-            <SheetTitle>Artwork Detail (ID 201)</SheetTitle>
+            <SheetTitle>Artwork for Order #{selectedOrder.id.substring(0,6)}</SheetTitle>
           </SheetHeader>
           <div className="p-6 space-y-6">
             <Card>
-                <CardContent className="p-2 bg-muted aspect-[4/3] flex items-center justify-center">
-                    <FileCheck2 className="h-24 w-24 text-muted-foreground" />
-                </CardContent>
-                <CardContent className="p-2 border-t flex items-center justify-center gap-2">
-                    <Button variant="ghost" size="icon"><ZoomIn/></Button>
-                    <Button variant="ghost" size="icon"><ZoomOut/></Button>
-                    <Separator orientation="vertical" className="h-6" />
-                    <Button variant="ghost" size="sm">Soft-Proof CMYK</Button>
-                    <Button variant="ghost" size="sm">Check Overprint</Button>
-                    <Button variant="ghost" size="sm">Bleed Guides</Button>
+                <CardHeader><CardTitle>Artwork Files</CardTitle></CardHeader>
+                <CardContent>
+                    {selectedOrder.artworkUrls && selectedOrder.artworkUrls.length > 0 ? (
+                        <ul className="space-y-2">
+                            {selectedOrder.artworkUrls.map((url: string, index: number) => {
+                                const fileName = decodeURIComponent(url.split('/').pop()?.split('?')[0] || 'file');
+                                return (
+                                    <li key={index} className="flex items-center justify-between p-2 rounded-md border text-sm">
+                                        <Link href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 truncate hover:underline">
+                                            <FileIcon className="h-4 w-4 shrink-0" />
+                                            <span className="truncate">{fileName}</span>
+                                        </Link>
+                                        <Button asChild variant="ghost" size="icon" className="h-6 w-6">
+                                           <a href={url} download={fileName}><Download className="h-4 w-4" /></a>
+                                        </Button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No artwork files for this order.</p>
+                    )}
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader><CardTitle>Preflight Checks</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
+                <CardHeader><CardTitle>Preflight Checks (Coming Soon)</CardTitle></CardHeader>
+                <CardContent className="space-y-3 opacity-50">
                     {preflightChecks.map(check => (
                         <div key={check.text} className="flex items-center justify-between text-sm">
                             <div className="flex items-center gap-2">
@@ -165,32 +190,30 @@ export default function ArtworkPage() {
                 </CardContent>
             </Card>
              <Card>
-                <CardHeader><CardTitle>Versioning & Proofing</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
+                <CardHeader><CardTitle>Versioning & Proofing (Coming Soon)</CardTitle></CardHeader>
+                <CardContent className="space-y-4 opacity-50">
                     <div className="flex items-center gap-2 text-sm">
-                        <span>Current: <Badge>v3</Badge></span>
-                        <Button variant="outline" size="sm">Upload New Version</Button>
-                        <Button variant="ghost" size="sm">Compare v2↔v3</Button>
-                        <Button variant="ghost" size="sm">Restore v2</Button>
+                        <span>Current: <Badge>v1</Badge></span>
+                        <Button variant="outline" size="sm" disabled>Upload New Version</Button>
+                        <Button variant="ghost" size="sm" disabled>Compare v1↔v2</Button>
                     </div>
                      <div className="flex items-center gap-2 text-sm">
                         <span>Proof:</span>
-                        <Button variant="outline" size="sm">Generate Proof PDF</Button>
-                        <Button variant="outline" size="sm">Send for Approval</Button>
-                        <Button variant="outline" size="sm" className="border-green-500 text-green-500">Approved ✓</Button>
-                        <Button variant="outline" size="sm" className="border-destructive text-destructive">Rejected ✗</Button>
+                        <Button variant="outline" size="sm" disabled>Send for Approval</Button>
+                        <Button variant="outline" size="sm" className="border-green-500 text-green-500" disabled>Approved ✓</Button>
                     </div>
                 </CardContent>
             </Card>
             <Card>
-                 <CardHeader><CardTitle>Comments</CardTitle></CardHeader>
+                 <CardHeader><CardTitle>Comments (Coming Soon)</CardTitle></CardHeader>
                  <CardContent>
-                    <Textarea placeholder="Add a comment, @mention to notify..."/>
-                    <Button className="mt-2">Post Comment</Button>
+                    <Textarea placeholder="Add a comment, @mention to notify..." disabled/>
+                    <Button className="mt-2" disabled>Post Comment</Button>
                  </CardContent>
             </Card>
           </div>
         </SheetContent>
+        )}
       </Sheet>
     </div>
   );
