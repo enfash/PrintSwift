@@ -168,17 +168,21 @@ function QuoteForm() {
 
     setIsSubmitting(true);
     
-    // 1. Save customer information
+    // 1. Save customer information and get their ID
+    let customerId;
     try {
-        await createCustomer(firestore, {
+        const customerRef = await createCustomer(firestore, {
             name: values.name,
             email: values.email,
             phone: values.phone,
             company: values.company
         });
+        customerId = customerRef.id;
     } catch (error) {
-        console.warn("Could not save customer info, but proceeding with quote request:", error);
-        // We don't block quote submission if customer creation fails.
+        console.error("Failed to create customer:", error);
+        toast({ variant: 'destructive', title: 'Submission Error', description: 'Could not save customer information.' });
+        setIsSubmitting(false);
+        return; // Stop if customer can't be saved
     }
     
     // 2. Save the quote request
@@ -186,6 +190,7 @@ function QuoteForm() {
     const docToSave = {
         ...values,
         id: quoteRequestId,
+        customerId: customerId, // Add the customer ID
         submissionDate: serverTimestamp(),
         status: 'Pending',
     }

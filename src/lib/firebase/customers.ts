@@ -10,8 +10,8 @@ export async function createCustomer(db: Firestore, data: any) {
 
   if (!querySnapshot.empty) {
     // Customer exists, update them with any new info
-    const existingCustomerId = querySnapshot.docs[0].id;
-    const customerDocRef = doc(db, COLLECTION, existingCustomerId);
+    const existingCustomerDoc = querySnapshot.docs[0];
+    const customerDocRef = doc(db, COLLECTION, existingCustomerDoc.id);
     const payload = {
         ...data,
         name_lower: data.name?.toLowerCase?.() || '',
@@ -19,7 +19,7 @@ export async function createCustomer(db: Firestore, data: any) {
     };
     // Only update fields that are provided
     Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-    await updateDoc(customerDocRef, payload, { merge: true });
+    await updateDoc(customerDocRef, payload);
     return customerDocRef;
   } else {
     // New customer, create them

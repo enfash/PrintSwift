@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc, writeBatch } from 'firebase/firestore';
+import { collection, doc, writeBatch, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow } from 'date-fns';
 import Papa from 'papaparse';
@@ -34,6 +34,9 @@ import {
   Eye,
   MessageSquare,
   FilePlus2,
+  FileText,
+  ShoppingCart,
+  FileQuestion,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -58,14 +61,99 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
-  DialogFooter
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+
+const CustomerQuickView = ({ customer }: { customer: any }) => {
+    const router = useRouter();
+    const firestore = useFirestore();
+
+    const quoteRequestsQuery = useMemoFirebase(
+      () => firestore ? query(collection(firestore, 'quote_requests'), where('customerId', '==', customer.id)) : null,
+      [firestore, customer.id]
+    );
+    const { data: quoteRequests, isLoading: isLoadingRequests } = useCollection<any>(quoteRequestsQuery);
+
+    const quotesQuery = useMemoFirebase(
+      () => firestore ? query(collection(firestore, 'quotes'), where('customerId', '==', customer.id)) : null,
+      [firestore, customer.id]
+    );
+    const { data: quotes, isLoading: isLoadingQuotes } = useCollection<any>(quotesQuery);
+    const orders = useMemo(() => quotes?.filter(q => q.status === 'won') || [], [quotes]);
+
+    return (
+        <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                     <Avatar>
+                        <AvatarFallback>{customer.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        {customer.name}
+                        <p className="text-sm font-normal text-muted-foreground">{customer.email}</p>
+                    </div>
+                </DialogTitle>
+            </DialogHeader>
+            <Tabs defaultValue="details">
+                <TabsList>
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="requests">Requests ({isLoadingRequests ? '...' : quoteRequests?.length || 0})</TabsTrigger>
+                    <TabsTrigger value="orders">Orders ({isLoadingQuotes ? '...' : orders.length || 0})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="details" className="pt-4">
+                     <div className="space-y-2 text-sm">
+                        <p><strong>Phone:</strong> {customer.phone || 'N/A'}</p>
+                        <p><strong>Company:</strong> {customer.company || 'N/A'}</p>
+                        <p><strong>Notes:</strong> {customer.notes || 'No notes.'}</p>
+                        <p className="text-xs text-muted-foreground pt-2">Joined: {customer.createdAt ? format(customer.createdAt.toDate(), 'PPP') : 'N/A'}</p>
+                    </div>
+                </TabsContent>
+                <TabsContent value="requests" className="pt-4">
+                     {isLoadingRequests ? <LoaderCircle className="animate-spin" /> : quoteRequests && quoteRequests.length > 0 ? (
+                        <div className="space-y-2">
+                            {quoteRequests.map((req: any) => (
+                                <div key={req.id} className="flex justify-between items-center p-2 border rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <FileQuestion className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium">{req.productName}</span>
+                                    </div>
+                                    <Badge variant="secondary">{req.status || 'Pending'}</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p className="text-sm text-muted-foreground">No quote requests found.</p>}
+                </TabsContent>
+                 <TabsContent value="orders" className="pt-4">
+                     {isLoadingQuotes ? <LoaderCircle className="animate-spin" /> : orders.length > 0 ? (
+                        <div className="space-y-2">
+                             {orders.map((order: any) => (
+                                <div key={order.id} className="flex justify-between items-center p-2 border rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium">#{order.id.substring(0, 6)} - ₦{order.total.toLocaleString()}</span>
+                                    </div>
+                                    <Badge>{order.productionStatus || 'Awaiting Artwork'}</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p className="text-sm text-muted-foreground">No orders found.</p>}
+                </TabsContent>
+            </Tabs>
+             <div className="flex justify-end pt-4">
+                <Button onClick={() => router.push(`/admin/quotes/new?customer_id=${customer.id}`)}>
+                    <FilePlus2 className="mr-2 h-4 w-4"/> Create Quote
+                </Button>
+            </div>
+        </DialogContent>
+    )
+}
 
 
 const CustomerTable = () => {
@@ -327,23 +415,7 @@ const CustomerTable = () => {
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
-                                    <DialogContent>
-                                      <DialogHeader>
-                                        <DialogTitle>{customer.name}</DialogTitle>
-                                        <DialogDescription>{customer.email}</DialogDescription>
-                                      </DialogHeader>
-                                      <div className="space-y-4 py-4">
-                                          <p><strong>Phone:</strong> {customer.phone || 'N/A'}</p>
-                                          <p><strong>Company:</strong> {customer.company || 'N/A'}</p>
-                                          <p><strong>Notes:</strong> {customer.notes || 'No notes.'}</p>
-                                          <p className="text-xs text-muted-foreground">Joined: {customer.createdAt ? customer.createdAt.toDate().toLocaleDateString() : 'N/A'}</p>
-                                      </div>
-                                      <DialogFooter>
-                                        <Button onClick={() => router.push(`/admin/quotes/new?customer_id=${customer.id}`)}>
-                                            <FilePlus2 className="mr-2 h-4 w-4"/> Create Quote
-                                        </Button>
-                                      </DialogFooter>
-                                    </DialogContent>
+                                    <CustomerQuickView customer={customer} />
                                   </Dialog>
                                 </TableCell>
                             </TableRow>

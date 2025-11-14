@@ -258,15 +258,23 @@ export default function NewQuotePage() {
 
     form.setValue('status', status);
     const quoteData = form.getValues();
+    let customerId = quoteData.customerId;
 
-    // Save customer info from the quote
+    // Save customer info from the quote and get ID
     if (quoteData.email) {
-      await createCustomer(firestore, {
-        name: quoteData.company || quoteData.email, // Fallback to email if no name/company
-        email: quoteData.email,
-        phone: quoteData.phone,
-        company: quoteData.company,
-      });
+      try {
+        const customerRef = await createCustomer(firestore, {
+          name: quoteData.company || quoteData.email, // Fallback to email if no name/company
+          email: quoteData.email,
+          phone: quoteData.phone,
+          company: quoteData.company,
+        });
+        customerId = customerRef.id;
+      } catch (error) {
+        console.error("Failed to create or update customer:", error);
+        toast({ variant: 'destructive', title: 'Customer Error', description: 'Could not save customer details.' });
+        return; // Stop if customer can't be saved
+      }
     }
     
     const quotesCollection = collection(firestore, 'quotes');
@@ -275,6 +283,7 @@ export default function NewQuotePage() {
     const finalData = {
       ...quoteData,
       id: newDocRef.id,
+      customerId: customerId, // Ensure customerId is saved
       subtotal: summary.subtotal,
       vat: summary.vat,
       total: summary.total,
