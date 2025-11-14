@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { cn, getSafeImageUrl } from '@/lib/utils';
+import { cn, getSafeImageUrl, generateSearchTerms } from '@/lib/utils';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -239,7 +239,23 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
         try {
             const productDocRef = doc(firestore, 'products', product.id);
 
-            const updateData = { ...values };
+            const categoryName = categories?.find(c => c.id === values.categoryId)?.name || '';
+            const searchTerms = generateSearchTerms(
+                values.name,
+                values.slug,
+                values.tags,
+                categoryName,
+                values.keywords,
+                values.description
+            );
+
+            const updateData = { 
+                ...values,
+                searchTerms,
+                name_lower: values.name.toLowerCase(),
+                categoryName,
+                updatedAt: serverTimestamp(),
+            };
             
             const cleanData = (obj: any): any => {
               const newObj: any = {};
@@ -260,7 +276,6 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
             };
             
             const sanitizedData = cleanData(updateData);
-            sanitizedData.updatedAt = serverTimestamp();
             
             await updateDocumentNonBlocking(productDocRef, sanitizedData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
@@ -810,5 +825,3 @@ Value two"
         </Form>
     );
 }
-
-    

@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { cn, getSafeImageUrl } from '@/lib/utils';
+import { cn, getSafeImageUrl, generateSearchTerms } from '@/lib/utils';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -226,9 +226,23 @@ export default function ProductFormPage() {
     const onSubmit = async (values: z.infer<typeof productSchema>) => {
         if (!firestore) return;
         
+        const categoryName = categories?.find(c => c.id === values.categoryId)?.name || '';
+        
+        const searchTerms = generateSearchTerms(
+            values.name,
+            values.slug,
+            values.tags,
+            categoryName,
+            values.keywords,
+            values.description
+        );
+
         const finalProductData = {
             id: productId,
             ...values,
+            searchTerms,
+            name_lower: values.name.toLowerCase(),
+            categoryName,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         }
@@ -704,5 +718,3 @@ export default function ProductFormPage() {
         </Form>
     );
 }
-
-    

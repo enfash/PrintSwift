@@ -23,3 +23,22 @@ export function getSafeImageUrl(url: string | undefined | null, seed?: string): 
     return fallbackUrl;
   }
 }
+
+export function generateSearchTerms(
+  name: string,
+  slug: string,
+  tags: string[] = [],
+  categoryName: string = '',
+  keywords: string[] = [],
+  description: string = ''
+): string[] {
+  const allText = [name, slug, categoryName, description, ...tags, ...keywords].join(' ');
+  const tokens = allText
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ') // Remove special characters
+    .split(/\s+/) // Split by whitespace
+    .filter(Boolean); // Remove empty strings
+
+  // Return a unique set of tokens
+  return Array.from(new Set(tokens));
+}
