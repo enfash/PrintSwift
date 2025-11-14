@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/logo';
 import React from 'react';
+import { SearchBar } from '@/components/search-bar';
 
 const navLinks = [
   { href: '/products', label: 'Products' },
@@ -20,8 +21,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-7xl items-center">
-        <div className="flex-1 flex items-center justify-start">
+      <div className="container flex h-16 max-w-7xl items-center gap-4">
+        <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <Logo />
             <span className="hidden font-bold font-headline sm:inline-block">BOMedia</span>
@@ -43,12 +44,9 @@ export function Header() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
-          <Button variant="ghost" asChild className="hidden lg:flex items-center space-x-2">
-            <a href="tel:+2348022247567">
-              <Phone className="h-4 w-4" />
-              <span>+234 802 224 7567</span>
-            </a>
-          </Button>
+            <div className="w-full max-w-sm lg:max-w-xs hidden md:block">
+                <SearchBar />
+            </div>
           <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Link href="/quote">Request a Quote</Link>
           </Button>
@@ -67,6 +65,9 @@ export function Header() {
                     <Logo />
                     <span className="font-bold font-headline">BOMedia</span>
                   </Link>
+                </div>
+                <div className="mb-6">
+                    <SearchBar />
                 </div>
                 <div className="flex flex-col space-y-4 text-left">
                   {navLinks.map((link) => (
