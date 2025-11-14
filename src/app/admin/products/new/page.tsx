@@ -62,12 +62,20 @@ const pricingSchema = z.object({
     tiers: z.array(tierSchema).optional(),
 });
 
+const seoSchema = z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    keywords: z.array(z.string()).optional(),
+});
+
 const productSchema = z.object({
   slug: z.string().min(3, 'Slug must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
   categoryId: z.string({ required_error: 'Please select a category.' }),
   subcategory: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  keywords: z.array(z.string()).optional(),
+  searchTerms: z.array(z.string()).optional(),
   description: z.string().optional(),
   longDescription: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
@@ -76,6 +84,7 @@ const productSchema = z.object({
   mainImageIndex: z.number().min(0).default(0),
   details: z.array(productDetailOptionSchema).optional(),
   pricing: pricingSchema.optional(),
+  seo: seoSchema.optional(),
 });
 
 const slugify = (str: string) =>
@@ -117,6 +126,9 @@ export default function ProductFormPage() {
             },
             subcategory: '',
             tags: [],
+            keywords: [],
+            searchTerms: [],
+            seo: { title: '', description: '', keywords: [] },
         },
     });
 
@@ -266,7 +278,7 @@ export default function ProductFormPage() {
                         <TabsTrigger value="general">General</TabsTrigger>
                         <TabsTrigger value="details">Details & Media</TabsTrigger>
                         <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                        <TabsTrigger value="seo">SEO & Organization</TabsTrigger>
+                        <TabsTrigger value="seo">SEO &amp; Search</TabsTrigger>
                         <TabsTrigger value="publishing">Publishing</TabsTrigger>
                     </TabsList>
                     <TabsContent value="general" className="pt-6">
@@ -561,10 +573,10 @@ export default function ProductFormPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
-                    <TabsContent value="seo" className="pt-6">
-                        <Card>
+                    <TabsContent value="seo" className="pt-6 space-y-6">
+                         <Card>
                             <CardHeader>
-                                <CardTitle>SEO & Organization</CardTitle>
+                                <CardTitle>Search &amp; Organization</CardTitle>
                                 <CardDescription>Improve search visibility and product organization.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
@@ -596,12 +608,61 @@ export default function ProductFormPage() {
                                                     defaultValue={Array.isArray(field.value) ? field.value.join(', ') : ''}
                                                 />
                                             </FormControl>
-                                            <FormDescription>Comma-separated tags for searching and filtering.</FormDescription>
+                                            <FormDescription>Comma-separated tags for filtering.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                 <FormField
+                                    control={form.control}
+                                    name="keywords"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Keywords</FormLabel>
+                                            <FormControl>
+                                                <Textarea 
+                                                    placeholder="Lagos business cards&#10;cheap flyers&#10;custom mugs Nigeria" 
+                                                    onBlur={(e) => {
+                                                        const keywords = e.target.value.split('\n').map(kw => kw.trim()).filter(Boolean);
+                                                        field.onChange(keywords);
+                                                    }}
+                                                    defaultValue={Array.isArray(field.value) ? field.value.join('\n') : ''}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>One high-priority search phrase per line.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>SEO Metadata</CardTitle>
+                                <CardDescription>Fine-tune how this product appears on search engines.</CardDescription>
+                            </CardHeader>
+                             <CardContent className="space-y-6">
+                                 <FormField
+                                    control={form.control}
+                                    name="seo.title"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>SEO Title</FormLabel>
+                                            <FormControl><Input placeholder="Custom Business Cards in Lagos" {...field} /></FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="seo.description"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>SEO Description</FormLabel>
+                                            <FormControl><Textarea placeholder="Order high-quality custom business cards online..." {...field} /></FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                             </CardContent>
                         </Card>
                     </TabsContent>
                     <TabsContent value="publishing" className="pt-6">
@@ -643,3 +704,5 @@ export default function ProductFormPage() {
         </Form>
     );
 }
+
+    

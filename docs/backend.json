@@ -44,9 +44,13 @@
           "type": "string",
           "description": "Name of the product."
         },
+        "name_lower": {
+          "type": "string",
+          "description": "Lowercase version of the product name for case-insensitive searching."
+        },
         "description": {
           "type": "string",
-          "description": "Short description of the product for cards."
+          "description": "Short description of the product for cards and summaries."
         },
         "longDescription": {
           "type": "string",
@@ -68,6 +72,10 @@
           "type": "string",
           "description": "Reference to ProductCategory. (Relationship: ProductCategory 1:N Product)"
         },
+        "categoryName": {
+            "type": "string",
+            "description": "The name of the category for denormalization and easier filtering."
+        },
         "subcategory": {
             "type": "string",
             "description": "Sub-category for more specific grouping (e.g., 'Premium', 'Kraft')."
@@ -79,13 +87,42 @@
                 "type": "string"
             }
         },
+        "keywords": {
+            "type": "array",
+            "description": "Admin-curated keywords for high-priority search matching.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "searchTerms": {
+            "type": "array",
+            "description": "An array of aggregated, lowercase tokens for full-text search simulation.",
+            "items": {
+                "type": "string"
+            }
+        },
         "price": {
           "type": "number",
           "description": "Base price of the product, used for sorting and display."
         },
+        "status": {
+            "type": "string",
+            "enum": ["Published", "Draft"],
+            "description": "Controls the visibility of the product on the public site."
+        },
         "featured": {
           "type": "boolean",
-          "description": "Indicates if the product is featured."
+          "description": "Indicates if the product is featured on the homepage."
+        },
+        "seo": {
+          "type": "object",
+          "description": "SEO-related metadata for the product.",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "keywords": { "type": "array", "items": { "type": "string" } },
+            "ogImage": { "type": "string", "format": "uri" }
+          }
         },
         "details": {
           "type": "array",
@@ -693,3 +730,5 @@
     "reasoning": "This Firestore structure prioritizes security, scalability, and ease of debugging, adhering to the core design principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It addresses the user's requirement for a secure admin page to manage products, categories, and customer quote requests, along with a summary dashboard.\n\n**Authorization Independence:**\n*   Admin Access: The `/roles_admin/{uid}` collection grants admin privileges. The existence of a document for a user ID in this collection signifies admin access. No data from other documents is required to validate admin privileges.\n\n*   No Hierarchical `get()` calls: All paths are independent and do not require reading parent documents to determine authorization.\n\n**Structural Segregation:**\n*   Admin Data Segregation: Admin-managed data (products, categories, quote requests, promos) is stored separately, allowing specific security rules to be applied.\n\n**Access Modeling:**\n*   Global Roles (DBAC): Admin roles are managed using the `/roles_admin/{uid}` collection, enabling simple existence-based security rules.\n\n**QAPs (Rules Are Not Filters):**\n*   The segregation of data into different collections based on access requirements supports secure `list` operations. For example, listing products or categories only requires read access to those specific collections, which is granted based on admin role.\n\n**Specific Path Explanations:**\n*   `/roles_admin/{uid}`:  This collection uses **Existence over Content** to assign admin roles. The existence of a document with a specific `uid` grants admin privileges to that user.\n*   `/product_categories/{productCategoryId}`: Stores product category information. Only admins can create, read, update, or delete documents in this collection.\n*   `/products/{productId}`: Stores product information. Only admins can create, read, update, or delete documents in this collection. \n*   `/quote_requests/{quoteRequestId}`: Stores customer quote requests. Only admins can read requests.\n*   `/faqs/{faqId}`: Stores frequently asked questions. Publicly readable if visible, writeable by admins.\n"
   }
 }
+
+    
