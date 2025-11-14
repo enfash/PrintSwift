@@ -25,6 +25,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createCustomer } from '@/lib/firebase/customers';
 import { Counter } from '@/components/ui/counter';
+import { Combobox } from '@/components/ui/combobox';
 
 
 const lineItemOptionSchema = z.object({
@@ -70,6 +71,9 @@ export default function NewQuotePage() {
 
   const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
+
+  const customersRef = useMemoFirebase(() => firestore ? collection(firestore, 'customers') : null, [firestore]);
+  const { data: customers, isLoading: isLoadingCustomers } = useCollection<any>(customersRef);
 
   const quoteRequestRef = useMemoFirebase(() => (firestore && requestId) ? doc(firestore, 'quote_requests', requestId) : null, [firestore, requestId]);
   const { data: quoteRequest, isLoading: isLoadingQuoteRequest } = useDoc<any>(quoteRequestRef);
@@ -231,6 +235,16 @@ export default function NewQuotePage() {
     }
   };
   
+  const handleCustomerSelect = (customerId: string) => {
+    const customer = customers?.find(c => c.id === customerId);
+    if (customer) {
+        form.setValue('customerId', customer.id);
+        form.setValue('company', customer.company || '');
+        form.setValue('email', customer.email);
+        form.setValue('phone', customer.phone || '');
+    }
+  }
+
   const handleOptionChange = (lineIndex: number, optionLabel: string, value: string) => {
     const currentItem = form.getValues(`lineItems.${lineIndex}`);
     const currentOptions = currentItem.options || [];
@@ -326,16 +340,23 @@ export default function NewQuotePage() {
             <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <Label htmlFor="customer">Customer</Label>
-                <Select onValueChange={(value) => form.setValue('customerId', value)}>
-                  <SelectTrigger id="customer">
-                    <SelectValue placeholder="Search/Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new-customer">-- Create New Customer --</SelectItem>
-                    <SelectItem value="ada-ventures">Ada Ventures</SelectItem>
-                    <SelectItem value="jide-stores">Jide Stores</SelectItem>
-                  </SelectContent>
-                </Select>
+                 <Controller
+                    control={form.control}
+                    name="customerId"
+                    render={({ field }) => (
+                        <Combobox
+                            items={customers?.map(c => ({ value: c.id, label: c.name })) || []}
+                            value={field.value}
+                            onValueChange={(value) => {
+                                field.onChange(value);
+                                handleCustomerSelect(value);
+                            }}
+                            placeholder="Select a customer..."
+                            searchPlaceholder="Search customers..."
+                            notFoundText="No customers found."
+                        />
+                    )}
+                />
               </div>
               <Input placeholder="Company (auto from customer)" {...form.register('company')} />
               <Input placeholder="Email (auto/override)" {...form.register('email')} />
