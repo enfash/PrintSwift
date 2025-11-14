@@ -68,6 +68,17 @@
           "type": "string",
           "description": "Reference to ProductCategory. (Relationship: ProductCategory 1:N Product)"
         },
+        "subcategory": {
+            "type": "string",
+            "description": "Sub-category for more specific grouping (e.g., 'Premium', 'Kraft')."
+        },
+        "tags": {
+            "type": "array",
+            "description": "A list of tags for filtering and searching (e.g., 'matte', 'A5', 'eco-friendly').",
+            "items": {
+                "type": "string"
+            }
+        },
         "price": {
           "type": "number",
           "description": "Base price of the product, used for sorting and display."

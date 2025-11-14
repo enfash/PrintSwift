@@ -66,6 +66,8 @@ const productSchema = z.object({
   slug: z.string().min(3, 'Slug must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
   categoryId: z.string({ required_error: 'Please select a category.' }),
+  subcategory: z.string().optional(),
+  tags: z.array(z.string()).optional(),
   description: z.string().optional(),
   longDescription: z.string().optional(),
   status: z.enum(['Published', 'Draft']).default('Draft'),
@@ -112,7 +114,9 @@ export default function ProductFormPage() {
                 tax: 7.5,
                 addons: [],
                 tiers: [{ minQty: 100, setup: 10, unitCost: 0.5, margin: 40 }],
-            }
+            },
+            subcategory: '',
+            tags: [],
         },
     });
 
@@ -262,6 +266,7 @@ export default function ProductFormPage() {
                         <TabsTrigger value="general">General</TabsTrigger>
                         <TabsTrigger value="details">Details & Media</TabsTrigger>
                         <TabsTrigger value="pricing">Pricing</TabsTrigger>
+                        <TabsTrigger value="seo">SEO & Organization</TabsTrigger>
                         <TabsTrigger value="publishing">Publishing</TabsTrigger>
                     </TabsList>
                     <TabsContent value="general" className="pt-6">
@@ -553,6 +558,49 @@ export default function ProductFormPage() {
                                 <div className="mt-4 flex gap-2">
                                     <Button type="button" variant="outline" onClick={() => appendTier({ minQty: 0, setup: 0, unitCost: 0, margin: 40 })}>Add Tier</Button>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="seo" className="pt-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>SEO & Organization</CardTitle>
+                                <CardDescription>Improve search visibility and product organization.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <FormField
+                                    control={form.control}
+                                    name="subcategory"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Subcategory</FormLabel>
+                                            <FormControl><Input placeholder="e.g., Premium Business Cards" {...field} /></FormControl>
+                                            <FormDescription>A more specific category for filtering.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="tags"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tags</FormLabel>
+                                            <FormControl>
+                                                <Input 
+                                                    placeholder="e.g., matte, luxury, rounded-corners" 
+                                                    onBlur={(e) => {
+                                                        const tags = e.target.value.split(',').map(tag => tag.trim()).filter(Boolean);
+                                                        field.onChange(tags);
+                                                    }}
+                                                    defaultValue={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>Comma-separated tags for searching and filtering.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </CardContent>
                         </Card>
                     </TabsContent>
