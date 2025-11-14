@@ -42,3 +42,13 @@ export function generateSearchTerms(
   // Return a unique set of tokens
   return Array.from(new Set(tokens));
 }
+
+export const getStatusVariant = (status: string) => {
+    switch (status) {
+        case 'Delivered': return 'default';
+        case 'In Production':
+        case 'Ready for Dispatch': return 'secondary';
+        case 'Awaiting Pay': return 'outline';
+        default: return 'secondary';
+    }
+};
