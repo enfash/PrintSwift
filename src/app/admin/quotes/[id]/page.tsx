@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, use } from 'react';
@@ -62,65 +61,6 @@ const quoteSchema = z.object({
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
 
-const generateQuoteHtml = (quoteData: QuoteFormValues, summary: any, quoteId: string) => {
-    const lineItemsHtml = quoteData.lineItems.map(item => {
-        const optionsHtml = item.options?.map(o => `<div><small style="color: #666;">${o.label}: ${o.value}</small></div>`).join('') || '';
-        return `
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">
-                    <b>${item.productName}</b>
-                    ${optionsHtml}
-                </td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.qty}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₦${item.unitPrice.toFixed(2)}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₦${(item.qty * item.unitPrice).toFixed(2)}</td>
-            </tr>
-        `;
-    }).join('');
-
-    const totalsHtml = `
-        <p><b>Subtotal:</b> ₦${summary.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-        ${summary.discount > 0 ? `<p><b>Discount:</b> - ₦${summary.discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>` : ''}
-        ${summary.delivery > 0 ? `<p><b>Delivery:</b> ₦${summary.delivery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>` : ''}
-        <p><b>VAT (${quoteData.vatRate}%):</b> ₦${summary.vat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-        <hr/>
-        <h3><b>TOTAL: ₦${summary.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></h3>
-        ${summary.depositAmount > 0 ? `
-            <p style="margin-top: 10px;"><b>Deposit Due:</b> ₦${summary.depositAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-            <p><b>Balance Remaining:</b> ₦${summary.remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-        ` : ''}
-    `;
-
-    return `
-        <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
-            <h2>Quote from BOMedia (Ref: ${quoteId})</h2>
-            <p>Hi ${quoteData.company || 'there'},</p>
-            <p>Thank you for your quote request. Please see the details below:</p>
-            <hr/>
-            <p><b>To:</b> ${quoteData.company || quoteData.email}<br/><b>Email:</b> ${quoteData.email}</p>
-            <hr/>
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th style="padding: 8px; border-bottom: 2px solid #333; text-align: left;">Description</th>
-                        <th style="padding: 8px; border-bottom: 2px solid #333; text-align: center;">Qty</th>
-                        <th style="padding: 8px; border-bottom: 2px solid #333; text-align: right;">Unit Price</th>
-                        <th style="padding: 8px; border-bottom: 2px solid #333; text-align: right;">Total</th>
-                    </tr>
-                </thead>
-                <tbody>${lineItemsHtml}</tbody>
-            </table>
-            <div style="text-align: right; margin-top: 20px;">
-                ${totalsHtml}
-            </div>
-            ${quoteData.notesCustomer ? `<div style="margin-top: 20px;"><p><b>Notes:</b></p><p>${quoteData.notesCustomer}</p></div>` : ''}
-            <p>Let us know if you have any questions.</p>
-            <p>Best regards,<br/>The BOMedia Team</p>
-        </div>
-    `;
-};
-
-
 export default function EditQuotePage({ params: paramsProp }: { params: { id: string } }) {
   const params = use(paramsProp);
   const { toast } = useToast();
@@ -176,7 +116,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   const artworkUrls = form.watch('artworkUrls');
   const depositPercentage = form.watch('depositPercentage');
 
-  const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0, delivery: 0, depositAmount: 0, remainingBalance: 0 });
+  const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0, delivery: 0, discount: 0, depositAmount: 0, remainingBalance: 0 });
 
   const calculateLineItemPrice = useCallback((item: any) => {
     if (!item.productDetails || !item.productDetails.pricing || !item.productDetails.pricing.tiers) {
@@ -226,14 +166,15 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
     }, 0);
 
     const newDelivery = delivery || 0;
-    const discountedTotal = newSubtotal - discount;
+    const newDiscount = discount || 0;
+    const discountedTotal = newSubtotal - newDiscount;
     const vat = discountedTotal * (vatRate / 100);
     const total = discountedTotal + vat + newDelivery;
     
     const depositAmount = total * ((depositPercentage || 0) / 100);
     const remainingBalance = total - depositAmount;
     
-    setSummary({ subtotal: newSubtotal, vat, total, delivery: newDelivery, depositAmount, remainingBalance });
+    setSummary({ subtotal: newSubtotal, vat, total, delivery: newDelivery, discount: newDiscount, depositAmount, remainingBalance });
   }, [lineItems, discount, vatRate, delivery, depositPercentage, calculateLineItemPrice]);
 
 
@@ -309,30 +250,6 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
     const updatedItem = { ...currentItem, options: currentOptions };
     const newUnitPrice = calculateLineItemPrice(updatedItem);
     update(lineIndex, { ...updatedItem, unitPrice: newUnitPrice });
-  };
-  
-  const handleSendEmail = () => {
-    const quoteData = form.getValues();
-    const quoteId = params.id.substring(0, 8).toUpperCase();
-
-    if (!quoteData.email) {
-      toast({
-        variant: 'destructive',
-        title: 'Missing Email',
-        description: 'Please enter a customer email address before sending.',
-      });
-      return;
-    }
-
-    const subject = `Your Quote from BOMedia (Ref: ${quoteId})`;
-    const htmlBody = generateQuoteHtml(quoteData, summary, quoteId);
-    
-    window.location.href = `mailto:${quoteData.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(htmlBody)}`;
-    
-    toast({
-      title: 'Email Client Opening',
-      description: 'Your default email client is opening with a pre-filled HTML quote.',
-    });
   };
 
   const saveQuote = async (status: 'draft' | 'sent') => {
@@ -749,7 +666,6 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
       </div>
        <Card className="fixed bottom-0 left-0 right-0 border-t rounded-none sm:left-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:left-[var(--sidebar-width)] transition-all duration-300 ease-in-out">
             <CardContent className="p-4 flex items-center justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={handleSendEmail}>Send Quote Email</Button>
                 <Button type="button" variant="secondary" onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
                     {isGeneratingPdf ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                     Generate PDF
