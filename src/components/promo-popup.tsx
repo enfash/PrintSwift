@@ -21,7 +21,8 @@ export default function PromoPopup() {
         return query(
             collection(firestore, 'promos'),
             where('active', '==', true),
-            where('placement', '==', 'popup')
+            where('placement', '==', 'popup'),
+            limit(1) // We only need one active popup promo
         );
     }, [firestore]);
     

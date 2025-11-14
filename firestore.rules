@@ -35,7 +35,7 @@ service cloud.firestore {
         // Admins can do anything.
         allow write: if isAdmin();
         // Non-admins can read active promos. This covers get and list.
-        allow read: if resource.data.active == true;
+        allow read: if isAdmin() || (request.query.limit == 1 && request.query.active == true);
     }
 
     // --- Customer Management ---
