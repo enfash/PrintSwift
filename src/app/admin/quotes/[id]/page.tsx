@@ -270,6 +270,19 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
         toast({ variant: 'destructive', title: 'Error', description: `Could not save the quote.` });
     }
   }
+
+  const handleConvertToOrder = async () => {
+    if (!firestore) return;
+    const quoteDocRef = doc(firestore, 'quotes', params.id);
+    try {
+        await updateDocumentNonBlocking(quoteDocRef, { status: 'won', updatedAt: serverTimestamp() });
+        toast({ title: 'Quote Converted!', description: 'The quote status has been updated to "won". Redirecting to orders.' });
+        router.push('/admin/orders');
+    } catch (error) {
+        console.error('Error converting quote to order:', error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not convert the quote to an order.' });
+    }
+  };
   
   const onSubmit = () => saveQuote('sent');
   const onSaveDraft = () => saveQuote('draft');
@@ -528,7 +541,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
             <CardContent className="p-4 flex items-center justify-end gap-2">
                 <Button type="button" variant="secondary" onClick={() => showNotImplementedToast('Send Quote Email')}>Send Quote Email</Button>
                 <Button type="button" variant="secondary" onClick={() => showNotImplementedToast('Generate PDF')}>Generate PDF</Button>
-                <Button type="button" onClick={() => showNotImplementedToast('Convert to Order')}>Convert to Order</Button>
+                <Button type="button" onClick={handleConvertToOrder}>Convert to Order</Button>
                 <Button type="button" variant="ghost" className="text-muted-foreground" onClick={() => showNotImplementedToast('Archive')}>Archive</Button>
             </CardContent>
         </Card>
