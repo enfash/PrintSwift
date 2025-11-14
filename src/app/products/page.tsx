@@ -6,14 +6,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
     Search,
-    Package,
     LoaderCircle
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -25,12 +24,14 @@ function calculateStartingPrice(product: any) {
         return null;
     }
     const firstTier = product.pricing.tiers[0];
-    const { qty, setup = 0, unitCost = 0, margin = 0 } = firstTier;
-    if (!qty || !unitCost) return null;
+    // Ensure firstTier and its properties are valid
+    if (!firstTier || typeof firstTier.minQty !== 'number' || typeof firstTier.unitCost !== 'number') return null;
 
-    const totalCost = setup + (qty * unitCost);
+    const { minQty, setup = 0, unitCost, margin = 0 } = firstTier;
+
+    const totalCost = setup + (minQty * unitCost);
     const finalPrice = totalCost / (1 - margin / 100);
-    const pricePerUnit = finalPrice / qty;
+    const pricePerUnit = finalPrice / minQty;
     return pricePerUnit;
 }
 
@@ -62,10 +63,12 @@ function ProductsComponent() {
     const firestore = useFirestore();
     const searchParams = useSearchParams();
     const router = useRouter();
-    const initialCategory = searchParams.get('category');
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : []);
+    const initialCategory = searchParams.get('category');
+    const initialSearch = searchParams.get('search');
+
+    const [searchTerm, setSearchTerm] = useState(initialSearch || '');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? initialCategory.split(',') : []);
     const [sortOption, setSortOption] = useState('popularity-desc');
 
     const categoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
@@ -77,7 +80,12 @@ function ProductsComponent() {
     useEffect(() => {
         const newCategory = searchParams.get('category');
         if (newCategory) {
-            setSelectedCategories(prev => prev.includes(newCategory) ? prev : [...prev, newCategory]);
+            const categories = newCategory.split(',');
+            setSelectedCategories(categories);
+        }
+        const newSearch = searchParams.get('search');
+        if (newSearch) {
+            setSearchTerm(newSearch);
         }
     }, [searchParams]);
 
@@ -87,14 +95,25 @@ function ProductsComponent() {
             : selectedCategories.filter(id => id !== categoryId);
         
         setSelectedCategories(newSelectedCategories);
+        updateURLParams({ category: newSelectedCategories.join(',') });
+    };
 
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newSearchTerm = e.target.value;
+        setSearchTerm(newSearchTerm);
+        updateURLParams({ search: newSearchTerm });
+    }
+
+    const updateURLParams = (newParams: Record<string, string>) => {
         const params = new URLSearchParams(searchParams.toString());
-        if (newSelectedCategories.length > 0) {
-            params.set('category', newSelectedCategories.join(','));
-        } else {
-            params.delete('category');
+        for (const key in newParams) {
+            if (newParams[key]) {
+                params.set(key, newParams[key]);
+            } else {
+                params.delete(key);
+            }
         }
-        router.replace(`/products?${params.toString()}`);
+        router.replace(`/products?${params.toString()}`, { scroll: false });
     };
 
     const filteredAndSortedProducts = useMemo(() => {
@@ -104,7 +123,11 @@ function ProductsComponent() {
 
         // Filter by search term
         if (searchTerm) {
-            products = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            const lowercasedTerm = searchTerm.toLowerCase();
+            products = products.filter(p => 
+                p.searchTerms?.some((term: string) => term.includes(lowercasedTerm)) ||
+                p.name.toLowerCase().includes(lowercasedTerm)
+            );
         }
 
         // Filter by categories
@@ -126,7 +149,10 @@ function ProductsComponent() {
                 return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
             }
 
-            // Default to popularity or other criteria if needed
+            // Default to popularity (featured first)
+             if (a.featured && !b.featured) return -1;
+             if (!a.featured && b.featured) return 1;
+
             return 0;
         });
 
@@ -153,7 +179,7 @@ function ProductsComponent() {
             <div className="grid lg:grid-cols-4 gap-8">
                 {/* Filters Sidebar */}
                 <aside className="lg:col-span-1">
-                    <Card>
+                    <Card className="sticky top-24">
                         <CardHeader>
                             <CardTitle>Filters</CardTitle>
                         </CardHeader>
@@ -166,7 +192,7 @@ function ProductsComponent() {
                                         placeholder="Search products..."
                                         className="pl-9"
                                         value={searchTerm}
-                                        onChange={e => setSearchTerm(e.target.value)}
+                                        onChange={handleSearchChange}
                                     />
                                 </div>
                             </div>
@@ -244,7 +270,7 @@ function ProductsComponent() {
                                             <CardContent className="p-4 flex-grow flex flex-col">
                                                 <h3 className="font-semibold text-lg truncate">{product.name}</h3>
                                                 <p className="text-sm text-muted-foreground flex-grow">{categories?.find(c => c.id === product.categoryId)?.name}</p>
-                                                {startingPrice ? (
+                                                {startingPrice !== null && !isNaN(startingPrice) ? (
                                                      <p className="font-bold text-lg mt-2">
                                                         Starts at ₦{Math.ceil(startingPrice).toLocaleString()}
                                                      </p>
