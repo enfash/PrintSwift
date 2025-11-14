@@ -26,6 +26,7 @@ import {
   PanelLeft,
   Home,
   FileQuestion,
+  Book,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -54,23 +55,18 @@ import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger as MobileSheetTrigger } from '@/components/ui/sheet';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import LoginPage from '../login/page';
 import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
 
-const menuItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { 
-    href: '/admin/products', 
-    label: 'Products', 
-    icon: Package,
-    subItems: [
-        { href: '/admin/products', label: 'All Products' },
-        { href: '/admin/products/new', label: 'Add Product' },
-    ]
-  },
-  { href: '/admin/categories', label: 'Categories', icon: Tags },
+
+const catalogItems = [
+    { 
+        href: '/admin/products', 
+        label: 'Products', 
+        icon: Package,
+    },
+    { href: '/admin/categories', label: 'Categories', icon: Tags },
 ];
 
 const orderManagementItems = [
@@ -112,46 +108,12 @@ function SidebarMenuContent() {
     }
   };
   
-  const renderMenuItems = (items: typeof menuItems) => {
+  const renderMenuItems = (items: typeof catalogItems) => {
     return items.map((item) => (
-      item.subItems ? (
-        <Collapsible key={item.label} className="w-full" defaultOpen={pathname.startsWith(item.href)}>
-            <CollapsibleTrigger asChild>
-                <SidebarMenuButton
-                    isActive={pathname.startsWith(item.href) && !item.subItems.some(si => si.href === pathname)}
-                    className="w-full justify-between"
-                    tooltip={item.label}
-                >
-                    <div className="flex items-center gap-2">
-                        <item.icon className="h-5 w-5" />
-                        <span className={cn(!open && "hidden")}>{item.label}</span>
-                    </div>
-                    <ChevronDown className={cn("h-4 w-4", !open && "hidden")} />
-                </SidebarMenuButton>
-            </CollapsibleTrigger>
-            <CollapsibleContent className={cn("pl-6", !open && "hidden")}>
-                <SidebarMenu>
-                 {item.subItems.map(subItem => (
-                    <SidebarMenuItem key={subItem.label}>
-                        <Link href={subItem.href}>
-                            <SidebarMenuButton
-                                variant="ghost"
-                                isActive={pathname === subItem.href}
-                                className="w-full justify-start"
-                            >
-                             <span className={cn(!open && "hidden")}>{subItem.label}</span>
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                 ))}
-                 </SidebarMenu>
-            </CollapsibleContent>
-        </Collapsible>
-     ) : (
-        <SidebarMenuItem key={item.label}>
+      <SidebarMenuItem key={item.label}>
         <Link href={item.href}>
             <SidebarMenuButton
-            isActive={pathname === item.href}
+            isActive={pathname.startsWith(item.href)}
             className="w-full justify-start"
             tooltip={item.label}
             >
@@ -159,21 +121,36 @@ function SidebarMenuContent() {
                 <span className={cn(!open && "hidden")}>{item.label}</span>
             </SidebarMenuButton>
         </Link>
-        </SidebarMenuItem>
-     )
+      </SidebarMenuItem>
     ));
   };
 
   return (
     <>
-      <SidebarHeader className="border-b flex justify-between items-center p-2 h-14">
-        <div className="flex items-center gap-2 font-semibold">
-          <Logo />
-          <span className={cn("text-lg", !open && "hidden")}>PrintSwift</span>
-        </div>
+      <SidebarHeader className="border-b p-2 h-14">
+         <SidebarMenu>
+            <SidebarMenuItem>
+                <Link href="/admin/dashboard">
+                    <SidebarMenuButton
+                        isActive={pathname === '/admin/dashboard'}
+                        className="w-full justify-start"
+                        tooltip="Dashboard"
+                    >
+                        <LayoutDashboard className="h-5 w-5" />
+                        <span className={cn(!open && "hidden")}>Dashboard</span>
+                    </SidebarMenuButton>
+                </Link>
+            </SidebarMenuItem>
+         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="flex-1 p-2">
-        <SidebarMenu>{renderMenuItems(menuItems)}</SidebarMenu>
+        
+        <SidebarMenu className="mt-4 border-t pt-4">
+            <span className={cn("text-xs text-muted-foreground px-2 mb-2 flex items-center gap-2", !open && "hidden")}>
+                <Book className="h-4 w-4"/> Catalog
+            </span>
+            {renderMenuItems(catalogItems)}
+        </SidebarMenu>
         
         <SidebarMenu className="mt-4 border-t pt-4">
             <span className={cn("text-xs text-muted-foreground px-2 mb-2", !open && "hidden")}>Order Management</span>
@@ -256,10 +233,11 @@ function AdminHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
         <MobileSidebar />
-        <SidebarTrigger className="hidden sm:flex">
-          <PanelLeft className="h-5 w-5" />
-          <span className="sr-only">Toggle Menu</span>
-        </SidebarTrigger>
+        <SidebarTrigger className="hidden sm:flex" />
+        <div className="flex items-center gap-2 font-semibold">
+          <Logo />
+          <span className="text-lg">PrintSwift</span>
+        </div>
         <div className="relative ml-auto flex-1 md:grow-0">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
