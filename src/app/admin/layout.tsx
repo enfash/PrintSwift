@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 import AdminApp from './_components/admin-app';
 
 export const metadata = {
-  title: 'Admin - PrintSwift',
-  description: 'Admin dashboard for PrintSwift',
+  title: 'Admin - BOMedia',
+  description: 'Admin dashboard for BOMedia',
 };
 
 export default function AdminRootLayout({

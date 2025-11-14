@@ -10,7 +10,7 @@ export function Footer() {
           <div className="col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center space-x-3 mb-4">
               <Logo />
-              <span className="text-xl font-headline font-bold">PrintSwift</span>
+              <span className="text-xl font-headline font-bold">BOMedia</span>
             </Link>
             <p className="text-muted-foreground max-w-xs">
               Affordable custom branding, delivered fast. Your trusted partner for all printing needs.
@@ -45,7 +45,7 @@ export function Footer() {
                 <a href="tel:+2348022247567" className="text-muted-foreground hover:text-foreground">+234 802 224 7567</a>
               </p>
               <p>
-                <a href="mailto:info@printswift.com" className="text-muted-foreground hover:text-foreground">info@printswift.com</a>
+                <a href="mailto:info@bomedia.com" className="text-muted-foreground hover:text-foreground">info@bomedia.com</a>
               </p>
             </address>
             <div className="flex space-x-4 mt-4">
@@ -57,7 +57,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} PrintSwift. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} BOMedia. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -175,7 +175,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                         <h3 className="font-semibold text-foreground">Email</h3>
-                        <a href="mailto:info@printswift.com" className="hover:text-accent">info@printswift.com</a>
+                        <a href="mailto:info@bomedia.com" className="hover:text-accent">info@bomedia.com</a>
                     </div>
                 </div>
                  <div className="pt-6">

@@ -33,7 +33,7 @@ export default function AboutPage() {
             />
         )}
         <div className="container mx-auto max-w-7xl px-4 text-center z-10">
-          <h1 className="text-4xl md:text-5xl font-bold font-headline">About PrintSwift</h1>
+          <h1 className="text-4xl md:text-5xl font-bold font-headline">About BOMedia</h1>
           <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto">
             Your trusted partner for high-quality, fast, and affordable custom printing solutions.
           </p>
@@ -50,7 +50,7 @@ export default function AboutPage() {
                 Our Story
               </h2>
               <p className="text-muted-foreground mb-4">
-                Founded in 2023 in the bustling heart of Lagos, Nigeria, PrintSwift started with a simple mission: to make high-quality custom printing accessible and hassle-free for businesses of all sizes. We saw the challenges many companies faced—long turnaround times, inconsistent quality, and high costs—and we knew there was a better way.
+                Founded in 2023 in the bustling heart of Lagos, Nigeria, BOMedia started with a simple mission: to make high-quality custom printing accessible and hassle-free for businesses of all sizes. We saw the challenges many companies faced—long turnaround times, inconsistent quality, and high costs—and we knew there was a better way.
               </p>
               <p className="text-muted-foreground">
                 By combining cutting-edge printing technology with a customer-centric approach, we've grown into a leading provider of custom branding materials. From startups to established enterprises, we empower our clients to bring their brand vision to life with speed and precision.

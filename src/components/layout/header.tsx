@@ -23,7 +23,7 @@ export function Header() {
         <div className="flex-1 flex items-center justify-start">
           <Link href="/" className="flex items-center space-x-2">
             <Logo />
-            <span className="hidden font-bold font-headline sm:inline-block">PrintSwift</span>
+            <span className="hidden font-bold font-headline sm:inline-block">BOMedia</span>
           </Link>
         </div>
 
@@ -64,7 +64,7 @@ export function Header() {
                 <div className="flex items-center mb-8">
                   <Link href="/" className="mr-6 flex items-center space-x-2" onClick={() => setIsOpen(false)}>
                     <Logo />
-                    <span className="font-bold font-headline">PrintSwift</span>
+                    <span className="font-bold font-headline">BOMedia</span>
                   </Link>
                 </div>
                 <div className="flex flex-col space-y-4 text-left">
