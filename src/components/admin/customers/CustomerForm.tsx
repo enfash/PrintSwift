@@ -18,14 +18,20 @@ export type CustomerFormValues = z.infer<typeof customerSchema>;
 
 interface CustomerFormProps {
     id?: string;
-    initialValues?: CustomerFormValues;
+    initialValues?: Partial<CustomerFormValues>;
     onSubmit: (values: CustomerFormValues) => void;
 }
 
-export default function CustomerForm({ id, initialValues = {}, onSubmit }: CustomerFormProps) {
+export default function CustomerForm({ id, initialValues, onSubmit }: CustomerFormProps) {
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
-    defaultValues: initialValues
+    defaultValues: {
+      name: initialValues?.name || '',
+      email: initialValues?.email || '',
+      phone: initialValues?.phone || '',
+      company: initialValues?.company || '',
+      notes: initialValues?.notes || '',
+    }
   });
 
   return (
