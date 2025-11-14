@@ -58,6 +58,7 @@ const quoteSchema = z.object({
   delivery: z.coerce.number().default(0),
   artworkUrls: z.array(z.string()).optional(),
   fromRequestId: z.string().optional(),
+  depositPercentage: z.coerce.number().optional(),
 });
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
@@ -97,6 +98,7 @@ export default function NewQuotePage() {
       vatRate: 7.5,
       delivery: 5000,
       artworkUrls: [],
+      depositPercentage: 0,
     },
   });
 
@@ -132,8 +134,9 @@ export default function NewQuotePage() {
   const vatRate = form.watch('vatRate');
   const delivery = form.watch('delivery');
   const artworkUrls = form.watch('artworkUrls');
+  const depositPercentage = form.watch('depositPercentage');
 
-  const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0 });
+  const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0, depositAmount: 0, remainingBalance: 0 });
 
   const calculateLineItemPrice = useCallback((item: any) => {
     if (!item.productDetails || !item.productDetails.pricing || !item.productDetails.pricing.tiers) {
@@ -184,12 +187,16 @@ export default function NewQuotePage() {
     const discountedTotal = newSubtotal - discount;
     const vat = discountedTotal * (vatRate / 100);
     const total = discountedTotal + vat + delivery;
-    setSummary({ subtotal: newSubtotal, vat, total });
-  }, [lineItems, discount, vatRate, delivery, calculateLineItemPrice]);
+
+    const depositAmount = total * ((depositPercentage || 0) / 100);
+    const remainingBalance = total - depositAmount;
+
+    setSummary({ subtotal: newSubtotal, vat, total, depositAmount, remainingBalance });
+  }, [lineItems, discount, vatRate, delivery, depositPercentage, calculateLineItemPrice]);
 
   useEffect(() => {
     calculateSummary();
-  }, [lineItems, discount, vatRate, delivery, calculateSummary]);
+  }, [lineItems, discount, vatRate, delivery, depositPercentage, calculateSummary]);
 
 
   const handleAddProduct = () => {
@@ -302,6 +309,8 @@ export default function NewQuotePage() {
       subtotal: summary.subtotal,
       vat: summary.vat,
       total: summary.total,
+      depositAmount: summary.depositAmount,
+      remainingBalance: summary.remainingBalance,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }
@@ -536,10 +545,20 @@ export default function NewQuotePage() {
                 <span>₦ {summary.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
               <Separator />
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" className="w-full" onClick={calculateSummary}>Recalculate</Button>
-                <Button type="button" variant="outline" className="w-full" onClick={() => showNotImplementedToast('Add Deposit')}>Add Deposit %</Button>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Deposit (%)</span>
+                <Controller name="depositPercentage" control={form.control} render={({field}) => <Input type="number" className="h-8 max-w-24 text-right" {...field} />} />
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Deposit Amount</span>
+                <span>₦ {summary.depositAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              </div>
+               <div className="flex justify-between text-lg font-bold text-primary">
+                <span>REMAINING</span>
+                <span>₦ {summary.remainingBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              </div>
+              <Separator />
+              <Button type="button" variant="outline" className="w-full" onClick={calculateSummary}>Recalculate</Button>
             </CardContent>
           </Card>
            <Card>

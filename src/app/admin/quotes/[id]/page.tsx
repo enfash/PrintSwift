@@ -55,6 +55,7 @@ const quoteSchema = z.object({
   vatRate: z.coerce.number().default(7.5),
   delivery: z.coerce.number().default(0),
   artworkUrls: z.array(z.string()).optional(),
+  depositPercentage: z.coerce.number().optional(),
 });
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
@@ -83,6 +84,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
         vatRate: 7.5,
         status: 'draft',
         artworkUrls: [],
+        depositPercentage: 0,
     }
   });
 
@@ -100,6 +102,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
         delivery: quote.delivery || 0,
         vatRate: quote.vatRate || 7.5,
         artworkUrls: quote.artworkUrls || [],
+        depositPercentage: quote.depositPercentage || 0,
       });
     }
   }, [quote, form]);
@@ -109,8 +112,9 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   const vatRate = form.watch('vatRate');
   const delivery = form.watch('delivery');
   const artworkUrls = form.watch('artworkUrls');
+  const depositPercentage = form.watch('depositPercentage');
 
-  const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0 });
+  const [summary, setSummary] = useState({ subtotal: 0, vat: 0, total: 0, depositAmount: 0, remainingBalance: 0 });
 
   const calculateLineItemPrice = useCallback((item: any) => {
     if (!item.productDetails || !item.productDetails.pricing || !item.productDetails.pricing.tiers) {
@@ -162,12 +166,16 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
     const discountedTotal = newSubtotal - discount;
     const vat = discountedTotal * (vatRate / 100);
     const total = discountedTotal + vat + delivery;
-    setSummary({ subtotal: newSubtotal, vat, total });
-  }, [lineItems, discount, vatRate, delivery, calculateLineItemPrice]);
+    
+    const depositAmount = total * ((depositPercentage || 0) / 100);
+    const remainingBalance = total - depositAmount;
+    
+    setSummary({ subtotal: newSubtotal, vat, total, depositAmount, remainingBalance });
+  }, [lineItems, discount, vatRate, delivery, depositPercentage, calculateLineItemPrice]);
 
   useEffect(() => {
     calculateSummary();
-  }, [lineItems, discount, vatRate, delivery, calculateSummary]);
+  }, [lineItems, discount, vatRate, delivery, depositPercentage, calculateSummary]);
 
 
   const handleAddProduct = () => {
@@ -256,6 +264,8 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
       subtotal: summary.subtotal,
       vat: summary.vat,
       total: summary.total,
+      depositAmount: summary.depositAmount,
+      remainingBalance: summary.remainingBalance,
       updatedAt: serverTimestamp(),
     }
 
@@ -507,10 +517,20 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
                 <span>₦ {summary.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
               <Separator />
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" className="w-full" onClick={calculateSummary}>Recalculate</Button>
-                <Button type="button" variant="outline" className="w-full" onClick={() => showNotImplementedToast('Add Deposit')}>Add Deposit %</Button>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Deposit (%)</span>
+                <Controller name="depositPercentage" control={form.control} render={({field}) => <Input type="number" className="h-8 max-w-24 text-right" {...field} />} />
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Deposit Amount</span>
+                <span>₦ {summary.depositAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              </div>
+               <div className="flex justify-between text-lg font-bold text-primary">
+                <span>REMAINING</span>
+                <span>₦ {summary.remainingBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              </div>
+              <Separator />
+              <Button type="button" variant="outline" className="w-full" onClick={calculateSummary}>Recalculate</Button>
             </CardContent>
           </Card>
            <Card>
