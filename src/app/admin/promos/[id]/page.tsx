@@ -8,19 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { LoaderCircle, Calendar as CalendarIcon } from 'lucide-react';
-import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { LoaderCircle, Calendar as CalendarIcon, UploadCloud } from 'lucide-react';
+import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useStorage } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, use } from 'react';
+import { useEffect, use, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import Image from 'next/image';
 
 const promoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -38,8 +40,10 @@ const promoSchema = z.object({
 export default function EditPromoPage({ params: paramsProp }: { params: { id: string } }) {
     const params = use(paramsProp);
     const firestore = useFirestore();
+    const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
+    const [isUploading, setIsUploading] = useState(false);
     
     const promoRef = useMemoFirebase(() => firestore ? doc(firestore, 'promos', params.id) : null, [firestore, params.id]);
     const { data: promo, isLoading } = useDoc<any>(promoRef);
@@ -59,6 +63,39 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
             });
         }
     }, [promo, form]);
+
+    const imageUrl = form.watch('imageUrl');
+
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!storage || !event.target.files || event.target.files.length === 0) return;
+        const file = event.target.files[0];
+        setIsUploading(true);
+
+        const MAX_MB = 5;
+        if (file.size > MAX_MB * 1024 * 1024) {
+            setIsUploading(false);
+            toast({ variant: 'destructive', title: 'File too large', description: `Max file size is ${MAX_MB}MB.` });
+            return;
+        }
+
+        const path = `promos/${params.id}/${file.name}`;
+        const fileRef = storageRef(storage, path);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+
+        uploadTask.on('state_changed',
+            () => {},
+            (error) => {
+                setIsUploading(false);
+                toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                form.setValue('imageUrl', downloadURL);
+                setIsUploading(false);
+                toast({ title: 'Image Uploaded', description: 'Image is ready to be saved.' });
+            }
+        );
+    };
     
     const onSubmit = async (values: z.infer<typeof promoSchema>) => {
         if (!firestore) return;
@@ -93,8 +130,8 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
                     <h1 className="text-3xl font-bold tracking-tight">Edit Promotion</h1>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" type="button" onClick={() => router.push('/admin/promos')}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" disabled={isSubmitting || isUploading}>
+                            {(isSubmitting || isUploading) && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                             Save Changes
                         </Button>
                     </div>
@@ -152,17 +189,52 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
                                 )}
                             />
                         </div>
+                        
                         <FormField
                             control={form.control}
                             name="imageUrl"
-                            render={({ field }) => (
+                            render={() => (
                                 <FormItem>
-                                    <FormLabel>Image URL (Optional)</FormLabel>
-                                    <FormControl><Input placeholder="https://.../image.png" {...field} value={field.value || ''} /></FormControl>
+                                    <FormLabel>Image (Optional)</FormLabel>
+                                    <div className="flex items-center gap-4">
+                                        {imageUrl && (
+                                            <Image
+                                                src={imageUrl}
+                                                alt="Promotion image preview"
+                                                width={120}
+                                                height={90}
+                                                className="rounded-md aspect-video object-cover"
+                                            />
+                                        )}
+                                        <label className={cn(
+                                            "flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition",
+                                            isUploading && "opacity-50 cursor-not-allowed"
+                                        )}>
+                                            <div className="flex flex-col items-center justify-center text-center">
+                                                {isUploading ? (
+                                                    <LoaderCircle className="w-6 h-6 text-muted-foreground animate-spin"/>
+                                                ) : (
+                                                    <UploadCloud className="w-6 h-6 text-muted-foreground"/>
+                                                )}
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                     {isUploading ? 'Uploading...' : 'Click to upload'}
+                                                </p>
+                                            </div>
+                                            <Input 
+                                                id="imageUpload"
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={handleFileUpload}
+                                                disabled={isUploading}
+                                            />
+                                        </label>
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
+
                         <FormField
                             control={form.control}
                             name="backgroundColor"
@@ -299,3 +371,5 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
         </Form>
     );
 }
+
+    
