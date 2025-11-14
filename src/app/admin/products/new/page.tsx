@@ -323,6 +323,7 @@ export default function ProductFormPage() {
                                                 src={getSafeImageUrl(field.value, field.id)}
                                                 alt={`Product image ${index + 1}`} 
                                                 fill 
+                                                sizes="(max-width: 768px) 33vw, 16vw"
                                                 className="object-cover rounded-md"
                                             />
                                             {mainImageIndex === index && (<Badge variant="secondary" className="absolute top-1 left-1">Main</Badge>)}

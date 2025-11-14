@@ -27,6 +27,7 @@ export default function AboutPage() {
                 src={aboutImage.imageUrl}
                 alt="Our Team"
                 fill
+                sizes="100vw"
                 className="object-cover opacity-20"
                 data-ai-hint={aboutImage.imageHint}
             />

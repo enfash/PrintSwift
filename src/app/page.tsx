@@ -94,6 +94,7 @@ export default function Home() {
             src={heroImage.imageUrl}
             alt={heroImage.description}
             fill
+            sizes="100vw"
             className="object-cover opacity-20"
             priority
             data-ai-hint={heroImage.imageHint}
@@ -170,6 +171,7 @@ export default function Home() {
                               src={mainImageUrl}
                               alt={product.name}
                               fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                               data-ai-hint="product image"
                             />

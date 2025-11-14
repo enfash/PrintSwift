@@ -78,6 +78,7 @@ export default function PromoPopup() {
                                 src={activePromo.imageUrl} 
                                 alt={activePromo.title} 
                                 fill 
+                                sizes="(max-width: 768px) 100vw, 50vw"
                                 className="object-cover"
                             />
                          </div>

@@ -378,6 +378,7 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                                                     src={getSafeImageUrl(field.value, field.id)}
                                                     alt={`Product image ${index + 1}`}
                                                     fill
+                                                    sizes="(max-width: 768px) 33vw, 16vw"
                                                     className="object-cover rounded-md"
                                                 />
                                                 {mainImageIndex === index && (
