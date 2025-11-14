@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Counter } from '@/components/ui/counter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Skeleton } from '@/components/ui/skeleton';
 
 async function getProductBySlug(firestore: any, slug: string) {
     if (!firestore || !slug) return null;
@@ -54,6 +55,53 @@ function FaqSection() {
         </Accordion>
     )
 }
+
+const ProductDetailSkeleton = () => (
+    <div className="container mx-auto max-w-7xl px-4 py-8 md:py-16">
+        <Skeleton className="h-4 w-1/3 mb-4" />
+        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+            <div className="space-y-4">
+                <Skeleton className="aspect-square w-full rounded-lg" />
+                <div className="grid grid-cols-5 gap-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <Skeleton key={i} className="aspect-square rounded-md" />
+                    ))}
+                </div>
+            </div>
+            <div className="space-y-6">
+                <Skeleton className="h-10 w-3/4" />
+                <Skeleton className="h-5 w-1/4" />
+                <div className="space-y-6 pt-6">
+                    <Skeleton className="h-8 w-1/3 mb-4" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-1/4" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-1/4" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-1/4" />
+                        <Skeleton className="h-10 w-1/2" />
+                    </div>
+                    <Skeleton className="h-12 w-full" />
+                </div>
+                <Separator />
+                <div className="p-6 rounded-lg space-y-4 border">
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-1/2" />
+                        <Skeleton className="h-4 w-1/3" />
+                    </div>
+                    <Skeleton className="h-12 w-full" />
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
 
 export default function ProductDetailPage({ params: paramsProp }: { params: { slug: string } }) {
   const params = use(paramsProp);
@@ -217,8 +265,12 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     }
   };
 
-  if (isLoading || !product) {
-    return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
+  if (isLoading) {
+    return <ProductDetailSkeleton />;
+  }
+  
+  if (!product) {
+      return notFound();
   }
   
   const category = categories?.find(c => c.id === product.categoryId);
@@ -359,5 +411,3 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     </div>
   );
 }
-
-    

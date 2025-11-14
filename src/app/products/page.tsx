@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
@@ -32,6 +33,29 @@ function calculateStartingPrice(product: any) {
     const pricePerUnit = finalPrice / qty;
     return pricePerUnit;
 }
+
+const ProductCardSkeleton = () => (
+    <Card className="overflow-hidden group h-full flex flex-col">
+        <Skeleton className="aspect-[4/3] w-full" />
+        <CardContent className="p-4 flex-grow flex flex-col">
+            <Skeleton className="h-5 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-1/2 mb-4" />
+            <div className="flex-grow" />
+            <Skeleton className="h-6 w-1/3" />
+        </CardContent>
+    </Card>
+);
+
+const FilterSkeleton = () => (
+    <div className="space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center space-x-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-3/4" />
+            </div>
+        ))}
+    </div>
+);
 
 
 function ProductsComponent() {
@@ -76,8 +100,7 @@ function ProductsComponent() {
     const filteredAndSortedProducts = useMemo(() => {
         if (!allProducts) return [];
         
-        // Filter by status first
-        let products = allProducts.filter(p => p.status === 'Published');
+        let products = allProducts;
 
         // Filter by search term
         if (searchTerm) {
@@ -149,7 +172,7 @@ function ProductsComponent() {
                             </div>
                             <div>
                                 <h3 className="font-semibold mb-3">Category</h3>
-                                {isLoadingCategories ? <div className="space-y-2"><LoaderCircle className="animate-spin h-5 w-5" /></div> : (
+                                {isLoadingCategories ? <FilterSkeleton /> : (
                                     <div className="space-y-3">
                                         {categories?.map(category => (
                                             <div key={category.id} className="flex items-center space-x-2">
@@ -192,7 +215,9 @@ function ProductsComponent() {
                     </div>
                     
                     {isLoadingProducts ? (
-                         <div className="flex h-64 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+                         </div>
                     ) : filteredAndSortedProducts.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredAndSortedProducts.map((product) => {

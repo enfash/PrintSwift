@@ -23,6 +23,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const categoryIcons: { [key: string]: React.ReactElement } = {
   'Marketing & Business Prints': <Briefcase className="w-8 h-8" />,
@@ -71,6 +72,25 @@ function StarRating({ rating, className }: { rating: number, className?: string 
         </div>
     );
 }
+
+const CategorySkeleton = () => (
+    <Card className="text-center p-6 h-full">
+        <div className="flex justify-center items-center mb-4">
+            <Skeleton className="h-8 w-8 rounded-full" />
+        </div>
+        <Skeleton className="h-4 w-2/3 mx-auto" />
+    </Card>
+);
+
+const ProductSkeleton = () => (
+    <Card className="overflow-hidden group h-full">
+        <Skeleton className="aspect-[4/3] w-full" />
+        <CardContent className="p-4">
+            <Skeleton className="h-5 w-3/4 mb-2" />
+        </CardContent>
+    </Card>
+);
+
 
 export default function Home() {
   const heroImage = findImage('hero-printing');
@@ -126,22 +146,22 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-headline">Browse by Category</h2>
             <p className="mt-3 text-lg text-muted-foreground">Explore our wide range of custom printing solutions</p>
           </div>
-          {isLoadingCategories ? (
-            <div className="flex justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {categories?.slice(0, 6).map((category) => (
-                <Link href={`/products?category=${category.id}`} key={category.id} className="group">
-                  <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 hover:-translate-y-1 h-full">
-                    <div className="flex justify-center items-center mb-4 text-primary group-hover:text-accent transition-colors">
-                      {categoryIcons[category.name] || categoryIcons['Default']}
-                    </div>
-                    <h3 className="font-semibold">{category.name}</h3>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {isLoadingCategories ? (
+                Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={i} />)
+            ) : (
+                categories?.slice(0, 6).map((category) => (
+                    <Link href={`/products?category=${category.id}`} key={category.id} className="group">
+                    <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 hover:-translate-y-1 h-full">
+                        <div className="flex justify-center items-center mb-4 text-primary group-hover:text-accent transition-colors">
+                        {categoryIcons[category.name] || categoryIcons['Default']}
+                        </div>
+                        <h3 className="font-semibold">{category.name}</h3>
+                    </Card>
+                    </Link>
+                ))
+            )}
+          </div>
         </div>
       </section>
 
@@ -152,40 +172,40 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-headline">Featured Products</h2>
             <p className="mt-3 text-lg text-muted-foreground">Our most popular custom printing solutions</p>
           </div>
-          {isLoadingProducts ? (
-            <div className="flex justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {featuredProducts?.map((product) => {
-                const rawUrl = product.imageUrls && product.imageUrls.length > 0
-                    ? product.imageUrls[product.mainImageIndex || 0]
-                    : null;
-                const mainImageUrl = rawUrl || `https://placehold.co/600x400/e2e8f0/e2e8f0`;
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {isLoadingProducts ? (
+                Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
+            ) : (
+                featuredProducts?.map((product) => {
+                    const rawUrl = product.imageUrls && product.imageUrls.length > 0
+                        ? product.imageUrls[product.mainImageIndex || 0]
+                        : null;
+                    const mainImageUrl = rawUrl || `https://placehold.co/600x400/e2e8f0/e2e8f0`;
 
-                return (
-                  <Link key={product.id} href={`/products/${product.slug}`}>
-                    <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full">
-                      <div className="overflow-hidden">
-                        <div className="aspect-[4/3] relative">
-                            <Image
-                              src={mainImageUrl}
-                              alt={product.name}
-                              fill
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                              data-ai-hint="product image"
-                            />
+                    return (
+                    <Link key={product.id} href={`/products/${product.slug}`}>
+                        <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full">
+                        <div className="overflow-hidden">
+                            <div className="aspect-[4/3] relative">
+                                <Image
+                                src={mainImageUrl}
+                                alt={product.name}
+                                fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                data-ai-hint="product image"
+                                />
+                            </div>
                         </div>
-                      </div>
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold text-lg">{product.name}</h3>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
+                        <CardContent className="p-4">
+                            <h3 className="font-semibold text-lg">{product.name}</h3>
+                        </CardContent>
+                        </Card>
+                    </Link>
+                    );
+                })
+            )}
             </div>
-          )}
           <div className="text-center mt-12">
             <Button asChild size="lg" variant="outline">
               <Link href="/products">
