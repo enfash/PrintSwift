@@ -35,6 +35,8 @@ const promoSchema = z.object({
   active: z.boolean().default(false),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
+  displayIntervalHours: z.coerce.number().optional(),
+  autoDismissSeconds: z.coerce.number().optional(),
 });
 
 export default function EditPromoPage({ params: paramsProp }: { params: { id: string } }) {
@@ -65,6 +67,7 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
     }, [promo, form]);
 
     const imageUrl = form.watch('imageUrl');
+    const placement = form.watch('placement');
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!storage || !event.target.files || event.target.files.length === 0) return;
@@ -365,11 +368,37 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
                                 )}
                             />
                         </div>
+                        
+                        {placement === 'popup' && (
+                             <FormField
+                                control={form.control}
+                                name="displayIntervalHours"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Popup Display Interval (Hours)</FormLabel>
+                                        <FormControl><Input type="number" placeholder="e.g., 24" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+                        {placement === 'top-banner' && (
+                             <FormField
+                                control={form.control}
+                                name="autoDismissSeconds"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Banner Auto-Dismiss (Seconds)</FormLabel>
+                                        <FormControl><Input type="number" placeholder="0 for no auto-dismiss" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
                     </CardContent>
                 </Card>
             </form>
         </Form>
     );
 }
-
-    

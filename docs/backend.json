@@ -469,6 +469,14 @@
           "type": "string",
           "format": "date-time",
           "description": "The date and time the promotion expires."
+        },
+        "displayIntervalHours": {
+          "type": "number",
+          "description": "For popups, the number of hours to wait before showing again to the same user."
+        },
+        "autoDismissSeconds": {
+          "type": "number",
+          "description": "For banners, number of seconds before it auto-hides. 0 for never."
         }
       },
       "required": [
