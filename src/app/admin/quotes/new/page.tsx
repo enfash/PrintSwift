@@ -354,14 +354,18 @@ export default function NewQuotePage() {
         
         // --- Header ---
         doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
         doc.text("BOMedia - Quote", 14, 22);
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         doc.text("Lagos, Nigeria", 14, 30);
         doc.text("info@bomedia.com", 14, 34);
         doc.text("+234 802 224 7567", 14, 38);
 
         doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
         doc.text(`QUOTE #${quoteId}`, 200, 22, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         doc.text(`Date: ${format(new Date(), 'PP')}`, 200, 30, { align: 'right' });
         if (quoteData.dueDate) {
@@ -383,8 +387,8 @@ export default function NewQuotePage() {
             return [
                 { content: `${item.productName}\n${optionsString}`, styles: { fontSize: 9 } },
                 item.qty,
-                `₦${item.unitPrice.toFixed(2)}`,
-                `₦${(item.qty * item.unitPrice).toFixed(2)}`,
+                { content: `₦${item.unitPrice.toFixed(2)}`, styles: { halign: 'right' } },
+                { content: `₦${(item.qty * item.unitPrice).toFixed(2)}`, styles: { halign: 'right' } },
             ];
         });
 
@@ -401,21 +405,22 @@ export default function NewQuotePage() {
         doc.setFontSize(10);
         
         const addTotalLine = (label: string, value: string) => {
-            doc.text(label, 14, finalY);
+            doc.text(label, 140, finalY, { align: 'left' });
             doc.text(value, 200, finalY, { align: 'right' });
-            finalY += 6;
+            finalY += 7;
         };
 
         addTotalLine("Subtotal:", `₦${summary.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-        if (summary.discount > 0) {
-            addTotalLine("Discount:", `- ₦${summary.discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        if (discount > 0) {
+            addTotalLine("Discount:", `- ₦${discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
         }
-        addTotalLine("Delivery:", `₦${summary.delivery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        if (delivery > 0) {
+            addTotalLine("Delivery:", `₦${delivery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        }
         addTotalLine(`VAT (${vatRate}%):`, `₦${summary.vat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
         
         doc.setLineWidth(0.5);
-        doc.line(14, finalY, 200, finalY);
-        finalY += 6;
+        doc.line(140, finalY - 3, 200, finalY - 3);
         
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
