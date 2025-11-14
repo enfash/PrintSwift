@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { LoaderCircle, Star, UploadCloud, Link2 } from 'lucide-react';
-import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { LoaderCircle, Star, UploadCloud } from 'lucide-react';
+import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useStorage } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +17,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useEffect, useState, use } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import Image from 'next/image';
+
 
 const MAX_QUOTE_LENGTH = 280;
 
@@ -33,9 +35,11 @@ const testimonialSchema = z.object({
 export default function EditTestimonialPage({ params: paramsProp }: { params: { id: string } }) {
     const params = use(paramsProp);
     const firestore = useFirestore();
+    const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [hoverRating, setHoverRating] = useState(0);
 
     const testimonialRef = useMemoFirebase(() => firestore ? doc(firestore, 'testimonials', params.id) : null, [firestore, params.id]);
@@ -57,16 +61,11 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
     
     const currentRating = form.watch('rating');
     const quoteValue = form.watch('quote') || '';
+    const imageUrl = form.watch('imageUrl');
 
     const onSubmit = async (values: z.infer<typeof testimonialSchema>) => {
         if (!firestore) return;
         setIsSubmitting(true);
-        
-        if (values.imageUrl && values.imageUrl.startsWith('blob:')) {
-            toast({ variant: 'destructive', title: 'Temporary Image Detected', description: "Please replace the local image preview with a permanent URL before saving. The save operation was cancelled."});
-            setIsSubmitting(false);
-            return;
-        }
 
         try {
             const testimonialDocRef = doc(firestore, 'testimonials', params.id);
@@ -83,24 +82,36 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
     };
     
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const tempPreviewUrl = URL.createObjectURL(file);
-            form.setValue('imageUrl', tempPreviewUrl);
-            toast({ title: "Image Added", description: "This is a local preview. To save, replace it with a permanent URL using the Link tab."})
-        }
-    };
+        if (!storage || !event.target.files || event.target.files.length === 0) return;
 
-    const handleAddImageUrl = (url: string) => {
-        try {
-            z.string().url().parse(url);
-            form.setValue('imageUrl', url);
-            const input = document.getElementById('imageUrlInput') as HTMLInputElement;
-            if (input) input.value = '';
-        } catch {
-            toast({ variant: 'destructive', title: "Invalid URL", description: "Please enter a valid image URL."});
+        const file = event.target.files[0];
+        setIsUploading(true);
+
+        const MAX_MB = 5;
+        if (file.size > MAX_MB * 1024 * 1024) {
+            setIsUploading(false);
+            toast({ variant: 'destructive', title: 'File too large', description: `Max file size is ${MAX_MB}MB.` });
+            return;
         }
-    }
+
+        const path = `testimonials/${params.id}/${file.name}`;
+        const fileRef = storageRef(storage, path);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+
+        uploadTask.on('state_changed',
+            () => { /* Progress can be handled here */ },
+            (error) => {
+                setIsUploading(false);
+                toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                form.setValue('imageUrl', downloadURL);
+                setIsUploading(false);
+                toast({ title: 'Image Uploaded', description: 'Image is ready to be saved with the testimonial.' });
+            }
+        );
+    };
 
 
     if (isLoading) {
@@ -118,8 +129,8 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
                     <h1 className="text-3xl font-bold tracking-tight">Edit Testimonial</h1>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" type="button" onClick={() => router.push('/admin/testimonials')}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" disabled={isSubmitting || isUploading}>
+                            {(isSubmitting || isUploading) && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                             Save Changes
                         </Button>
                     </div>
@@ -160,35 +171,45 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
                             <FormField
                                 control={form.control}
                                 name="imageUrl"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Customer Image</FormLabel>
-                                        <FormControl>
-                                            <Tabs defaultValue="url" className="w-full">
-                                                <TabsList className="grid w-full grid-cols-2">
-                                                    <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/>Upload</TabsTrigger>
-                                                    <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4"/>Link</TabsTrigger>
-                                                </TabsList>
-                                                <TabsContent value="upload" className="pt-2">
-                                                    <Input type="file" onChange={handleFileUpload} accept="image/*" />
-                                                    <FormDescription className="text-xs mt-2">
-                                                        Local previews must be replaced with a permanent URL before saving.
-                                                    </FormDescription>
-                                                </TabsContent>
-                                                <TabsContent value="url" className="pt-2">
-                                                    <div className="flex gap-2">
-                                                        <Input 
-                                                            id="imageUrlInput"
-                                                            placeholder="https://..."
-                                                            defaultValue={field.value}
-                                                        />
-                                                        <Button type="button" onClick={() => handleAddImageUrl((document.getElementById('imageUrlInput') as HTMLInputElement).value)}>Add</Button>
-                                                    </div>
-                                                </TabsContent>
-                                            </Tabs>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                render={() => (
+                                <FormItem>
+                                    <FormLabel>Customer Image</FormLabel>
+                                    <div className="flex items-center gap-4">
+                                        {imageUrl && (
+                                            <Image
+                                                src={imageUrl}
+                                                alt="Customer image preview"
+                                                width={80}
+                                                height={80}
+                                                className="rounded-full aspect-square object-cover"
+                                            />
+                                        )}
+                                        <label className={cn(
+                                            "flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition",
+                                            isUploading && "opacity-50 cursor-not-allowed"
+                                        )}>
+                                            <div className="flex flex-col items-center justify-center text-center">
+                                                {isUploading ? (
+                                                    <LoaderCircle className="w-6 h-6 text-muted-foreground animate-spin"/>
+                                                ) : (
+                                                    <UploadCloud className="w-6 h-6 text-muted-foreground"/>
+                                                )}
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                     {isUploading ? 'Uploading...' : 'Click to upload'}
+                                                </p>
+                                            </div>
+                                            <Input 
+                                                id="imageUpload"
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={handleFileUpload}
+                                                disabled={isUploading}
+                                            />
+                                        </label>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
                                 )}
                             />
 
@@ -266,3 +287,4 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
         </Form>
     );
 }
+
