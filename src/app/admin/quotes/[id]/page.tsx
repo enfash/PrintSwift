@@ -26,7 +26,7 @@ import Link from 'next/link';
 import { Counter } from '@/components/ui/counter';
 import { Combobox } from '@/components/ui/combobox';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import 'jspdf-autotable';
 
 
 const lineItemOptionSchema = z.object({
@@ -315,26 +315,100 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   };
   
   const handleGeneratePdf = async () => {
-    const summaryElement = document.getElementById('quote-summary-card');
-    if (!summaryElement) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not find the summary card to generate PDF.' });
-        return;
-    }
     setIsGeneratingPdf(true);
-
     try {
-        const canvas = await html2canvas(summaryElement, {
-            scale: 2, // Increase resolution
-            useCORS: true,
+        const doc = new jsPDF();
+        const quoteData = form.getValues();
+        const quoteId = params.id.substring(0, 8).toUpperCase();
+        
+        // --- Header ---
+        doc.setFontSize(20);
+        doc.text("BOMedia - Quote", 14, 22);
+        doc.setFontSize(10);
+        doc.text("Lagos, Nigeria", 14, 30);
+        doc.text("info@bomedia.com", 14, 34);
+        doc.text("+234 802 224 7567", 14, 38);
+
+        doc.setFontSize(16);
+        doc.text(`QUOTE #${quoteId}`, 200, 22, { align: 'right' });
+        doc.setFontSize(10);
+        doc.text(`Date: ${format(new Date(), 'PP')}`, 200, 30, { align: 'right' });
+        if (quoteData.dueDate) {
+          doc.text(`Valid Until: ${format(quoteData.dueDate, 'PP')}`, 200, 34, { align: 'right' });
+        }
+        
+        // --- Customer Info ---
+        doc.setLineWidth(0.5);
+        doc.line(14, 45, 200, 45);
+        doc.setFontSize(10);
+        doc.text("BILLED TO:", 14, 52);
+        doc.text(quoteData.company || quoteData.email, 14, 58);
+        if(quoteData.company) doc.text(quoteData.email, 14, 62);
+        if(quoteData.phone) doc.text(quoteData.phone, 14, 66);
+        
+        // --- Line Items Table ---
+        const tableBody = quoteData.lineItems.map(item => {
+            const optionsString = item.options?.map(o => `${o.label}: ${o.value}`).join('\n') || '';
+            return [
+                { content: `${item.productName}\n${optionsString}`, styles: { fontSize: 9 } },
+                item.qty,
+                `₦${item.unitPrice.toFixed(2)}`,
+                `₦${(item.qty * item.unitPrice).toFixed(2)}`,
+            ];
         });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
+
+        (doc as any).autoTable({
+            startY: 75,
+            head: [['Description', 'Qty', 'Unit Price', 'Total']],
+            body: tableBody,
+            theme: 'striped',
+            headStyles: { fillColor: [33, 37, 41] },
         });
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`Quote-BOMedia-${params.id.substring(0, 8)}.pdf`);
+        
+        // --- Totals ---
+        let finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        
+        const addTotalLine = (label: string, value: string) => {
+            doc.text(label, 14, finalY);
+            doc.text(value, 200, finalY, { align: 'right' });
+            finalY += 6;
+        };
+
+        addTotalLine("Subtotal:", `₦${summary.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        if (summary.discount > 0) {
+            addTotalLine("Discount:", `- ₦${summary.discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        }
+        addTotalLine("Delivery:", `₦${summary.delivery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        addTotalLine(`VAT (${vatRate}%):`, `₦${summary.vat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        
+        doc.setLineWidth(0.5);
+        doc.line(14, finalY, 200, finalY);
+        finalY += 6;
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        addTotalLine("TOTAL:", `₦${summary.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        
+        doc.setFont('helvetica', 'normal');
+        
+        if(summary.depositAmount > 0) {
+            finalY += 4;
+            addTotalLine("Deposit Due:", `₦${summary.depositAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            doc.setFont('helvetica', 'bold');
+            addTotalLine("Balance Remaining:", `₦${summary.remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        }
+
+        // --- Footer Notes ---
+        if (quoteData.notesCustomer) {
+            finalY = Math.max(finalY, 250);
+            doc.setFontSize(9);
+            doc.text("Notes:", 14, finalY);
+            doc.text(doc.splitTextToSize(quoteData.notesCustomer, 180), 14, finalY + 4);
+        }
+        
+        doc.save(`Quote-BOMedia-${quoteId}.pdf`);
+
         toast({ title: 'PDF Generated', description: 'Your PDF has been downloaded.' });
     } catch (error) {
         console.error("PDF Generation Error:", error);
