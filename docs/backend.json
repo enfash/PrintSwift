@@ -436,6 +436,10 @@
           "format": "uri",
           "description": "URL for a background or feature image."
         },
+        "backgroundColor": {
+          "type": "string",
+          "description": "Background color for the promo popup (hex code)."
+        },
         "ctaText": {
           "type": "string",
           "description": "Text for the call-to-action button."

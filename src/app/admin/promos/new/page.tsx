@@ -28,6 +28,7 @@ const promoSchema = z.object({
   ctaText: z.string().min(2, 'CTA text is required.'),
   ctaLink: z.string().min(1, 'Please enter a link.'),
   imageUrl: z.string().url('Please enter a valid image URL.').optional().or(z.literal('')),
+  backgroundColor: z.string().optional(),
   placement: z.enum(['popup', 'top-banner']).default('popup'),
   active: z.boolean().default(false),
   startDate: z.date().optional(),
@@ -48,6 +49,7 @@ export default function NewPromoPage() {
             ctaText: '',
             ctaLink: '',
             imageUrl: '',
+            backgroundColor: '#ffffff',
             placement: 'popup',
             active: false,
         },
@@ -145,6 +147,22 @@ export default function NewPromoPage() {
                                 <FormItem>
                                     <FormLabel>Image URL (Optional)</FormLabel>
                                     <FormControl><Input placeholder="https://.../image.png" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="backgroundColor"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Background Color (Optional)</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                        <FormControl>
+                                            <Input type="color" className="w-12 h-10 p-1" {...field} />
+                                        </FormControl>
+                                        <Input placeholder="#ffffff" {...field} value={field.value} onChange={e => field.onChange(e.target.value)} />
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}

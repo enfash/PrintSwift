@@ -69,9 +69,16 @@ export default function PromoPopup() {
         return null;
     }
     
+    const contentStyle = activePromo.backgroundColor
+        ? { backgroundColor: activePromo.backgroundColor }
+        : {};
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-2xl p-0 overflow-hidden">
+            <DialogContent 
+                className="sm:max-w-md md:max-w-lg lg:max-w-2xl p-0 overflow-hidden"
+                style={contentStyle}
+            >
                 <div className="grid grid-cols-1 md:grid-cols-2 items-center">
                     {activePromo.imageUrl && (
                          <div className="relative h-64 md:h-full w-full">
