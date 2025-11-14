@@ -49,6 +49,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuFooter
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -252,9 +253,48 @@ function AdminHeader() {
             <Home className="h-5 w-5" />
           </Link>
         </Button>
-        <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full relative">
+                    <Bell className="h-5 w-5" />
+                     <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
+                    </span>
+                    <span className="sr-only">Notifications</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                    <div className="grid gap-1">
+                        <p className="font-semibold">New Quote Request</p>
+                        <p className="text-xs text-muted-foreground">From Ada Ventures for Business Cards.</p>
+                    </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                    <div className="grid gap-1">
+                        <p className="font-semibold">Order Completed</p>
+                        <p className="text-xs text-muted-foreground">Order #ORD-001 has been marked as delivered.</p>
+                    </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                     <div className="grid gap-1">
+                        <p className="font-semibold">New Customer Signup</p>
+                        <p className="text-xs text-muted-foreground">jide.stores@example.com just signed up.</p>
+                    </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuFooter>
+                    <Button asChild variant="outline" className="w-full">
+                        <Link href="/admin/activity">View All Activity</Link>
+                    </Button>
+                </DropdownMenuFooter>
+            </DropdownMenuContent>
+        </DropdownMenu>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
