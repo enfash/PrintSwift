@@ -228,7 +228,11 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                 tags: product.tags || [],
                 keywords: product.keywords || [],
                 searchTerms: product.searchTerms || [],
-                seo: product.seo || { title: '', description: '', keywords: [] },
+                seo: {
+                    title: product.seo?.title || '',
+                    description: product.seo?.description || '',
+                    keywords: product.seo?.keywords || [],
+                },
             });
         }
     }, [product, form]);

@@ -662,7 +662,7 @@ export default function ProductFormPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>SEO Title</FormLabel>
-                                            <FormControl><Input placeholder="Custom Business Cards in Lagos" {...field} /></FormControl>
+                                            <FormControl><Input placeholder="Custom Business Cards in Lagos" {...field} value={field.value || ''} /></FormControl>
                                         </FormItem>
                                     )}
                                 />
@@ -672,7 +672,7 @@ export default function ProductFormPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>SEO Description</FormLabel>
-                                            <FormControl><Textarea placeholder="Order high-quality custom business cards online..." {...field} /></FormControl>
+                                            <FormControl><Textarea placeholder="Order high-quality custom business cards online..." {...field} value={field.value || ''} /></FormControl>
                                         </FormItem>
                                     )}
                                 />
