@@ -101,7 +101,6 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-heading">
               Discover our exclusive <br/>printing categories
             </h2>
-            <p className="mt-3 text-lg text-muted-foreground">Find the perfect products to elevate your brand's presence</p>
           </div>
           <div className="overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible">
             <div className="flex flex-row md:grid md:grid-cols-3 lg:grid-cols-6 gap-6 w-max md:w-auto">
