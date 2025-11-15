@@ -22,7 +22,7 @@ function CartButton() {
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
-        <Button asChild variant="ghost" size="icon">
+        <Button asChild variant="ghost" size="icon" className="relative">
             <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (
@@ -44,7 +44,7 @@ export function Header() {
       <div className="flex h-16 items-center justify-between gap-4 px-6">
         
         {/* Left Section */}
-        <div className="flex items-center flex-1">
+        <div className="flex items-center flex-1 justify-start">
           <Link href="/" className="flex items-center space-x-2">
             <Logo className="h-8 w-auto" />
           </Link>
