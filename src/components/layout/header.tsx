@@ -49,7 +49,7 @@ export function Header() {
           </Link>
         </div>
 
-        <nav className="hidden md:flex flex-1 items-center justify-center">
+        <nav className="hidden md:flex items-center justify-center flex-1">
           <div className="flex items-center space-x-6 text-sm font-medium">
             {navLinks.map((link) => (
               <Link
