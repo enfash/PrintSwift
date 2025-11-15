@@ -1,3 +1,4 @@
+
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -91,6 +92,8 @@ export default function Home() {
         </div>
       </section>
 
+      <HowItWorks />
+
       {/* Browse by Category */}
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4">
@@ -170,7 +173,6 @@ export default function Home() {
         </div>
       </section>
 
-      <HowItWorks />
       <WhyChooseUs />
       <TestimonialsCarousel />
     </>
