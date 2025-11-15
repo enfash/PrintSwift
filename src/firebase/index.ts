@@ -4,7 +4,7 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFirestore, type Firestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
@@ -17,7 +17,11 @@ export function initializeFirebase(): { firebaseApp: FirebaseApp, auth: Auth, fi
   }
   
   const auth = getAuth(firebaseApp);
-  const firestore = getFirestore(firebaseApp);
+  const firestore = initializeFirestore(firebaseApp, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager(),
+    }),
+  });
   const storage = getStorage(firebaseApp);
 
   return { firebaseApp, auth, firestore, storage };
