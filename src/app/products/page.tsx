@@ -24,10 +24,16 @@ function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
         return null;
     }
-    const firstTier = product.pricing.tiers[0];
-    if (!firstTier || typeof firstTier.minQty !== 'number' || typeof firstTier.unitCost !== 'number') return null;
 
-    const { minQty, setup = 0, unitCost, margin = 0 } = firstTier;
+    const startingTier = product.pricing.tiers
+        .filter((t: any) => t.minQty > 0)
+        .sort((a: any, b: any) => a.minQty - b.minQty)[0];
+        
+    if (!startingTier || typeof startingTier.minQty !== 'number' || typeof startingTier.unitCost !== 'number') {
+        return null;
+    }
+
+    const { minQty, setup = 0, unitCost, margin = 0 } = startingTier;
     if (minQty === 0) return null; // Avoid division by zero
 
     const totalCost = setup + (minQty * unitCost);
@@ -65,8 +71,8 @@ function ProductsComponent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(searchParams.get('category')?.split(',') || []);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [sortOption, setSortOption] = useState('popularity-desc');
     const [searchResults, setSearchResults] = useState<any[] | null>(null);
     const [isSearching, setIsSearching] = useState(false);
@@ -140,7 +146,7 @@ function ProductsComponent() {
             : selectedCategories.filter(id => id !== categoryId);
         
         setSelectedCategories(newSelectedCategories);
-        updateURLParams({ category: newSelectedCategories.join(',') || undefined });
+        updateURLParams({ category: newSelectedCategories.join(',') || undefined, search: searchTerm || undefined });
     };
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
