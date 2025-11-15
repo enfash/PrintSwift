@@ -16,7 +16,7 @@ import {
     LoaderCircle
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
 
@@ -82,7 +82,7 @@ function ProductsComponent() {
     const categoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesQuery);
 
-    const productsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
+    const productsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('status', '==', 'Published')) : null, [firestore]);
     const { data: allProducts, isLoading: isLoadingProducts } = useCollection<any>(productsQuery);
 
     useEffect(() => {
@@ -264,11 +264,11 @@ function ProductsComponent() {
                     </div>
                     
                     {(isLoading || isSearching) ? (
-                         <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                             {Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
                          </div>
                     ) : sortedProducts.length > 0 ? (
-                        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                             {sortedProducts.map((product) => {
                                 const startingPrice = calculateStartingPrice(product);
                                 const rawUrl = product.imageUrls && product.imageUrls.length > 0
