@@ -44,10 +44,9 @@ export function Header() {
       <div className="flex h-16 items-center justify-between gap-4 px-6">
         
         {/* Left Section */}
-        <div className="flex items-center md:flex-1">
+        <div className="flex items-center flex-1">
           <Link href="/" className="flex items-center space-x-2">
-            <Logo />
-            <span className="hidden font-heading font-bold sm:inline-block">BOMedia</span>
+            <Logo className="h-8 w-auto" />
           </Link>
         </div>
 
@@ -85,8 +84,7 @@ export function Header() {
               <div className="flex flex-col h-full">
                 <div className="flex items-center mb-8">
                   <Link href="/" className="mr-6 flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-                    <Logo />
-                    <span className="font-heading font-bold">BOMedia</span>
+                    <Logo className="h-8 w-auto" />
                   </Link>
                 </div>
                 <div className="mb-6">

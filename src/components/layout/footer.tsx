@@ -9,8 +9,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
           <div className="col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center space-x-3 mb-4">
-              <Logo />
-              <span className="text-xl font-heading font-bold">BOMedia</span>
+              <Logo className="h-10 w-auto" />
             </Link>
             <p className="text-muted-foreground max-w-xs">
               Affordable custom branding, delivered fast. Your trusted partner for all printing needs.

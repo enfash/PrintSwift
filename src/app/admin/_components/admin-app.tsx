@@ -237,8 +237,7 @@ function AdminHeader() {
       </div>
       <SidebarTrigger className="hidden sm:flex" />
       <div className="flex items-center gap-2 font-semibold">
-        <Logo />
-        <span className="text-lg">BOMedia</span>
+        <Logo className="h-8 w-auto" />
       </div>
       <div className="relative ml-auto flex-1 md:grow-0">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
