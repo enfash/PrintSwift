@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,18 +16,19 @@ import {
     LoaderCircle
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDebounce } from '@/hooks/use-debounce';
 
 function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
         return null;
     }
     const firstTier = product.pricing.tiers[0];
-    // Ensure firstTier and its properties are valid
     if (!firstTier || typeof firstTier.minQty !== 'number' || typeof firstTier.unitCost !== 'number') return null;
 
     const { minQty, setup = 0, unitCost, margin = 0 } = firstTier;
+    if (minQty === 0) return null; // Avoid division by zero
 
     const totalCost = setup + (minQty * unitCost);
     const finalPrice = totalCost / (1 - margin / 100);
@@ -70,24 +71,55 @@ function ProductsComponent() {
     const [searchTerm, setSearchTerm] = useState(initialSearch || '');
     const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? initialCategory.split(',') : []);
     const [sortOption, setSortOption] = useState('popularity-desc');
+    const [searchResults, setSearchResults] = useState<any[] | null>(null);
+    const [isSearching, setIsSearching] = useState(false);
+    
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const categoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesQuery);
 
-    const productsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('status', '==', 'Published')) : null, [firestore]);
+    const productsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
     const { data: allProducts, isLoading: isLoadingProducts } = useCollection<any>(productsQuery);
 
     useEffect(() => {
         const newCategory = searchParams.get('category');
-        if (newCategory) {
-            const categories = newCategory.split(',');
-            setSelectedCategories(categories);
-        }
+        setSelectedCategories(newCategory ? newCategory.split(',') : []);
         const newSearch = searchParams.get('search');
-        if (newSearch) {
-            setSearchTerm(newSearch);
-        }
+        setSearchTerm(newSearch || '');
     }, [searchParams]);
+    
+    useEffect(() => {
+        if (debouncedSearchTerm === '' && selectedCategories.length === 0) {
+            setSearchResults(null); // Show all products if no search/filter
+            return;
+        }
+
+        const performSearch = async () => {
+            setIsSearching(true);
+            const params = new URLSearchParams();
+            if (debouncedSearchTerm) {
+                params.set('q', debouncedSearchTerm);
+            }
+            if (selectedCategories.length > 0) {
+                params.set('category', selectedCategories.join(','));
+            }
+            
+            try {
+                const response = await fetch(`/api/search?${params.toString()}`);
+                const data = await response.json();
+                setSearchResults(data.results || []);
+            } catch (error) {
+                console.error("Search API failed:", error);
+                setSearchResults([]); // On error, show no results
+            } finally {
+                setIsSearching(false);
+            }
+        };
+
+        performSearch();
+    }, [debouncedSearchTerm, selectedCategories]);
+
 
     const handleCategoryChange = (categoryId: string, checked: boolean | string) => {
         const newSelectedCategories = checked
@@ -95,20 +127,21 @@ function ProductsComponent() {
             : selectedCategories.filter(id => id !== categoryId);
         
         setSelectedCategories(newSelectedCategories);
-        updateURLParams({ category: newSelectedCategories.join(',') });
+        updateURLParams({ category: newSelectedCategories.join(',') || undefined });
     };
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newSearchTerm = e.target.value;
         setSearchTerm(newSearchTerm);
-        updateURLParams({ search: newSearchTerm });
+        updateURLParams({ search: newSearchTerm || undefined });
     }
 
-    const updateURLParams = (newParams: Record<string, string>) => {
+    const updateURLParams = (newParams: Record<string, string | undefined>) => {
         const params = new URLSearchParams(searchParams.toString());
         for (const key in newParams) {
-            if (newParams[key]) {
-                params.set(key, newParams[key]);
+            const value = newParams[key];
+            if (value) {
+                params.set(key, value);
             } else {
                 params.delete(key);
             }
@@ -116,48 +149,32 @@ function ProductsComponent() {
         router.replace(`/products?${params.toString()}`, { scroll: false });
     };
 
-    const filteredAndSortedProducts = useMemo(() => {
-        if (!allProducts) return [];
+    const sortedProducts = useMemo(() => {
+        const productsToDisplay = searchResults === null ? allProducts : searchResults;
+        if (!productsToDisplay) return [];
+
+        const sorted = [...productsToDisplay];
         
-        let products = allProducts;
-
-        // Filter by search term
-        if (searchTerm) {
-            const lowercasedTerm = searchTerm.toLowerCase();
-            products = products.filter(p => 
-                p.searchTerms?.some((term: string) => term.includes(lowercasedTerm)) ||
-                p.name.toLowerCase().includes(lowercasedTerm)
-            );
-        }
-
-        // Filter by categories
-        if (selectedCategories.length > 0) {
-            products = products.filter(p => p.categoryId && selectedCategories.includes(p.categoryId));
-        }
-
-        // Sort products
-        products.sort((a, b) => {
+        sorted.sort((a, b) => {
             const [key, order] = sortOption.split('-');
-
             if (key === 'price') {
-                 const priceA = calculateStartingPrice(a) || Infinity;
-                 const priceB = calculateStartingPrice(b) || Infinity;
+                 const priceA = calculateStartingPrice(a) || (order === 'asc' ? Infinity : -Infinity);
+                 const priceB = calculateStartingPrice(b) || (order === 'asc' ? Infinity : -Infinity);
                  return order === 'asc' ? priceA - priceB : priceB - priceA;
             }
-            
             if (key === 'name') {
                 return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
             }
-
-            // Default to popularity (featured first)
-             if (a.featured && !b.featured) return -1;
-             if (!a.featured && b.featured) return 1;
+            // Default to popularity (featured first, then by score if available)
+            const scoreA = a._score ?? (a.featured ? 1 : 0);
+            const scoreB = b._score ?? (b.featured ? 1 : 0);
+            if(scoreA !== scoreB) return scoreB - scoreA;
 
             return 0;
         });
 
-        return products;
-    }, [searchTerm, selectedCategories, sortOption, allProducts]);
+        return sorted;
+    }, [sortOption, allProducts, searchResults]);
 
     const isLoading = isLoadingCategories || isLoadingProducts;
     
@@ -221,7 +238,7 @@ function ProductsComponent() {
                 <main className="lg:col-span-3">
                     <div className="flex justify-between items-center mb-6">
                         <p className="text-sm text-muted-foreground">
-                            {isLoadingProducts ? 'Loading...' : `Showing ${filteredAndSortedProducts.length} products`}
+                            {(isLoading || isSearching) ? 'Loading...' : `Showing ${sortedProducts.length} products`}
                         </p>
                         <div className="flex items-center gap-2">
                             <Label htmlFor="sort-by" className="text-sm">Sort by:</Label>
@@ -240,13 +257,13 @@ function ProductsComponent() {
                         </div>
                     </div>
                     
-                    {isLoadingProducts ? (
+                    {(isLoading || isSearching) ? (
                          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             {Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
                          </div>
-                    ) : filteredAndSortedProducts.length > 0 ? (
+                    ) : sortedProducts.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filteredAndSortedProducts.map((product) => {
+                            {sortedProducts.map((product) => {
                                 const startingPrice = calculateStartingPrice(product);
                                 const rawUrl = product.imageUrls && product.imageUrls.length > 0
                                     ? product.imageUrls[product.mainImageIndex || 0]
@@ -269,7 +286,7 @@ function ProductsComponent() {
                                             </div>
                                             <CardContent className="p-4 flex-grow flex flex-col">
                                                 <h3 className="font-semibold text-lg truncate">{product.name}</h3>
-                                                <p className="text-sm text-muted-foreground flex-grow">{categories?.find(c => c.id === product.categoryId)?.name}</p>
+                                                <p className="text-sm text-muted-foreground flex-grow">{product.categoryName || categories?.find(c => c.id === product.categoryId)?.name}</p>
                                                 {startingPrice !== null && !isNaN(startingPrice) ? (
                                                      <p className="font-bold text-lg mt-2">
                                                         Starts at ₦{Math.ceil(startingPrice).toLocaleString()}
