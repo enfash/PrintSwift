@@ -24,19 +24,19 @@ export default function HowItWorks() {
   return (
     <section className="py-12 sm:py-16 bg-background">
       <div className="max-w-6xl mx-auto px-4 text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-heading">How It Works</h2>
-
-        <div className="grid sm:grid-cols-3 gap-8">
-          {steps.map((step, idx) => (
-            <div
-              key={idx}
-              className="flex flex-col items-center text-center p-6 rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow hover:-translate-y-1"
-            >
-              <div className="mb-4">{step.icon}</div>
-              <h3 className="font-semibold text-lg">{step.title}</h3>
-              <p className="text-muted-foreground text-sm mt-2">{step.desc}</p>
+        <div className="overflow-x-auto pb-4 -mx-4 px-4 md:overflow-visible md:px-0 md:-mx-0">
+            <div className="flex md:grid md:grid-cols-3 gap-8 w-max md:w-auto">
+            {steps.map((step, idx) => (
+                <div
+                key={idx}
+                className="flex flex-col items-center text-center p-6 rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow hover:-translate-y-1 w-64 md:w-auto"
+                >
+                <div className="mb-4">{step.icon}</div>
+                <h3 className="font-semibold text-lg">{step.title}</h3>
+                <p className="text-muted-foreground text-sm mt-2">{step.desc}</p>
+                </div>
+            ))}
             </div>
-          ))}
         </div>
       </div>
     </section>
