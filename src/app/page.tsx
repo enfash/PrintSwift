@@ -71,9 +71,10 @@ export default function Home() {
             sizes="100vw"
             className="object-cover opacity-20"
             data-ai-hint="printing press"
+            priority
           />
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-primary-foreground">
-          <h1 className="text-4xl md:text-6xl font-extrabold font-heading tracking-tight">
+          <h1 className="text-4xl md:text-[62px] font-extrabold font-heading tracking-tight">
             Affordable Custom Branding, Delivered Fast
           </h1>
           <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto text-primary-foreground/80">
@@ -97,8 +98,8 @@ export default function Home() {
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-heading">Browse by Category</h2>
-            <p className="mt-3 text-lg text-muted-foreground">Explore our wide range of custom printing solutions</p>
+            <h2 className="text-3xl md:text-4xl font-bold font-heading">Discover our exclusive printing categories</h2>
+            <p className="mt-3 text-lg text-muted-foreground">Find the perfect products to elevate your brand's presence</p>
           </div>
           <div className="overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible">
             <div className="flex flex-row md:grid md:grid-cols-3 lg:grid-cols-6 gap-6 w-max md:w-auto">
