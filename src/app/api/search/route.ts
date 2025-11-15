@@ -1,10 +1,17 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, Firestore } from 'firebase/firestore';
 
-// Initialize Firebase services
-const { firestore } = initializeFirebase();
+// Cached instances
+let firestore: Firestore;
+
+function ensureFirebaseInitialized() {
+  if (!firestore) {
+    firestore = initializeFirebase().firestore;
+  }
+}
+
 
 /**
  * Normalizes and cleans up a search query string.
@@ -52,6 +59,8 @@ function scoreDoc(doc: any, q: string): number {
 
 export async function GET(request: NextRequest) {
   try {
+    ensureFirebaseInitialized();
+
     const { searchParams } = new URL(request.url);
     const q = normalize(searchParams.get('q'));
     const category = searchParams.get('category') || '';
