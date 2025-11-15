@@ -10,18 +10,21 @@ import { getStorage, type FirebaseStorage } from 'firebase/storage';
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase(): { firebaseApp: FirebaseApp, auth: Auth, firestore: Firestore, storage: FirebaseStorage } {
   let firebaseApp: FirebaseApp;
+  let firestore: Firestore;
+
   if (!getApps().length) {
     firebaseApp = initializeApp(firebaseConfig);
+    firestore = initializeFirestore(firebaseApp, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
   } else {
     firebaseApp = getApp();
+    firestore = getFirestore(firebaseApp);
   }
   
   const auth = getAuth(firebaseApp);
-  const firestore = initializeFirestore(firebaseApp, {
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager(),
-    }),
-  });
   const storage = getStorage(firebaseApp);
 
   return { firebaseApp, auth, firestore, storage };
