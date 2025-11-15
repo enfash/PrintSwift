@@ -39,6 +39,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -148,6 +149,9 @@ export default function ArtworkPage() {
         <SheetContent className="w-full sm:max-w-2xl p-0">
           <SheetHeader className="p-6 border-b">
             <SheetTitle>Artwork for Order #{selectedOrder.id.substring(0,6)}</SheetTitle>
+            <SheetDescription>
+                Review artwork, run preflight checks, and manage versions for this order.
+            </SheetDescription>
           </SheetHeader>
           <div className="p-6 space-y-6">
             <Card>
