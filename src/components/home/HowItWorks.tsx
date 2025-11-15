@@ -27,18 +27,20 @@ export default function HowItWorks() {
   return (
     <section className="py-4 bg-background">
       <div className="max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
           {STEPS.map((step) => (
-            <div key={step.id} className="flex flex-col items-center p-4">
-              <div className="w-14 h-14 relative mb-4 flex items-center justify-center">
+            <div key={step.id} className="flex items-center gap-4 p-4">
+              <div className="flex-shrink-0">
                 {step.icon}
               </div>
-              <h3 className="text-lg font-semibold font-heading">
-                {step.title}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                {step.subtitle}
-              </p>
+              <div>
+                <h3 className="text-base font-semibold font-heading">
+                  {step.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                  {step.subtitle}
+                </p>
+              </div>
             </div>
           ))}
         </div>
