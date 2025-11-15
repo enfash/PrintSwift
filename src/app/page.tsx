@@ -21,6 +21,10 @@ import {
     Clock,
     DollarSign,
     Users,
+    Package,
+    CheckCircle,
+    BadgeDollarSign,
+    Headphones,
 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -45,46 +49,43 @@ const categoryIcons: { [key: string]: React.ReactElement } = {
 
 const howItWorksSteps = [
   {
-    step: 1,
-    title: 'Choose Your Product',
-    description: 'Browse our extensive catalog and select the perfect item for your branding needs.',
-    icon: <MousePointerSquareDashed className="w-10 h-10" />,
+    icon: <Package className="w-8 h-8 text-primary" />,
+    title: "Choose Your Product",
+    desc: "Browse our collection and pick the perfect item for your needs."
   },
   {
-    step: 2,
-    title: 'Upload Your Design',
-    description: 'Easily upload your artwork, or use our tools to create a new design from scratch.',
-    icon: <UploadCloud className="w-10 h-10" />,
+    icon: <UploadCloud className="w-8 h-8 text-primary" />,
+    title: "Upload Your Design",
+    desc: "Upload your artwork or let us help you create a stunning design."
   },
   {
-    step: 3,
-    title: 'Receive Your Order',
-    description: 'We print, pack, and deliver your custom products right to your doorstep, fast.',
-    icon: <Truck className="w-10 h-10" />,
-  },
+    icon: <CheckCircle className="w-8 h-8 text-primary" />,
+    title: "Receive Your Order",
+    desc: "We print, process, and deliver your branded products on time."
+  }
 ];
 
 const whyChooseUsItems = [
-    {
-        title: 'Unbeatable Quality',
-        description: 'We use state-of-the-art printing technology and premium materials to ensure every product meets the highest standards.',
-        icon: 'Unbeatable Quality'
-    },
-    {
-        title: 'Fast Turnaround',
-        description: 'With our efficient processes, we offer some of the fastest production and delivery times in the industry, without compromising quality.',
-        icon: 'Fast Turnaround'
-    },
-    {
-        title: 'Affordable Pricing',
-        description: 'Get top-quality custom printing at competitive prices. We offer solutions for every budget, from small businesses to large corporations.',
-        icon: 'Affordable Pricing'
-    },
-    {
-        title: 'Expert Support',
-        description: 'Our dedicated team is here to help you every step of the way, from choosing the right product to finalizing your design.',
-        icon: 'Expert Support'
-    },
+  {
+    icon: <Star className="w-8 h-8 text-primary" />,
+    title: "High-Quality Printing",
+    desc: "Sharp, vibrant, professional prints produced with modern technology."
+  },
+  {
+    icon: <Clock className="w-8 h-8 text-primary" />,
+    title: "Fast Turnaround",
+    desc: "Most orders are completed within 24–48 hours, depending on product."
+  },
+  {
+    icon: <BadgeDollarSign className="w-8 h-8 text-primary" />,
+    title: "Affordable Pricing",
+    desc: "Highly competitive pricing designed for SMEs and bulk buyers."
+  },
+  {
+    icon: <Headphones className="w-8 h-8 text-primary" />,
+    title: "Expert Support",
+    desc: "Real human assistance for artwork, orders, and product questions."
+  }
 ];
 
 function findImage(id: string) {
@@ -266,55 +267,40 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto max-w-7xl px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline">How It Works</h2>
-            <p className="mt-3 text-lg text-muted-foreground">Three simple steps to get your custom branded products</p>
-          </div>
-          <div className="relative">
-            <div className="hidden md:block absolute top-8 left-0 w-full h-0.5 bg-border -translate-y-1/2"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-16">
-              {howItWorksSteps.map((step) => (
-                <div key={step.step} className="text-center relative bg-background p-4">
-                  <div className="flex justify-center mb-4">
-                    <div className="bg-primary text-primary-foreground rounded-full h-16 w-16 flex items-center justify-center z-10 relative">
-                      {step.icon}
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold font-headline mb-2">
-                    {step.step}. {step.title}
-                  </h3>
-                  <p className="text-muted-foreground">{step.description}</p>
+      <section className="py-12 sm:py-16 bg-background">
+        <div className="container mx-auto max-w-6xl px-4 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-headline">How It Works</h2>
+            <div className="grid sm:grid-cols-3 gap-8">
+            {howItWorksSteps.map((step, idx) => (
+                <div
+                key={idx}
+                className="flex flex-col items-center text-center p-6 rounded-xl border bg-card shadow-sm hover:shadow-md transition"
+                >
+                <div className="mb-4">{step.icon}</div>
+                <h3 className="font-semibold text-lg">{step.title}</h3>
+                <p className="text-muted-foreground text-sm mt-2">{step.desc}</p>
                 </div>
-              ))}
+            ))}
             </div>
-          </div>
         </div>
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="py-16 md:py-24 bg-card">
-        <div className="container mx-auto max-w-7xl px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline">Why Choose Us?</h2>
-            <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Your reliable partner for high-quality printing and branding solutions.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {whyChooseUsItems.map((item) => (
-              <div key={item.title} className="text-center p-6">
-                <div className="flex justify-center mb-4">
-                    <div className="bg-primary/10 text-primary rounded-full h-16 w-16 flex items-center justify-center">
-                        {categoryIcons[item.icon] || categoryIcons['Default']}
-                    </div>
+      <section className="py-12 sm:py-16 bg-card">
+        <div className="container mx-auto max-w-6xl px-4 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-headline">Why Choose Us?</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {whyChooseUsItems.map((item, idx) => (
+                <div
+                key={idx}
+                className="flex flex-col items-center text-center p-6 rounded-xl border bg-background shadow-sm hover:shadow-md transition"
+                >
+                <div className="mb-4">{item.icon}</div>
+                <h3 className="font-semibold text-lg">{item.title}</h3>
+                <p className="text-muted-foreground text-sm mt-2">{item.desc}</p>
                 </div>
-                <h3 className="text-xl font-bold font-headline mb-2">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
-              </div>
             ))}
-          </div>
+            </div>
         </div>
       </section>
 
