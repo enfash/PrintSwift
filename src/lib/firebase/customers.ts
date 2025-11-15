@@ -61,3 +61,5 @@ export async function listCustomers(db: Firestore, limitN=20, startAfterDoc=null
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
+
+    

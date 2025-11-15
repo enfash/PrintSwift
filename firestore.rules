@@ -45,10 +45,9 @@ service cloud.firestore {
     }
 
     // --- Customer Management ---
-    // DEV ONLY: Open access for development. 
-    // WARNING: SECURE THIS BEFORE PRODUCTION by replacing with `if isAdmin()`.
+    // Admins have full access to customer data.
     match /customers/{customerId} {
-      allow read, write: if true; 
+      allow read, write: if isAdmin(); 
     }
 
     // --- Admin-only Write/Read Collections ---
@@ -66,3 +65,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
