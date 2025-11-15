@@ -74,7 +74,7 @@ export default function Home() {
             priority
           />
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-primary-foreground">
-          <h1 className="text-4xl md:text-[62px] font-extrabold font-heading tracking-tight">
+          <h1 className="text-4xl md:text-[62px] font-extrabold font-heading tracking-tight leading-tight">
             Affordable Custom Branding, Delivered Fast
           </h1>
           <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto text-primary-foreground/80">
