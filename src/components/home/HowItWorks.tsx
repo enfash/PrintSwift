@@ -25,7 +25,7 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-8 bg-background">
+    <section className="py-4 bg-background">
       <div className="max-w-5xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
           {STEPS.map((step) => (
