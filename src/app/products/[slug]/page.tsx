@@ -1,7 +1,7 @@
 
 'use client';
 import { useEffect, useState, useCallback, use } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/context/cart-context';
+import { useRouter } from 'next/navigation';
 
 async function getProductBySlug(firestore: any, slug: string) {
     if (!firestore || !slug) return null;
@@ -106,6 +107,8 @@ const ProductDetailSkeleton = () => (
 
 export default function ProductDetailPage({ params: paramsProp }: { params: { slug: string } }) {
   const params = use(paramsProp);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const slug = params.slug;
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -221,23 +224,9 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     setSelectedOptions(prev => ({ ...prev, [label]: value }));
   };
 
-  const handleAddToCart = () => {
-    if (!product || price === null) return;
-    
-    const cartItem = {
-      productId: product.id,
-      name: product.name,
-      quantity,
-      price,
-      image: product.imageUrls?.[selectedImage] || '',
-      options: Object.entries(selectedOptions).map(([label, value]) => ({ label, value })),
-    };
-    
-    addToCart(cartItem);
-    toast({
-      title: "Added to Cart",
-      description: `${quantity} x ${product.name} has been added to your cart.`,
-    });
+  const handleGetQuote = () => {
+    if (!product) return;
+    router.push(`/quote?product=${encodeURIComponent(product.name)}`);
   };
 
   const renderDetailField = (detail: any) => {
@@ -315,7 +304,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
         )}
         <div className="grid md:grid-cols-2 gap-8 md:gap-12">
           {/* Product Image Gallery */}
-          <div className="space-y-4 sticky top-24 self-start">
+          <div className="space-y-4 md:sticky top-24 self-start">
             <div className="aspect-square relative rounded-lg border overflow-hidden">
                 <Image
                     src={mainImageUrl}
@@ -379,7 +368,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                     />
                 </div>
                 
-                <Button variant="outline" className="w-full h-12 text-base" onClick={() => toast({ title: "Feature coming soon!", description: "Artwork upload will be implemented in a future step."})}>
+                <Button variant="outline" className="w-full h-12 text-base" onClick={handleGetQuote}>
                     <UploadCloud className="mr-2 h-5 w-5" />
                     Upload Your Artwork
                 </Button>
@@ -400,14 +389,18 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                         )}
 
                     </div>
-                    <button onClick={() => document.getElementById('details-tab')?.click()} className="text-sm font-medium text-primary hover:underline">
+                    <button onClick={() => {
+                        const element = document.getElementById('details-tab');
+                        element?.click();
+                        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }} className="text-sm font-medium text-primary hover:underline">
                         Bulk discounts available
                     </button>
                 </div>
 
-                <Button size="lg" className="w-full h-12 text-lg font-semibold" disabled={!allOptionsSelected || price === null} onClick={handleAddToCart}>
+                <Button size="lg" className="w-full h-12 text-lg font-semibold" disabled={!allOptionsSelected} onClick={handleGetQuote}>
                     <ShoppingCart className="mr-2 h-5 w-5" />
-                    Add to Cart
+                    Get a Quote
                 </Button>
                  <p className="text-xs text-center text-muted-foreground">
                     We'll send a final proof for your approval before printing.
