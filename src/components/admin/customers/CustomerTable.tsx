@@ -61,6 +61,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -97,9 +98,11 @@ const CustomerQuickView = ({ customer }: { customer: any }) => {
                     </Avatar>
                     <div>
                         {customer.name}
-                        <p className="text-sm font-normal text-muted-foreground">{customer.email}</p>
                     </div>
                 </DialogTitle>
+                <DialogDescription>
+                    {customer.email}
+                </DialogDescription>
             </DialogHeader>
             <Tabs defaultValue="details">
                 <TabsList>
