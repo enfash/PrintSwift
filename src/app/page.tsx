@@ -32,7 +32,7 @@ const categoryIcons: { [key: string]: React.ReactElement } = {
 };
 
 const CategorySkeleton = () => (
-    <Card className="text-center p-6 h-full">
+    <Card className="text-center p-6 h-full flex-shrink-0 w-36 sm:w-auto">
         <div className="flex justify-center items-center mb-4">
             <Skeleton className="h-8 w-8 rounded-full" />
         </div>
@@ -98,21 +98,23 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-heading">Browse by Category</h2>
             <p className="mt-3 text-lg text-muted-foreground">Explore our wide range of custom printing solutions</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {isLoadingCategories ? (
-                Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={i} />)
-            ) : (
-                categories?.slice(0, 6).map((category) => (
-                    <Link href={`/products?category=${category.id}`} key={category.id} className="group">
-                    <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 hover:-translate-y-1 h-full">
-                        <div className="flex justify-center items-center mb-4 text-primary group-hover:text-accent transition-colors">
-                        {categoryIcons[category.name] || categoryIcons['Default']}
-                        </div>
-                        <h3 className="font-semibold">{category.name}</h3>
-                    </Card>
-                    </Link>
-                ))
-            )}
+          <div className="overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible md:-mx-0 md:px-0">
+            <div className="flex flex-row md:grid md:grid-cols-3 lg:grid-cols-6 gap-6 w-max md:w-auto">
+                {isLoadingCategories ? (
+                    Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={i} />)
+                ) : (
+                    categories?.slice(0, 6).map((category) => (
+                        <Link href={`/products?category=${category.id}`} key={category.id} className="group flex-shrink-0 w-36 sm:w-auto">
+                        <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 hover:-translate-y-1 h-full">
+                            <div className="flex justify-center items-center mb-4 text-primary group-hover:text-accent transition-colors">
+                            {categoryIcons[category.name] || categoryIcons['Default']}
+                            </div>
+                            <h3 className="font-semibold">{category.name}</h3>
+                        </Card>
+                        </Link>
+                    ))
+                )}
+            </div>
           </div>
         </div>
       </section>
