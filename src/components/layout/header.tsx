@@ -67,7 +67,7 @@ export function Header() {
 
         {/* Right Section */}
         <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
-            <div className="w-full max-w-sm lg:max-w-xs hidden md:block">
+            <div className="w-full max-w-sm lg:max-w-[14rem] hidden md:block">
                 <SearchBar />
             </div>
             
