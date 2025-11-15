@@ -70,7 +70,6 @@ export default function Home() {
             fill
             sizes="100vw"
             className="object-cover opacity-20"
-            priority
             data-ai-hint="printing press"
           />
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-primary-foreground">
@@ -101,7 +100,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-heading">Browse by Category</h2>
             <p className="mt-3 text-lg text-muted-foreground">Explore our wide range of custom printing solutions</p>
           </div>
-          <div className="overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible md:-mx-0 md:px-0">
+          <div className="overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible">
             <div className="flex flex-row md:grid md:grid-cols-3 lg:grid-cols-6 gap-6 w-max md:w-auto">
                 {isLoadingCategories ? (
                     Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={i} />)
