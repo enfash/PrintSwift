@@ -25,19 +25,19 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-4 bg-background">
+    <section className="py-8 bg-background">
       <div className="max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
+        <div className="grid grid-cols-3 gap-4 md:gap-10 text-center">
           {STEPS.map((step) => (
-            <div key={step.id} className="flex items-center gap-4 p-4">
-              <div className="flex-shrink-0">
+            <div key={step.id} className="flex flex-col items-center p-2">
+              <div className="flex-shrink-0 mb-4">
                 {step.icon}
               </div>
               <div>
-                <h3 className="text-base font-semibold font-heading">
+                <h3 className="text-sm sm:text-base font-semibold font-heading">
                   {step.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
                   {step.subtitle}
                 </p>
               </div>
