@@ -26,11 +26,11 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-8 bg-background">
+    <section className="py-4 bg-background">
       <div className="max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-3 gap-4 md:gap-8">
           {STEPS.map((step) => (
-            <div key={step.id} className="flex items-center gap-4">
+            <div key={step.id} className="flex flex-col md:flex-row items-center text-center md:text-left gap-4">
               <div className="flex-shrink-0">
                 {step.icon}
               </div>
