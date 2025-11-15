@@ -19,7 +19,7 @@ const navLinks = [
 
 function CartButton() {
     const { items } = useCart();
-    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    const itemCount = items.length;
 
     return (
         <Button asChild variant="ghost" size="icon" className="relative">
