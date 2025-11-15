@@ -27,11 +27,10 @@ export default function HowItWorks() {
   return (
     <section className="py-12 bg-background">
       <div className="max-w-5xl mx-auto px-6">
-        {/* Horizontal scroll on mobile, grid on desktop */}
-        <div className="md:grid md:grid-cols-3 md:gap-10 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
           {STEPS.map((step) => (
             <div key={step.id} className="flex flex-col items-center p-4">
-              <div className="w-14 h-14 relative mb-4">
+              <div className="w-14 h-14 relative mb-4 flex items-center justify-center">
                 {step.icon}
               </div>
               <h3 className="text-lg font-semibold font-heading">
