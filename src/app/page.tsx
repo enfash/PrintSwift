@@ -17,6 +17,10 @@ import {
     ArrowRight,
     LoaderCircle,
     Star,
+    Award,
+    Clock,
+    DollarSign,
+    Users,
 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -32,6 +36,10 @@ const categoryIcons: { [key: string]: React.ReactElement } = {
   'Packaging Prints': <Box className="w-8 h-8" />,
   'Apparel & Textile Printing': <Shirt className="w-8 h-8" />,
   'Signage & Display Systems': <MonitorPlay className="w-8 h-8" />,
+  'Unbeatable Quality': <Award className="w-8 h-8" />,
+  'Fast Turnaround': <Clock className="w-8 h-8" />,
+  'Affordable Pricing': <DollarSign className="w-8 h-8" />,
+  'Expert Support': <Users className="w-8 h-8" />,
   'Default': <Briefcase className="w-8 h-8" />
 };
 
@@ -54,6 +62,29 @@ const howItWorksSteps = [
     description: 'We print, pack, and deliver your custom products right to your doorstep, fast.',
     icon: <Truck className="w-10 h-10" />,
   },
+];
+
+const whyChooseUsItems = [
+    {
+        title: 'Unbeatable Quality',
+        description: 'We use state-of-the-art printing technology and premium materials to ensure every product meets the highest standards.',
+        icon: 'Unbeatable Quality'
+    },
+    {
+        title: 'Fast Turnaround',
+        description: 'With our efficient processes, we offer some of the fastest production and delivery times in the industry, without compromising quality.',
+        icon: 'Fast Turnaround'
+    },
+    {
+        title: 'Affordable Pricing',
+        description: 'Get top-quality custom printing at competitive prices. We offer solutions for every budget, from small businesses to large corporations.',
+        icon: 'Affordable Pricing'
+    },
+    {
+        title: 'Expert Support',
+        description: 'Our dedicated team is here to help you every step of the way, from choosing the right product to finalizing your design.',
+        icon: 'Expert Support'
+    },
 ];
 
 function findImage(id: string) {
@@ -244,8 +275,33 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Why Choose Us Section */}
       <section className="py-16 md:py-24 bg-card">
+        <div className="container mx-auto max-w-7xl px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline">Why Choose Us?</h2>
+            <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
+              Your reliable partner for high-quality printing and branding solutions.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {whyChooseUsItems.map((item) => (
+              <div key={item.title} className="text-center p-6">
+                <div className="flex justify-center mb-4">
+                    <div className="bg-primary/10 text-primary rounded-full h-16 w-16 flex items-center justify-center">
+                        {categoryIcons[item.icon] || categoryIcons['Default']}
+                    </div>
+                </div>
+                <h3 className="text-xl font-bold font-headline mb-2">{item.title}</h3>
+                <p className="text-muted-foreground">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4">
             <div className="text-center mb-12">
                 <h2 className="text-3xl md:text-4xl font-bold font-headline">What Our Clients Say</h2>
