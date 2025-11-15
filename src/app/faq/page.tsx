@@ -2,14 +2,14 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { LoaderCircle } from 'lucide-react';
 
 export default function FAQPage() {
   const firestore = useFirestore();
-  const faqsRef = useMemoFirebase(() => firestore ? collection(firestore, 'faqs') : null, [firestore]);
+  const faqsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'faqs'), where('visible', '==', true)) : null, [firestore]);
   const { data: faqs, isLoading } = useCollection<any>(faqsRef);
   
   const faqCategories = faqs
