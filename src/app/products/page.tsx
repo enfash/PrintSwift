@@ -264,11 +264,11 @@ function ProductsComponent() {
                     </div>
                     
                     {(isLoading || isSearching) ? (
-                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                         <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                             {Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
                          </div>
                     ) : sortedProducts.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                             {sortedProducts.map((product) => {
                                 const startingPrice = calculateStartingPrice(product);
                                 const rawUrl = product.imageUrls && product.imageUrls.length > 0
@@ -286,7 +286,7 @@ function ProductsComponent() {
                                                         alt={product.name}
                                                         fill
                                                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                                                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                                                        sizes="(max-width: 640px) 50vw, (max-width: 1280px) 50vw, 33vw"
                                                     />
                                                 </div>
                                             </div>

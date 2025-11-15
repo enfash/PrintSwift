@@ -221,7 +221,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold font-headline">Featured Products</h2>
             <p className="mt-3 text-lg text-muted-foreground">Our most popular custom printing solutions</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {isLoadingProducts ? (
                 Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
             ) : (
@@ -240,7 +240,7 @@ export default function Home() {
                                 src={mainImageUrl}
                                 alt={product.name}
                                 fill
-                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
                                 className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                                 data-ai-hint="product image"
                                 />
