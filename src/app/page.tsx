@@ -95,7 +95,7 @@ export default function Home() {
       <HowItWorks />
 
       {/* Browse by Category */}
-      <section className="py-16 md:py-24 bg-background">
+      <section className="py-16 bg-background">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-heading">
