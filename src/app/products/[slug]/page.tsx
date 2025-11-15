@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LoaderCircle, UploadCloud, Star } from 'lucide-react';
+import { LoaderCircle, UploadCloud, Star, ShoppingCart } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
@@ -18,6 +18,7 @@ import { Counter } from '@/components/ui/counter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCart } from '@/context/cart-context';
 
 async function getProductBySlug(firestore: any, slug: string) {
     if (!firestore || !slug) return null;
@@ -108,6 +109,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
   const slug = params.slug;
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -219,6 +221,25 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     setSelectedOptions(prev => ({ ...prev, [label]: value }));
   };
 
+  const handleAddToCart = () => {
+    if (!product || price === null) return;
+    
+    const cartItem = {
+      productId: product.id,
+      name: product.name,
+      quantity,
+      price,
+      image: product.imageUrls?.[selectedImage] || '',
+      options: Object.entries(selectedOptions).map(([label, value]) => ({ label, value })),
+    };
+    
+    addToCart(cartItem);
+    toast({
+      title: "Added to Cart",
+      description: `${quantity} x ${product.name} has been added to your cart.`,
+    });
+  };
+
   const renderDetailField = (detail: any) => {
     switch (detail.type) {
         case 'dropdown':
@@ -275,6 +296,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
   
   const category = categories?.find(c => c.id === product.categoryId);
   const minQty = getMinQuantity();
+  const allOptionsSelected = product.details ? product.details.every((d: any) => selectedOptions[d.label]) : true;
 
   const mainImageUrl = product.imageUrls?.[selectedImage] || `https://placehold.co/600x400/e2e8f0/e2e8f0`;
 
@@ -378,14 +400,18 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                         )}
 
                     </div>
-                    <Link href="#" className="text-sm font-medium text-primary hover:underline">
+                    <button onClick={() => document.getElementById('details-tab')?.click()} className="text-sm font-medium text-primary hover:underline">
                         Bulk discounts available
-                    </Link>
+                    </button>
                 </div>
 
-                <Button size="lg" className="w-full h-12 text-lg font-semibold" disabled={price === null} onClick={() => toast({ title: "Feature coming soon!", description: "Add to cart functionality is not yet implemented."})}>
+                <Button size="lg" className="w-full h-12 text-lg font-semibold" disabled={!allOptionsSelected || price === null} onClick={handleAddToCart}>
+                    <ShoppingCart className="mr-2 h-5 w-5" />
                     Add to Cart
                 </Button>
+                 <p className="text-xs text-center text-muted-foreground">
+                    We'll send a final proof for your approval before printing.
+                 </p>
             </div>
           </div>
         </div>
@@ -393,7 +419,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
             <Tabs defaultValue="description">
                 <TabsList>
                     <TabsTrigger value="description">Description</TabsTrigger>
-                    <TabsTrigger value="details">Product Details</TabsTrigger>
+                    <TabsTrigger id="details-tab" value="details">Product Details</TabsTrigger>
                     <TabsTrigger value="faq">FAQ</TabsTrigger>
                 </TabsList>
                 <TabsContent value="description" className="py-6 prose max-w-none">
@@ -411,7 +437,3 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     </div>
   );
 }
-
-    
-
-    

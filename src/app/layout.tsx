@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import MainLayout from '@/components/layout/main-layout';
+import { CartProvider } from '@/context/cart-context';
 
 export const metadata: Metadata = {
   title: 'BOMedia',
@@ -25,7 +26,9 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased')}>
         <FirebaseClientProvider>
-          <MainLayout>{children}</MainLayout>
+          <CartProvider>
+            <MainLayout>{children}</MainLayout>
+          </CartProvider>
           <Toaster />
         </FirebaseClientProvider>
       </body>

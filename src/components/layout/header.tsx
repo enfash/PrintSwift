@@ -2,12 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Phone, HelpCircle } from 'lucide-react';
+import { Menu, Phone, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/logo';
 import React from 'react';
 import { SearchBar } from '@/components/search-bar';
+import { useCart } from '@/context/cart-context';
 
 const navLinks = [
   { href: '/products', label: 'Products' },
@@ -15,6 +16,25 @@ const navLinks = [
   { href: '/faq', label: 'FAQ' },
   { href: '/contact', label: 'Contact' },
 ];
+
+function CartButton() {
+    const { items } = useCart();
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+    return (
+        <Button asChild variant="ghost" size="icon">
+            <Link href="/cart">
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs">
+                        {itemCount}
+                    </span>
+                )}
+                <span className="sr-only">Shopping Cart</span>
+            </Link>
+        </Button>
+    )
+}
 
 export function Header() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -25,7 +45,7 @@ export function Header() {
         <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <Logo />
-            <span className="hidden font-bold font-headline sm:inline-block">BOMedia</span>
+            <span className="hidden font-headline font-bold sm:inline-block">BOMedia</span>
           </Link>
         </div>
 
@@ -47,9 +67,8 @@ export function Header() {
             <div className="w-full max-w-sm lg:max-w-xs hidden md:block">
                 <SearchBar />
             </div>
-          <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="/quote">Request a Quote</Link>
-          </Button>
+            
+            <CartButton />
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -63,7 +82,7 @@ export function Header() {
                 <div className="flex items-center mb-8">
                   <Link href="/" className="mr-6 flex items-center space-x-2" onClick={() => setIsOpen(false)}>
                     <Logo />
-                    <span className="font-bold font-headline">BOMedia</span>
+                    <span className="font-headline font-bold">BOMedia</span>
                   </Link>
                 </div>
                 <div className="mb-6">
