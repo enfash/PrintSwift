@@ -50,7 +50,7 @@ function FaqSection() {
         <Accordion type="single" collapsible className="w-full">
             {faqs.map(faq => (
                 <AccordionItem value={faq.id} key={faq.id}>
-                    <AccordionTrigger>{faq.question}</AccordionTrigger>
+                    <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
                     <AccordionContent>{faq.answer}</AccordionContent>
                 </AccordionItem>
             ))}
