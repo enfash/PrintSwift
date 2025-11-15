@@ -98,7 +98,9 @@ export default function Home() {
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-heading">Discover our exclusive printing categories</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-heading">
+              Discover our exclusive <br/>printing categories
+            </h2>
             <p className="mt-3 text-lg text-muted-foreground">Find the perfect products to elevate your brand's presence</p>
           </div>
           <div className="overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible">
