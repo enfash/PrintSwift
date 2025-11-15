@@ -199,12 +199,12 @@ function SidebarMenuContent() {
 function MobileSidebar() {
   return (
     <Sheet>
-        {/*
-// @ts-ignore */}
-        <SheetTrigger>
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle Menu</span>
-        </SheetTrigger>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="md:hidden">
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+      </SheetTrigger>
       <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
         <SheetHeader>
           <SheetTitle className="sr-only">Admin Menu</SheetTitle>
@@ -232,91 +232,91 @@ function AdminHeader() {
   
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-        <div className="sm:hidden">
-            <MobileSidebar />
-        </div>
-        <SidebarTrigger className="hidden sm:flex" />
-        <div className="flex items-center gap-2 font-semibold">
-          <Logo />
-          <span className="text-lg">BOMedia</span>
-        </div>
-        <div className="relative ml-auto flex-1 md:grow-0">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-                type="search"
-                placeholder="Search..."
-                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-            />
-        </div>
-        <Button asChild variant="ghost" size="icon">
-          <Link href="/">
-            <Home className="h-5 w-5" />
-          </Link>
-        </Button>
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full relative">
-                    <Bell className="h-5 w-5" />
-                     <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
-                    </span>
-                    <span className="sr-only">Notifications</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                    <div className="grid gap-1">
-                        <p className="font-semibold">New Quote Request</p>
-                        <p className="text-xs text-muted-foreground">From Ada Ventures for Business Cards.</p>
-                    </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                    <div className="grid gap-1">
-                        <p className="font-semibold">Order Completed</p>
-                        <p className="text-xs text-muted-foreground">Order #ORD-001 has been marked as delivered.</p>
-                    </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                     <div className="grid gap-1">
-                        <p className="font-semibold">New Customer Signup</p>
-                        <p className="text-xs text-muted-foreground">jide.stores@example.com just signed up.</p>
-                    </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuFooter>
-                    <Button asChild variant="outline" className="w-full">
-                        <Link href="/admin/activity">View All Activity</Link>
-                    </Button>
-                </DropdownMenuFooter>
-            </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.photoURL || ''} alt="User avatar" />
-                <AvatarFallback>
-                    {user?.email?.charAt(0).toUpperCase() || 'A'}
-                </AvatarFallback>
-                </Avatar>
+      <div className="sm:hidden">
+        <MobileSidebar />
+      </div>
+      <SidebarTrigger className="hidden sm:flex" />
+      <div className="flex items-center gap-2 font-semibold">
+        <Logo />
+        <span className="text-lg">BOMedia</span>
+      </div>
+      <div className="relative ml-auto flex-1 md:grow-0">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search..."
+          className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+        />
+      </div>
+      <Button asChild variant="ghost" size="icon">
+        <Link href="/">
+          <Home className="h-5 w-5" />
+        </Link>
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="rounded-full relative">
+            <Bell className="h-5 w-5" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
+            </span>
+            <span className="sr-only">Notifications</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <div className="grid gap-1">
+              <p className="font-semibold">New Quote Request</p>
+              <p className="text-xs text-muted-foreground">From Ada Ventures for Business Cards.</p>
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <div className="grid gap-1">
+              <p className="font-semibold">Order Completed</p>
+              <p className="text-xs text-muted-foreground">Order #ORD-001 has been marked as delivered.</p>
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <div className="grid gap-1">
+              <p className="font-semibold">New Customer Signup</p>
+              <p className="text-xs text-muted-foreground">jide.stores@example.com just signed up.</p>
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuFooter>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/admin/activity">View All Activity</Link>
             </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link href="/admin/settings">Settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-   </header>
+          </DropdownMenuFooter>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user?.photoURL || ''} alt="User avatar" />
+              <AvatarFallback>
+                {user?.email?.charAt(0).toUpperCase() || 'A'}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/admin/settings">Settings</Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </header>
   );
 }
 
