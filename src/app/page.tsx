@@ -122,6 +122,24 @@ const ProductSkeleton = () => (
     </Card>
 );
 
+const TestimonialSkeleton = () => (
+    <Card className="flex flex-col text-center">
+        <CardContent className="pt-6 flex-grow flex flex-col items-center">
+            <Skeleton className="w-20 h-20 rounded-full mb-4" />
+            <Skeleton className="h-5 w-24 mb-2" />
+            <Skeleton className="h-4 w-32 mb-4" />
+            <div className="flex space-x-1 mb-4">
+                <Skeleton className="h-5 w-5" />
+                <Skeleton className="h-5 w-5" />
+                <Skeleton className="h-5 w-5" />
+                <Skeleton className="h-5 w-5" />
+                <Skeleton className="h-5 w-5" />
+            </div>
+            <Skeleton className="h-4 w-full mb-1" />
+            <Skeleton className="h-4 w-5/6" />
+        </CardContent>
+    </Card>
+)
 
 export default function Home() {
   const heroImage = findImage('hero-printing');
@@ -307,11 +325,11 @@ export default function Home() {
                 <h2 className="text-3xl md:text-4xl font-bold font-headline">What Our Clients Say</h2>
                 <p className="mt-3 text-lg text-muted-foreground">We're trusted by businesses across Nigeria</p>
             </div>
-            {isLoadingTestimonials ? (
-                <div className="flex justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {testimonials?.map((testimonial) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {isLoadingTestimonials ? (
+                    Array.from({ length: 3 }).map((_, i) => <TestimonialSkeleton key={i} />)
+                ) : (
+                    testimonials?.map((testimonial) => (
                         <Card key={testimonial.id} className="flex flex-col text-center">
                             <CardContent className="pt-6 flex-grow flex flex-col items-center">
                                 <Avatar className="w-20 h-20 mb-4">
@@ -324,9 +342,9 @@ export default function Home() {
                                 <p className="text-muted-foreground italic">"{testimonial.quote}"</p>
                             </CardContent>
                         </Card>
-                    ))}
-                </div>
-            )}
+                    ))
+                )}
+            </div>
         </div>
       </section>
     </>
