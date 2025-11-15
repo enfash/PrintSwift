@@ -65,11 +65,8 @@ function ProductsComponent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const initialCategory = searchParams.get('category');
-    const initialSearch = searchParams.get('search');
-
-    const [searchTerm, setSearchTerm] = useState(initialSearch || '');
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? initialCategory.split(',') : []);
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(searchParams.get('category')?.split(',') || []);
     const [sortOption, setSortOption] = useState('popularity-desc');
     const [searchResults, setSearchResults] = useState<any[] | null>(null);
     const [isSearching, setIsSearching] = useState(false);
@@ -90,8 +87,12 @@ function ProductsComponent() {
     }, [searchParams]);
     
     useEffect(() => {
+        // If there's no search term and no categories selected, we should show all products.
+        // The API endpoint isn't designed for fetching all products, so we reset searchResults to null
+        // to let the client-side logic take over.
         if (debouncedSearchTerm === '' && selectedCategories.length === 0) {
-            setSearchResults(null); // Show all products if no search/filter
+            setSearchResults(null);
+            setIsSearching(false);
             return;
         }
 
@@ -121,6 +122,18 @@ function ProductsComponent() {
     }, [debouncedSearchTerm, selectedCategories]);
 
 
+    const updateURLParams = (newParams: Record<string, string | undefined>) => {
+        const params = new URLSearchParams(searchParams.toString());
+        Object.entries(newParams).forEach(([key, value]) => {
+            if (value) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        });
+        router.replace(`/products?${params.toString()}`, { scroll: false });
+    };
+
     const handleCategoryChange = (categoryId: string, checked: boolean | string) => {
         const newSelectedCategories = checked
             ? [...selectedCategories, categoryId]
@@ -135,19 +148,6 @@ function ProductsComponent() {
         setSearchTerm(newSearchTerm);
         updateURLParams({ search: newSearchTerm || undefined });
     }
-
-    const updateURLParams = (newParams: Record<string, string | undefined>) => {
-        const params = new URLSearchParams(searchParams.toString());
-        for (const key in newParams) {
-            const value = newParams[key];
-            if (value) {
-                params.set(key, value);
-            } else {
-                params.delete(key);
-            }
-        }
-        router.replace(`/products?${params.toString()}`, { scroll: false });
-    };
 
     const sortedProducts = useMemo(() => {
         const productsToDisplay = searchResults === null ? allProducts : searchResults;
