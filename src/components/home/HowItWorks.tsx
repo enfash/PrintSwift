@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Package, UploadCloud, Truck } from 'lucide-react';
@@ -25,7 +26,7 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-8 bg-background">
+    <section className="py-4 bg-background">
       <div className="max-w-5xl mx-auto px-6">
         <div className="overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible">
             <div className="flex flex-row md:grid md:grid-cols-3 gap-4 md:gap-10 w-max md:w-auto">
