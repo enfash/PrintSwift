@@ -10,7 +10,7 @@ export function Footer() {
           <div className="col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center space-x-3 mb-4">
               <Logo />
-              <span className="text-xl font-headline font-bold">BOMedia</span>
+              <span className="text-xl font-heading font-bold">BOMedia</span>
             </Link>
             <p className="text-muted-foreground max-w-xs">
               Affordable custom branding, delivered fast. Your trusted partner for all printing needs.
@@ -18,7 +18,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 font-headline">Quick Links</h3>
+            <h3 className="font-semibold mb-4 font-heading">Quick Links</h3>
             <ul className="space-y-2">
               <li><Link href="/products" className="text-muted-foreground hover:text-foreground">All Products</Link></li>
               <li><Link href="/about" className="text-muted-foreground hover:text-foreground">About Us</Link></li>
@@ -28,7 +28,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 font-headline">Categories</h3>
+            <h3 className="font-semibold mb-4 font-heading">Categories</h3>
             <ul className="space-y-2">
               <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Marketing Prints</Link></li>
               <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Packaging</Link></li>
@@ -38,7 +38,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 font-headline">Connect With Us</h3>
+            <h3 className="font-semibold mb-4 font-heading">Connect With Us</h3>
             <address className="space-y-3 not-italic">
               <p className="text-muted-foreground">Lagos, Nigeria</p>
               <p>

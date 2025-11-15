@@ -19,7 +19,7 @@ export default function FAQPage() {
   return (
     <div className="container mx-auto max-w-4xl px-4 py-16 md:py-24">
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold font-headline">Frequently Asked Questions</h1>
+        <h1 className="text-4xl md:text-5xl font-bold font-heading">Frequently Asked Questions</h1>
         <p className="mt-4 text-lg text-muted-foreground">
           Find answers to common questions about our products, services, and processes.
         </p>

@@ -193,7 +193,7 @@ function ProductsComponent() {
     return (
         <div className="container mx-auto max-w-7xl px-4 py-16 md:py-24">
             <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-bold font-headline">Our Products</h1>
+                <h1 className="text-4xl md:text-5xl font-bold font-heading">Our Products</h1>
                 <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
                     Explore our extensive catalog of customizable products, designed to make your brand stand out.
                 </p>

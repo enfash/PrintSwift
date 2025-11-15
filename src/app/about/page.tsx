@@ -33,7 +33,7 @@ export default function AboutPage() {
             />
         )}
         <div className="container mx-auto max-w-7xl px-4 text-center z-10">
-          <h1 className="text-4xl md:text-5xl font-bold font-headline">About BOMedia</h1>
+          <h1 className="text-4xl md:text-5xl font-bold font-heading">About BOMedia</h1>
           <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto">
             Your trusted partner for high-quality, fast, and affordable custom printing solutions.
           </p>
@@ -45,7 +45,7 @@ export default function AboutPage() {
         <div className="container mx-auto max-w-7xl px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold font-headline mb-4 text-primary flex items-center">
+              <h2 className="text-3xl font-bold font-heading mb-4 text-primary flex items-center">
                 <Building className="mr-3 h-8 w-8" />
                 Our Story
               </h2>
@@ -91,7 +91,7 @@ export default function AboutPage() {
       <section className="py-16 md:py-24 bg-card">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline flex items-center justify-center">
+            <h2 className="text-3xl md:text-4xl font-bold font-heading flex items-center justify-center">
               <Users className="mr-3 h-8 w-8" />
               Meet the Team
             </h2>

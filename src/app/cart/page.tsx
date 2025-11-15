@@ -120,7 +120,7 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-16">
-      <h1 className="text-3xl font-bold font-headline mb-8">Shopping Cart & Checkout</h1>
+      <h1 className="text-3xl font-bold font-heading mb-8">Shopping Cart & Checkout</h1>
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-5">
         
         {/* Left Side: Order Summary & Checkout Form */}

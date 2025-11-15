@@ -343,7 +343,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
           {/* Product Details & Customization */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold font-headline">{product.name}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold font-heading">{product.name}</h1>
                <div className="mt-3 flex items-center gap-2">
                     <div className="flex items-center">
                         {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}

@@ -26,7 +26,6 @@ import {
     BadgeDollarSign,
     Headphones,
 } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
@@ -88,10 +87,6 @@ const whyChooseUsItems = [
   }
 ];
 
-function findImage(id: string) {
-  return PlaceHolderImages.find((img) => img.id === id);
-}
-
 function StarRating({ rating, className }: { rating: number, className?: string }) {
     return (
         <div className={cn("flex items-center", className)}>
@@ -143,7 +138,6 @@ const TestimonialSkeleton = () => (
 )
 
 export default function Home() {
-  const heroImage = findImage('hero-printing');
   const firestore = useFirestore();
 
   const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
@@ -159,19 +153,17 @@ export default function Home() {
     <>
       {/* Hero Section */}
       <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center bg-primary">
-        {heroImage && (
-          <Image
-            src={heroImage.imageUrl}
-            alt={heroImage.description}
+        <Image
+            src="https://images.unsplash.com/photo-1693031630369-bd429a57f115?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwcmludGluZyUyMHByZXNzfGVufDB8fHx8MTc2Mjg4MDAwM3ww&ixlib=rb-4.1.0&q=80&w=1080"
+            alt="Printing Press"
             fill
             sizes="100vw"
             className="object-cover opacity-20"
             priority
-            data-ai-hint={heroImage.imageHint}
+            data-ai-hint="printing press"
           />
-        )}
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-primary-foreground">
-          <h1 className="text-4xl md:text-6xl font-extrabold font-headline tracking-tight">
+          <h1 className="text-4xl md:text-6xl font-extrabold font-heading tracking-tight">
             Affordable Custom Branding, Delivered Fast
           </h1>
           <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto text-primary-foreground/80">
@@ -193,7 +185,7 @@ export default function Home() {
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline">Browse by Category</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-heading">Browse by Category</h2>
             <p className="mt-3 text-lg text-muted-foreground">Explore our wide range of custom printing solutions</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
@@ -219,10 +211,10 @@ export default function Home() {
       <section className="py-16 md:py-24 bg-card">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline">Featured Products</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-heading">Featured Products</h2>
             <p className="mt-3 text-lg text-muted-foreground">Our most popular custom printing solutions</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {isLoadingProducts ? (
                 Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
             ) : (
@@ -269,7 +261,7 @@ export default function Home() {
       {/* How It Works */}
       <section className="py-12 sm:py-16 bg-background">
         <div className="container mx-auto max-w-6xl px-4 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-headline">How It Works</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-heading">How It Works</h2>
             <div className="grid sm:grid-cols-3 gap-8">
             {howItWorksSteps.map((step, idx) => (
                 <div
@@ -288,7 +280,7 @@ export default function Home() {
       {/* Why Choose Us Section */}
       <section className="py-12 sm:py-16 bg-card">
         <div className="container mx-auto max-w-6xl px-4 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-headline">Why Choose Us?</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-heading">Why Choose Us?</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {whyChooseUsItems.map((item, idx) => (
                 <div
@@ -308,7 +300,7 @@ export default function Home() {
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4">
             <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold font-headline">What Our Clients Say</h2>
+                <h2 className="text-3xl md:text-4xl font-bold font-heading">What Our Clients Say</h2>
                 <p className="mt-3 text-lg text-muted-foreground">We're trusted by businesses across Nigeria</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

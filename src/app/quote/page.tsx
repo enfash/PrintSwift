@@ -218,7 +218,7 @@ function QuoteForm() {
   return (
     <div className="container mx-auto max-w-4xl px-4 py-16 md:py-24">
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold font-headline">Request a Quote</h1>
+        <h1 className="text-4xl md:text-5xl font-bold font-heading">Request a Quote</h1>
         <p className="mt-4 text-lg text-muted-foreground">
           Get a personalized quote for your custom printing project. Fill out the details below, and our team will get back to you promptly.
         </p>

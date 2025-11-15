@@ -20,7 +20,7 @@ export function Logo({ className }: { className?: string }) {
         fontSize="18"
         fontWeight="bold"
         fill="hsl(var(--primary-foreground))"
-        fontFamily="Space Grotesk, sans-serif"
+        fontFamily='"Plus Jakarta Sans", sans-serif'
       >
         BM
       </text>
