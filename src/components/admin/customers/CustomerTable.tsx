@@ -92,17 +92,15 @@ const CustomerQuickView = ({ customer }: { customer: any }) => {
     return (
         <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
-                <DialogTitle className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
                      <Avatar>
                         <AvatarFallback>{customer.name?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
-                        {customer.name}
+                        <DialogTitle>{customer.name}</DialogTitle>
+                        <DialogDescription>{customer.email}</DialogDescription>
                     </div>
-                </DialogTitle>
-                <DialogDescription>
-                    {customer.email}
-                </DialogDescription>
+                </div>
             </DialogHeader>
             <Tabs defaultValue="details">
                 <TabsList>
