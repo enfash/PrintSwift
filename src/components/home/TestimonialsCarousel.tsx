@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -68,7 +69,7 @@ export default function TestimonialsCarousel() {
   
   if (isLoading) {
     return (
-        <section className="py-16 md:py-24 bg-background">
+        <section className="py-16 md:py-24 bg-muted">
             <div className="container mx-auto max-w-7xl px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold font-heading">What Our Clients Say</h2>
@@ -90,7 +91,7 @@ export default function TestimonialsCarousel() {
   
   return (
     <section 
-        className="py-12 sm:py-16 bg-background"
+        className="py-12 sm:py-16 bg-muted"
         onMouseEnter={() => setIsPlaying(false)}
         onMouseLeave={() => setIsPlaying(true)}
     >
