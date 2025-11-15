@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,26 +10,16 @@ import {
     Box,
     Shirt,
     MonitorPlay,
-    MousePointerSquareDashed,
-    UploadCloud,
-    Truck,
     ArrowRight,
     LoaderCircle,
-    Star,
-    Award,
-    Clock,
-    DollarSign,
-    Users,
-    Package,
-    CheckCircle,
-    BadgeDollarSign,
-    Headphones,
 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
-import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import HowItWorks from '@/components/home/HowItWorks';
+import WhyChooseUs from '@/components/home/WhyChooseUs';
+import TestimonialsCarousel from '@/components/home/TestimonialsCarousel';
+
 
 const categoryIcons: { [key: string]: React.ReactElement } = {
   'Marketing & Business Prints': <Briefcase className="w-8 h-8" />,
@@ -39,66 +28,8 @@ const categoryIcons: { [key: string]: React.ReactElement } = {
   'Packaging Prints': <Box className="w-8 h-8" />,
   'Apparel & Textile Printing': <Shirt className="w-8 h-8" />,
   'Signage & Display Systems': <MonitorPlay className="w-8 h-8" />,
-  'Unbeatable Quality': <Award className="w-8 h-8" />,
-  'Fast Turnaround': <Clock className="w-8 h-8" />,
-  'Affordable Pricing': <DollarSign className="w-8 h-8" />,
-  'Expert Support': <Users className="w-8 h-8" />,
   'Default': <Briefcase className="w-8 h-8" />
 };
-
-const howItWorksSteps = [
-  {
-    icon: <Package className="w-8 h-8 text-primary" />,
-    title: "Choose Your Product",
-    desc: "Browse our collection and pick the perfect item for your needs."
-  },
-  {
-    icon: <UploadCloud className="w-8 h-8 text-primary" />,
-    title: "Upload Your Design",
-    desc: "Upload your artwork or let us help you create a stunning design."
-  },
-  {
-    icon: <CheckCircle className="w-8 h-8 text-primary" />,
-    title: "Receive Your Order",
-    desc: "We print, process, and deliver your branded products on time."
-  }
-];
-
-const whyChooseUsItems = [
-  {
-    icon: <Star className="w-8 h-8 text-primary" />,
-    title: "High-Quality Printing",
-    desc: "Sharp, vibrant, professional prints produced with modern technology."
-  },
-  {
-    icon: <Clock className="w-8 h-8 text-primary" />,
-    title: "Fast Turnaround",
-    desc: "Most orders are completed within 24–48 hours, depending on product."
-  },
-  {
-    icon: <BadgeDollarSign className="w-8 h-8 text-primary" />,
-    title: "Affordable Pricing",
-    desc: "Highly competitive pricing designed for SMEs and bulk buyers."
-  },
-  {
-    icon: <Headphones className="w-8 h-8 text-primary" />,
-    title: "Expert Support",
-    desc: "Real human assistance for artwork, orders, and product questions."
-  }
-];
-
-function StarRating({ rating, className }: { rating: number, className?: string }) {
-    return (
-        <div className={cn("flex items-center", className)}>
-            {[...Array(5)].map((_, i) => (
-                <Star
-                    key={i}
-                    className={`h-5 w-5 ${i < rating ? 'text-accent fill-accent' : 'text-muted-foreground/30'}`}
-                />
-            ))}
-        </div>
-    );
-}
 
 const CategorySkeleton = () => (
     <Card className="text-center p-6 h-full">
@@ -118,24 +49,6 @@ const ProductSkeleton = () => (
     </Card>
 );
 
-const TestimonialSkeleton = () => (
-    <Card className="flex flex-col text-center">
-        <CardContent className="pt-6 flex-grow flex flex-col items-center">
-            <Skeleton className="w-20 h-20 rounded-full mb-4" />
-            <Skeleton className="h-5 w-24 mb-2" />
-            <Skeleton className="h-4 w-32 mb-4" />
-            <div className="flex space-x-1 mb-4">
-                <Skeleton className="h-5 w-5" />
-                <Skeleton className="h-5 w-5" />
-                <Skeleton className="h-5 w-5" />
-                <Skeleton className="h-5 w-5" />
-                <Skeleton className="h-5 w-5" />
-            </div>
-            <Skeleton className="h-4 w-full mb-1" />
-            <Skeleton className="h-4 w-5/6" />
-        </CardContent>
-    </Card>
-)
 
 export default function Home() {
   const firestore = useFirestore();
@@ -145,9 +58,6 @@ export default function Home() {
 
   const featuredProductsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), where('featured', '==', true), where('status', '==', 'Published'), limit(12)) : null, [firestore]);
   const { data: featuredProducts, isLoading: isLoadingProducts } = useCollection<any>(featuredProductsRef);
-
-  const testimonialsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'testimonials'), where('visible', '==', true), limit(3)) : null, [firestore]);
-  const { data: testimonials, isLoading: isLoadingTestimonials } = useCollection<any>(testimonialsRef);
 
   return (
     <>
@@ -258,73 +168,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-12 sm:py-16 bg-background">
-        <div className="container mx-auto max-w-6xl px-4 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-heading">How It Works</h2>
-            <div className="grid sm:grid-cols-3 gap-8">
-            {howItWorksSteps.map((step, idx) => (
-                <div
-                key={idx}
-                className="flex flex-col items-center text-center p-6 rounded-xl border bg-card shadow-sm hover:shadow-md transition"
-                >
-                <div className="mb-4">{step.icon}</div>
-                <h3 className="font-semibold text-lg">{step.title}</h3>
-                <p className="text-muted-foreground text-sm mt-2">{step.desc}</p>
-                </div>
-            ))}
-            </div>
-        </div>
-      </section>
-
-      {/* Why Choose Us Section */}
-      <section className="py-12 sm:py-16 bg-card">
-        <div className="container mx-auto max-w-6xl px-4 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-8 font-heading">Why Choose Us?</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {whyChooseUsItems.map((item, idx) => (
-                <div
-                key={idx}
-                className="flex flex-col items-center text-center p-6 rounded-xl border bg-background shadow-sm hover:shadow-md transition"
-                >
-                <div className="mb-4">{item.icon}</div>
-                <h3 className="font-semibold text-lg">{item.title}</h3>
-                <p className="text-muted-foreground text-sm mt-2">{item.desc}</p>
-                </div>
-            ))}
-            </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto max-w-7xl px-4">
-            <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold font-heading">What Our Clients Say</h2>
-                <p className="mt-3 text-lg text-muted-foreground">We're trusted by businesses across Nigeria</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {isLoadingTestimonials ? (
-                    Array.from({ length: 3 }).map((_, i) => <TestimonialSkeleton key={i} />)
-                ) : (
-                    testimonials?.map((testimonial) => (
-                        <Card key={testimonial.id} className="flex flex-col text-center">
-                            <CardContent className="pt-6 flex-grow flex flex-col items-center">
-                                <Avatar className="w-20 h-20 mb-4">
-                                    <AvatarImage src={testimonial.imageUrl || `https://picsum.photos/seed/${testimonial.id}/100`} alt={testimonial.name} />
-                                    <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <h4 className="font-semibold text-lg">{testimonial.name}</h4>
-                                <p className="text-sm text-muted-foreground mb-4">{testimonial.company}</p>
-                                <StarRating rating={testimonial.rating} className="mb-4" />
-                                <p className="text-muted-foreground italic">"{testimonial.quote}"</p>
-                            </CardContent>
-                        </Card>
-                    ))
-                )}
-            </div>
-        </div>
-      </section>
+      <HowItWorks />
+      <WhyChooseUs />
+      <TestimonialsCarousel />
     </>
   );
 }
