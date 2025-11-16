@@ -1,9 +1,9 @@
 
 import Image from 'next/image';
 import { Building, Target, Users, CheckCircle } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const teamMembers = [
   { name: 'Alice Johnson', role: 'Founder & CEO', imageId: 'team-member-1' },
@@ -13,7 +13,18 @@ const teamMembers = [
 ];
 
 function findImage(id: string) {
-    return PlaceHolderImages.find((img) => img.id === id);
+    // A simple function to generate a consistent placeholder image URL.
+    const image = PlaceHolderImages.find((img) => img.id === id);
+    if (image) return image;
+
+    // Fallback for any missing images.
+    const seed = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return {
+        id,
+        imageUrl: `https://picsum.photos/seed/${seed}/100/100`,
+        imageHint: 'team member',
+        description: 'Placeholder for team member'
+    };
 }
 
 export default function AboutPage() {
