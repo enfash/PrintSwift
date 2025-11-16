@@ -1,8 +1,21 @@
+
+'use client';
+
 import Link from 'next/link';
 import { Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import { Logo } from '@/components/logo';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function Footer() {
+  const firestore = useFirestore();
+  const settingsDocRef = useMemoFirebase(
+      () => (firestore ? doc(firestore, 'settings', 'global') : null),
+      [firestore]
+  );
+  const { data: settings, isLoading } = useDoc<any>(settingsDocRef);
+  
   return (
     <footer className="bg-card border-t">
       <div className="container mx-auto max-w-7xl px-4 py-12">
@@ -38,25 +51,38 @@ export function Footer() {
 
           <div>
             <h3 className="font-semibold mb-4 font-heading">Connect With Us</h3>
-            <address className="space-y-3 not-italic">
-              <p className="text-muted-foreground">Lagos, Nigeria</p>
-              <p>
-                <a href="tel:+2348022247567" className="text-muted-foreground hover:text-foreground">+234 802 224 7567</a>
-              </p>
-              <p>
-                <a href="mailto:info@bomedia.com" className="text-muted-foreground hover:text-foreground">info@bomedia.com</a>
-              </p>
-            </address>
+             {isLoading ? (
+                <div className="space-y-3">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-4 w-2/3" />
+                </div>
+             ) : (
+                <address className="space-y-3 not-italic">
+                    {settings?.address && <p className="text-muted-foreground">{settings.address}</p>}
+                    {settings?.phone && <p><a href={`tel:${settings.phone}`} className="text-muted-foreground hover:text-foreground">{settings.phone}</a></p>}
+                    {settings?.email && <p><a href={`mailto:${settings.email}`} className="text-muted-foreground hover:text-foreground">{settings.email}</a></p>}
+                </address>
+             )}
             <div className="flex space-x-4 mt-4">
-              <a href="#" aria-label="Facebook" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5" /></a>
-              <a href="#" aria-label="Instagram" className="text-muted-foreground hover:text-foreground"><Instagram className="h-5 w-5" /></a>
-              <a href="#" aria-label="Twitter" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5" /></a>
-              <a href="#" aria-label="LinkedIn" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5" /></a>
+              {isLoading ? (
+                <div className="flex space-x-4">
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                </div>
+              ) : (
+                <>
+                    {settings?.facebook && <a href={settings.facebook} aria-label="Facebook" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5" /></a>}
+                    {settings?.instagram && <a href={settings.instagram} aria-label="Instagram" className="text-muted-foreground hover:text-foreground"><Instagram className="h-5 w-5" /></a>}
+                    {settings?.whatsapp && <a href={settings.whatsapp} aria-label="WhatsApp" className="text-muted-foreground hover:text-foreground"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>}
+                </>
+              )}
             </div>
           </div>
         </div>
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} BOMedia. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {isLoading ? <Skeleton className="h-4 w-24 inline-block" /> : (settings?.businessName || 'BOMedia')}. All rights reserved.</p>
         </div>
       </div>
     </footer>
