@@ -94,8 +94,8 @@ const insightsItems = [
 
 
 const settingsItems = [
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
   { href: '/admin/users', label: 'Users & Roles', icon: Users },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 
@@ -209,15 +209,12 @@ function MobileSidebar() {
             </Button>
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
-            <SheetHeader className="p-4 flex flex-row items-center justify-between">
+            <SheetHeader className="p-4 border-b">
                 <SheetTitle className="sr-only">Admin Menu</SheetTitle>
                 <SheetDescription className="sr-only">Navigation links for the admin dashboard.</SheetDescription>
-                 <SheetClose asChild>
-                    <Button variant="ghost" size="icon">
-                        <X className="h-5 w-5"/>
-                        <span className="sr-only">Close</span>
-                    </Button>
-                </SheetClose>
+                 <Link href="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
+                    <Logo className="h-8 w-auto" />
+                  </Link>
             </SheetHeader>
             <SidebarMenuContent onLinkClick={() => setIsOpen(false)} />
         </SheetContent>
@@ -238,7 +235,7 @@ function AdminHeader() {
   };
   
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:static sm:border-0 sm:bg-transparent sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       <div className="sm:hidden">
         <MobileSidebar />
       </div>
@@ -363,7 +360,7 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
           <Sidebar>
             <SidebarMenuContent />
           </Sidebar>
-          <div className="flex flex-col flex-grow transition-all duration-300 ease-in-out">
+          <div className="flex flex-col flex-grow sm:pl-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:pl-[var(--sidebar-width)] transition-all duration-300 ease-in-out">
             <AdminHeader />
             <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-4 md:gap-8">
               {children}
