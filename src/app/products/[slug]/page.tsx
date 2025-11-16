@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { LoaderCircle, UploadCloud, Star, ShoppingCart } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, doc } from 'firebase/firestore';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -104,6 +104,36 @@ const ProductDetailSkeleton = () => (
     </div>
 );
 
+function ProductJsonLd({ product, price }: { product: any, price: number | null }) {
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.name,
+        "image": product.imageUrls?.[product.mainImageIndex || 0] || '',
+        "description": product.description,
+        "sku": product.id,
+        "brand": {
+            "@type": "Brand",
+            "name": "BOMedia"
+        },
+        "offers": {
+            "@type": "Offer",
+            "url": `https://bomedia.com.ng/products/${product.slug}`,
+            "priceCurrency": "NGN",
+            "price": price ? price.toFixed(2) : "0",
+            "availability": "https://schema.org/InStock"
+        },
+         "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "reviewCount": "1288"
+        }
+    };
+
+    return (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+    );
+}
 
 export default function ProductDetailPage({ params: paramsProp }: { params: { slug: string } }) {
   const params = use(paramsProp);
@@ -220,6 +250,12 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     setPrice(calculatePrice());
   }, [product, quantity, selectedOptions, calculatePrice]);
 
+  useEffect(() => {
+    if (product?.name) {
+      document.title = `${product.name} | BOMedia`;
+    }
+  }, [product?.name]);
+
   const handleOptionChange = (label: string, value: string) => {
     setSelectedOptions(prev => ({ ...prev, [label]: value }));
   };
@@ -291,147 +327,150 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
 
 
   return (
-    <div className="bg-background">
-      <div className="container mx-auto max-w-7xl px-4 py-8 md:py-16">
-        {category && (
-            <div className="text-sm text-muted-foreground mb-4">
-                <Link href="/" className="hover:text-primary">Home</Link>
-                <span className="mx-2">/</span>
-                <Link href={`/products?category=${category.id}`} className="hover:text-primary">{category.name}</Link>
-                <span className="mx-2">/</span>
-                <span className="text-foreground">{product.name}</span>
+    <>
+      <ProductJsonLd product={product} price={price} />
+      <div className="bg-background">
+        <div className="container mx-auto max-w-7xl px-4 py-8 md:py-16">
+          {category && (
+              <div className="text-sm text-muted-foreground mb-4">
+                  <Link href="/" className="hover:text-primary">Home</Link>
+                  <span className="mx-2">/</span>
+                  <Link href={`/products?category=${category.id}`} className="hover:text-primary">{category.name}</Link>
+                  <span className="mx-2">/</span>
+                  <span className="text-foreground">{product.name}</span>
+              </div>
+          )}
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+            {/* Product Image Gallery */}
+            <div className="space-y-4 md:sticky top-24 self-start">
+              <div className="aspect-square relative rounded-lg border overflow-hidden">
+                  <Image
+                      src={mainImageUrl}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      priority
+                  />
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                  {product.imageUrls?.map((url: string, index: number) => {
+                      const thumbnailUrl = url || `https://placehold.co/100x100/e2e8f0/e2e8f0`;
+                      return (
+                          <button
+                              key={index}
+                              onClick={() => setSelectedImage(index)}
+                              className={cn(
+                                  "aspect-square relative rounded-md border overflow-hidden transition",
+                                  selectedImage === index ? "ring-2 ring-primary ring-offset-2" : "hover:opacity-80"
+                              )}
+                          >
+                              <Image
+                                  src={thumbnailUrl}
+                                  alt={`${product.name} thumbnail ${index + 1}`}
+                                  fill
+                                  className="object-cover"
+                                  sizes="20vw"
+                              />
+                          </button>
+                      )
+                  })}
+              </div>
             </div>
-        )}
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-          {/* Product Image Gallery */}
-          <div className="space-y-4 md:sticky top-24 self-start">
-            <div className="aspect-square relative rounded-lg border overflow-hidden">
-                <Image
-                    src={mainImageUrl}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority
-                />
-            </div>
-             <div className="grid grid-cols-5 gap-2">
-                {product.imageUrls?.map((url: string, index: number) => {
-                    const thumbnailUrl = url || `https://placehold.co/100x100/e2e8f0/e2e8f0`;
-                    return (
-                        <button
-                            key={index}
-                            onClick={() => setSelectedImage(index)}
-                            className={cn(
-                                "aspect-square relative rounded-md border overflow-hidden transition",
-                                selectedImage === index ? "ring-2 ring-primary ring-offset-2" : "hover:opacity-80"
-                            )}
-                        >
-                            <Image
-                                src={thumbnailUrl}
-                                alt={`${product.name} thumbnail ${index + 1}`}
-                                fill
-                                className="object-cover"
-                                sizes="20vw"
-                            />
-                        </button>
-                    )
-                })}
-            </div>
-          </div>
 
-          {/* Product Details & Customization */}
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold font-heading">{product.name}</h1>
-               <div className="mt-3 flex items-center gap-2">
-                    <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}
-                    </div>
-                    <span className="text-sm text-muted-foreground">4.8 (1,288 reviews)</span>
-                </div>
-            </div>
-            
+            {/* Product Details & Customization */}
             <div className="space-y-6">
-                <h2 className="text-2xl font-semibold">Customize Your Order</h2>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {product.details?.map(renderDetailField)}
-                </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold font-heading">{product.name}</h1>
+                <div className="mt-3 flex items-center gap-2">
+                      <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}
+                      </div>
+                      <span className="text-sm text-muted-foreground">4.8 (1,288 reviews)</span>
+                  </div>
+              </div>
+              
+              <div className="space-y-6">
+                  <h2 className="text-2xl font-semibold">Customize Your Order</h2>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {product.details?.map(renderDetailField)}
+                  </div>
 
-                 <div className="grid gap-2">
-                    <Label>Quantity</Label>
-                    <Counter 
-                        value={quantity} 
-                        setValue={setQuantity} 
-                        min={minQty}
-                    />
-                </div>
-                
-                <Button variant="outline" className="w-full h-12 text-base" onClick={handleGetQuote}>
-                    <UploadCloud className="mr-2 h-5 w-5" />
-                    Upload Your Artwork
-                </Button>
-            </div>
-            
-            <Separator />
+                  <div className="grid gap-2">
+                      <Label>Quantity</Label>
+                      <Counter 
+                          value={quantity} 
+                          setValue={setQuantity} 
+                          min={minQty}
+                      />
+                  </div>
+                  
+                  <Button variant="outline" className="w-full h-12 text-base" onClick={handleGetQuote}>
+                      <UploadCloud className="mr-2 h-5 w-5" />
+                      Upload Your Artwork
+                  </Button>
+              </div>
+              
+              <Separator />
 
-            <div className="bg-muted/50 p-6 rounded-lg space-y-4">
-                <div className="flex justify-between items-center">
-                    <div>
-                        {price !== null ? (
-                            <>
-                                <p className="text-3xl font-bold">₦{price.toLocaleString()}</p>
-                                <p className="text-sm text-muted-foreground">for {quantity} units</p>
-                            </>
-                        ) : (
-                             <p className="text-lg font-semibold text-muted-foreground">Select options to see price</p>
-                        )}
+              <div className="bg-muted/50 p-6 rounded-lg space-y-4">
+                  <div className="flex justify-between items-center">
+                      <div>
+                          {price !== null ? (
+                              <>
+                                  <p className="text-3xl font-bold">₦{price.toLocaleString()}</p>
+                                  <p className="text-sm text-muted-foreground">for {quantity} units</p>
+                              </>
+                          ) : (
+                              <p className="text-lg font-semibold text-muted-foreground">Select options to see price</p>
+                          )}
 
-                    </div>
-                    <button onClick={() => {
-                        const element = document.getElementById('details-tab');
-                        element?.click();
-                        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }} className="text-sm font-medium text-primary hover:underline">
-                        Bulk discounts available
-                    </button>
-                </div>
+                      </div>
+                      <button onClick={() => {
+                          const element = document.getElementById('details-tab');
+                          element?.click();
+                          element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }} className="text-sm font-medium text-primary hover:underline">
+                          Bulk discounts available
+                      </button>
+                  </div>
 
-                <Button size="lg" className="w-full h-12 text-lg font-semibold" disabled={!allOptionsSelected} onClick={handleGetQuote}>
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Get a Quote
-                </Button>
-                 <p className="text-xs text-center text-muted-foreground">
-                    We'll send a final proof for your approval before printing.
-                 </p>
+                  <Button size="lg" className="w-full h-12 text-lg font-semibold" disabled={!allOptionsSelected} onClick={handleGetQuote}>
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Get a Quote
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                      We'll send a final proof for your approval before printing.
+                  </p>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="mt-16 grid grid-cols-1 lg:grid-cols-10 gap-8">
+          <div className="mt-16 grid grid-cols-1 lg:grid-cols-10 gap-8">
             <div className="lg:col-span-7">
-                <Tabs defaultValue="description">
-                    <TabsList>
-                        <TabsTrigger value="description">Description</TabsTrigger>
-                        <TabsTrigger id="details-tab" value="details">Product Details</TabsTrigger>
-                        <TabsTrigger value="faq">FAQ</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="description" className="py-6 prose max-w-none">
-                        <p>{product.description}</p>
-                    </TabsContent>
-                    <TabsContent value="details" className="py-6 prose max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: product.longDescription || '<p>No details provided.</p>' }} />
-                    </TabsContent>
-                    <TabsContent value="faq" className="py-6">
-                        <FaqSection />
-                    </TabsContent>
-                </Tabs>
+              <Tabs defaultValue="description">
+                  <TabsList>
+                      <TabsTrigger value="description">Description</TabsTrigger>
+                      <TabsTrigger id="details-tab" value="details">Product Details</TabsTrigger>
+                      <TabsTrigger value="faq">FAQ</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="description" className="py-6 prose max-w-none">
+                      <p>{product.description}</p>
+                  </TabsContent>
+                  <TabsContent value="details" className="py-6 prose max-w-none">
+                      <div dangerouslySetInnerHTML={{ __html: product.longDescription || '<p>No details provided.</p>' }} />
+                  </TabsContent>
+                  <TabsContent value="faq" className="py-6">
+                      <FaqSection />
+                  </TabsContent>
+              </Tabs>
             </div>
             <div className="lg:col-span-3">
                 {/* This is the 35% placeholder column. Content will be added later. */}
             </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

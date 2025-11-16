@@ -5,6 +5,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Minus, Plus } from 'lucide-react';
 
 type CounterProps = {
   value: number;
@@ -22,6 +23,7 @@ function Counter({ value, setValue, min, max, className }: CounterProps) {
       toast({
         title: 'Minimum Reached',
         description: `The minimum value is ${min}.`,
+        variant: 'destructive',
       });
       return;
     }
@@ -33,6 +35,7 @@ function Counter({ value, setValue, min, max, className }: CounterProps) {
       toast({
         title: 'Maximum Reached',
         description: `The maximum value is ${max}.`,
+        variant: 'destructive',
       });
       return;
     }
@@ -42,32 +45,32 @@ function Counter({ value, setValue, min, max, className }: CounterProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center bg-white rounded-md shadow-sm p-1 border border-gray-100',
+        'flex items-center rounded-md border',
         className
       )}
     >
       <Button
         type="button"
-        aria-label="decrement"
-        onClick={handleDecrement}
-        className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition"
         variant="ghost"
+        size="icon"
+        className="h-10 w-10 rounded-r-none"
+        onClick={handleDecrement}
       >
-        <span className="text-xl font-light">−</span>
+        <Minus className="h-4 w-4" />
       </Button>
 
-      <div className="mx-1 w-10 text-center font-medium text-gray-800">
+      <div className="w-12 border-l border-r text-center text-sm font-medium">
         {value}
       </div>
 
       <Button
         type="button"
-        aria-label="increment"
-        onClick={handleIncrement}
-        className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition"
         variant="ghost"
+        size="icon"
+        className="h-10 w-10 rounded-l-none"
+        onClick={handleIncrement}
       >
-        <span className="text-xl font-light">+</span>
+        <Plus className="h-4 w-4" />
       </Button>
     </div>
   );
