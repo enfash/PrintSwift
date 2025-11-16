@@ -82,7 +82,11 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} {isLoading ? <Skeleton className="h-4 w-24 inline-block" /> : (settings?.businessName || 'BOMedia')}. All rights reserved.</p>
+          <div>
+            <span>&copy; {new Date().getFullYear()} </span>
+            {isLoading ? <Skeleton className="h-4 w-24 inline-block" /> : <span>{settings?.businessName || 'BOMedia'}.</span>}
+            <span> All rights reserved.</span>
+          </div>
         </div>
       </div>
     </footer>
