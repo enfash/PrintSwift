@@ -28,6 +28,7 @@ import {
   FileQuestion,
   Book,
   HelpCircle,
+  X,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -56,7 +57,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import LoginPage from '../login/page';
 import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
@@ -98,7 +99,7 @@ const settingsItems = [
 ];
 
 
-function SidebarMenuContent() {
+function SidebarMenuContent({ onLinkClick }: { onLinkClick?: () => void }) {
   const pathname = usePathname();
   const auth = useAuth();
   const router = useRouter();
@@ -109,13 +110,14 @@ function SidebarMenuContent() {
     if (auth) {
       await signOut(auth);
       router.push('/admin/login');
+      onLinkClick?.();
     }
   };
   
   const renderMenuItems = (items: typeof catalogItems) => {
     return items.map((item) => (
       <SidebarMenuItem key={item.label}>
-        <Link href={item.href}>
+        <Link href={item.href} onClick={onLinkClick}>
             <SidebarMenuButton
             isActive={pathname.startsWith(item.href)}
             className="w-full justify-start"
@@ -132,7 +134,7 @@ function SidebarMenuContent() {
   return (
     <>
       <SidebarHeader className="border-b p-2 h-16 flex items-center justify-center">
-         <Link href="/admin/dashboard" className="w-full">
+         <Link href="/admin/dashboard" className="w-full" onClick={onLinkClick}>
             <SidebarMenuButton
                 isActive={pathname === '/admin/dashboard'}
                 className="w-full justify-start"
@@ -172,7 +174,7 @@ function SidebarMenuContent() {
         <SidebarMenu>
           {settingsItems.map((item) => (
             <SidebarMenuItem key={item.label}>
-              <Link href={item.href}>
+              <Link href={item.href} onClick={onLinkClick}>
                 <SidebarMenuButton
                   isActive={pathname.startsWith(item.href)}
                    className="w-full justify-start"
@@ -197,25 +199,27 @@ function SidebarMenuContent() {
 }
 
 function MobileSidebar() {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="sr-only">Admin Menu</SheetTitle>
-          <SheetDescription className="sr-only">
-            Navigation links for the admin dashboard.
-          </SheetDescription>
-        </SheetHeader>
-        <SidebarMenuContent />
-      </SheetContent>
-    </Sheet>
-  );
+    const [isOpen, setIsOpen] = React.useState(false);
+    return (
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle Menu</span>
+            </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
+            <SheetHeader className="p-4 flex flex-row items-center justify-between">
+                <SheetTitle>Admin Menu</SheetTitle>
+                <SheetClose>
+                    <X className="h-5 w-5"/>
+                    <span className="sr-only">Close</span>
+                </SheetClose>
+            </SheetHeader>
+            <SidebarMenuContent onLinkClick={() => setIsOpen(false)} />
+        </SheetContent>
+        </Sheet>
+    );
 }
 
 function AdminHeader() {
@@ -231,7 +235,7 @@ function AdminHeader() {
   };
   
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:static sm:border-0 sm:bg-transparent sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       <div className="sm:hidden">
         <MobileSidebar />
       </div>
