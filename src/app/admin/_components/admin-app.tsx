@@ -131,7 +131,7 @@ function SidebarMenuContent() {
 
   return (
     <>
-      <SidebarHeader className="border-b p-2 h-14 flex items-center justify-center">
+      <SidebarHeader className="border-b p-2 h-16 flex items-center justify-center">
          <Link href="/admin/dashboard" className="w-full">
             <SidebarMenuButton
                 isActive={pathname === '/admin/dashboard'}
@@ -231,7 +231,7 @@ function AdminHeader() {
   };
   
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       <div className="sm:hidden">
         <MobileSidebar />
       </div>
