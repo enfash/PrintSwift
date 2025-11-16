@@ -1,30 +1,91 @@
 
 'use client';
 
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { LoaderCircle, User, Package, FileText } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import Link from 'next/link';
 
-const activities = [
-  { user: 'Alice J.', action: 'created', target: 'Product: "New Sticker Pack"', time: '2 min ago', avatar: '/avatars/01.png' },
-  { user: 'Ben C.', action: 'updated', target: 'Category: "Apparel"', time: '1 hour ago', avatar: '/avatars/02.png' },
-  { user: 'Admin', action: 'approved', target: 'Quote: QT-003', time: '3 hours ago', avatar: '/avatars/03.png' },
-  { user: 'Cathy D.', action: 'deleted', target: 'Promo: "Old Sale"', time: '1 day ago', avatar: '/avatars/04.png' },
-  { user: 'Alice J.', action: 'updated', target: 'Order: ORD-001 to Shipped', time: '2 days ago', avatar: '/avatars/01.png' },
-];
+const useActivityFeed = () => {
+    const firestore = useFirestore();
+
+    const recentQuotesQuery = useMemoFirebase(
+        () => firestore ? query(collection(firestore, 'quotes'), orderBy('updatedAt', 'desc'), limit(10)) : null,
+        [firestore]
+    );
+    const recentProductsQuery = useMemoFirebase(
+        () => firestore ? query(collection(firestore, 'products'), orderBy('updatedAt', 'desc'), limit(10)) : null,
+        [firestore]
+    );
+    const recentCustomersQuery = useMemoFirebase(
+        () => firestore ? query(collection(firestore, 'customers'), orderBy('createdAt', 'desc'), limit(10)) : null,
+        [firestore]
+    );
+
+    const { data: quotes, isLoading: loadingQuotes } = useCollection<any>(recentQuotesQuery);
+    const { data: products, isLoading: loadingProducts } = useCollection<any>(recentProductsQuery);
+    const { data: customers, isLoading: loadingCustomers } = useCollection<any>(recentCustomersQuery);
+
+    const isLoading = loadingQuotes || loadingProducts || loadingCustomers;
+
+    const combinedFeed = React.useMemo(() => {
+        if (isLoading) return [];
+
+        const quoteActivities = quotes?.map(q => ({
+            id: q.id,
+            type: 'Quote',
+            icon: <FileText className="h-4 w-4" />,
+            description: `${q.status === 'won' ? 'Converted to Order:' : 'Updated Quote:'} #${q.id.substring(0, 6)} for ${q.company || q.email}`,
+            timestamp: q.updatedAt?.toDate(),
+            link: `/admin/quotes/${q.id}`
+        })) || [];
+        
+        const productActivities = products?.map(p => ({
+            id: p.id,
+            type: 'Product',
+            icon: <Package className="h-4 w-4" />,
+            description: `Updated Product: ${p.name}`,
+            timestamp: p.updatedAt?.toDate(),
+            link: `/admin/products/${p.id}`
+        })) || [];
+
+        const customerActivities = customers?.map(c => ({
+            id: c.id,
+            type: 'Customer',
+            icon: <User className="h-4 w-4" />,
+            description: `New Customer: ${c.name}`,
+            timestamp: c.createdAt?.toDate(),
+            link: `/admin/customers/${c.id}`
+        })) || [];
+
+        const allActivities = [...quoteActivities, ...productActivities, ...customerActivities];
+        
+        allActivities.sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0));
+
+        return allActivities.slice(0, 15); // Return the top 15 most recent activities
+    }, [quotes, products, customers, isLoading]);
+
+    return { activities: combinedFeed, isLoading };
+};
 
 const getActionBadge = (action: string) => {
     switch(action) {
-        case 'created': return 'default';
-        case 'updated': return 'secondary';
-        case 'deleted': return 'destructive';
-        case 'approved': return 'outline';
+        case 'Quote': return 'default';
+        case 'Product': return 'secondary';
+        case 'Customer': return 'outline';
         default: return 'secondary';
     }
 }
 
 export default function ActivityLogPage() {
+    const { activities, isLoading } = useActivityFeed();
+
     return (
         <>
             <div className="flex items-center justify-between">
@@ -39,22 +100,34 @@ export default function ActivityLogPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-6">
-                        {activities.map((activity, index) => (
-                             <div key={index} className="flex items-center gap-4">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={activity.avatar} alt="Avatar" />
-                                    <AvatarFallback>{activity.user.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="grid gap-1">
-                                    <div className="text-sm font-medium leading-none">
-                                        <span className="font-semibold">{activity.user}</span>
-                                        <Badge variant={getActionBadge(activity.action)} className="mx-2">{activity.action}</Badge>
-                                        <span>{activity.target}</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">{activity.time}</p>
-                                </div>
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-48">
+                                <LoaderCircle className="h-8 w-8 animate-spin text-muted-foreground"/>
                             </div>
-                        ))}
+                        ) : activities.length > 0 ? (
+                            activities.map((activity) => (
+                                 <div key={activity.id + activity.type} className="flex items-start gap-4">
+                                    <Avatar className="h-9 w-9 border">
+                                        <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground">
+                                           {activity.icon}
+                                        </div>
+                                    </Avatar>
+                                    <div className="grid gap-1">
+                                        <div className="text-sm font-medium leading-none">
+                                            <Badge variant={getActionBadge(activity.type)} className="mr-2">{activity.type}</Badge>
+                                            <Link href={activity.link} className="hover:underline">{activity.description}</Link>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">
+                                            {activity.timestamp ? formatDistanceToNow(activity.timestamp, { addSuffix: true }) : 'Just now'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-12 text-muted-foreground">
+                                No recent activity found.
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
