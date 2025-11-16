@@ -57,7 +57,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import LoginPage from '../login/page';
 import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
@@ -235,7 +235,7 @@ function AdminHeader() {
   };
   
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:static sm:border-0 sm:bg-transparent sm:px-6">
       <div className="sm:hidden">
         <MobileSidebar />
       </div>
@@ -396,3 +396,5 @@ export default function AdminApp({
     </FirebaseClientProvider>
   );
 }
+
+    
