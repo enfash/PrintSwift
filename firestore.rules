@@ -44,6 +44,12 @@ service cloud.firestore {
         allow write: if isAdmin();
     }
 
+    match /settings/{settingsId} {
+        // Allow public read for settings, but only admins can write.
+        allow read: if true;
+        allow write: if isAdmin();
+    }
+
     // --- Customer Management ---
     // Admins have full access to customer data.
     match /customers/{customerId} {
@@ -51,9 +57,6 @@ service cloud.firestore {
     }
 
     // --- Admin-only Collections ---
-    match /settings/{settingsId} {
-        allow read, write: if isAdmin();
-    }
 
     match /quote_requests/{request} {
         allow write: if true; // Allow public to submit quote requests
