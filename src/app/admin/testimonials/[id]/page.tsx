@@ -47,6 +47,14 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
 
     const form = useForm<z.infer<typeof testimonialSchema>>({
         resolver: zodResolver(testimonialSchema),
+        defaultValues: {
+            name: '',
+            company: '',
+            quote: '',
+            rating: 0,
+            visible: true,
+            imageUrl: '',
+        }
     });
 
     useEffect(() => {
@@ -171,7 +179,7 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
                             <FormField
                                 control={form.control}
                                 name="imageUrl"
-                                render={() => (
+                                render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Customer Image</FormLabel>
                                     <div className="flex items-center gap-4">
