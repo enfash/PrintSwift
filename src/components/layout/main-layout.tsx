@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import PromoPopup from '@/components/promo-popup';
+import FloatingWhatsApp from './floating-whatsapp';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,6 +16,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       {!isAdminPage && <Header />}
       <main className="flex-1">{children}</main>
       {!isAdminPage && <Footer />}
+      {!isAdminPage && <FloatingWhatsApp />}
     </div>
   );
 }
