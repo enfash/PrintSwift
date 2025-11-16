@@ -57,7 +57,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import LoginPage from '../login/page';
 import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
@@ -396,5 +396,3 @@ export default function AdminApp({
     </FirebaseClientProvider>
   );
 }
-
-    
