@@ -63,7 +63,7 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center bg-primary">
+      <section className="relative w-full h-[740px] flex items-center justify-center text-center bg-primary">
         <Image
             src="https://images.unsplash.com/photo-1693031630369-bd429a57f115?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwcmludGluZyUyMHByZXNzfGVufDB8fHx8MTc2Mjg4MDAwM3ww&ixlib=rb-4.1.0&q=80&w=1080"
             alt="Printing Press"
