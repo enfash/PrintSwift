@@ -50,7 +50,11 @@ service cloud.firestore {
       allow read, write: if isAdmin(); 
     }
 
-    // --- Admin-only Write/Read Collections ---
+    // --- Admin-only Collections ---
+    match /settings/{settingsId} {
+        allow read, write: if isAdmin();
+    }
+
     match /quote_requests/{request} {
         allow write: if true; // Allow public to submit quote requests
         allow read, delete: if isAdmin();
