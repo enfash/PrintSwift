@@ -8,10 +8,13 @@ import { CartProvider } from '@/context/cart-context';
 
 export const metadata: Metadata = {
   title: {
-    default: 'BOMedia',
+    default: 'BOMedia | Custom Printing & Branded Packaging in Nigeria',
     template: `%s | BOMedia`,
   },
-  description: 'Affordable Custom Branding, Delivered Fast.',
+  description: 'Affordable Custom Branding, Delivered Fast. High-quality business cards, custom mugs, branded boxes, and more in Lagos, Nigeria.',
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 
