@@ -99,6 +99,22 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
 
     const form = useForm<PromoFormValues>({
         resolver: zodResolver(promoSchema),
+        defaultValues: {
+            title: '',
+            description: '',
+            ctaText: '',
+            ctaLink: '',
+            imageUrl: '',
+            backgroundColor: '#ffffff',
+            titleColor: '#000000',
+            descriptionColor: '#666666',
+            ctaBackgroundColor: '#3b82f6',
+            ctaTextColor: '#ffffff',
+            placement: 'popup',
+            active: false,
+            displayIntervalHours: 24,
+            autoDismissSeconds: 0,
+        },
     });
 
     const watchedData = form.watch();
@@ -115,6 +131,8 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
                 ctaTextColor: promo.ctaTextColor || '#ffffff',
                 startDate: promo.startDate ? promo.startDate.toDate() : undefined,
                 endDate: promo.endDate ? promo.endDate.toDate() : undefined,
+                displayIntervalHours: promo.displayIntervalHours || 24,
+                autoDismissSeconds: promo.autoDismissSeconds || 0,
             });
         }
     }, [promo, form]);
@@ -279,3 +297,5 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
         </Form>
     );
 }
+
+    
