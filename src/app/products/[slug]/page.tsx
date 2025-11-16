@@ -408,23 +408,28 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
             </div>
           </div>
         </div>
-        <div className="mt-16">
-            <Tabs defaultValue="description">
-                <TabsList>
-                    <TabsTrigger value="description">Description</TabsTrigger>
-                    <TabsTrigger id="details-tab" value="details">Product Details</TabsTrigger>
-                    <TabsTrigger value="faq">FAQ</TabsTrigger>
-                </TabsList>
-                <TabsContent value="description" className="py-6 prose max-w-none">
-                    <p>{product.description}</p>
-                </TabsContent>
-                <TabsContent value="details" className="py-6 prose max-w-none">
-                    <div dangerouslySetInnerHTML={{ __html: product.longDescription || '<p>No details provided.</p>' }} />
-                </TabsContent>
-                <TabsContent value="faq" className="py-6">
-                    <FaqSection />
-                </TabsContent>
-            </Tabs>
+        <div className="mt-16 grid grid-cols-1 lg:grid-cols-10 gap-8">
+            <div className="lg:col-span-7">
+                <Tabs defaultValue="description">
+                    <TabsList>
+                        <TabsTrigger value="description">Description</TabsTrigger>
+                        <TabsTrigger id="details-tab" value="details">Product Details</TabsTrigger>
+                        <TabsTrigger value="faq">FAQ</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="description" className="py-6 prose max-w-none">
+                        <p>{product.description}</p>
+                    </TabsContent>
+                    <TabsContent value="details" className="py-6 prose max-w-none">
+                        <div dangerouslySetInnerHTML={{ __html: product.longDescription || '<p>No details provided.</p>' }} />
+                    </TabsContent>
+                    <TabsContent value="faq" className="py-6">
+                        <FaqSection />
+                    </TabsContent>
+                </Tabs>
+            </div>
+            <div className="lg:col-span-3">
+                {/* This is the 35% placeholder column. Content will be added later. */}
+            </div>
         </div>
       </div>
     </div>
