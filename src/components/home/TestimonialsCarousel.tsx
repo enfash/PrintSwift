@@ -107,8 +107,8 @@ export default function TestimonialsCarousel() {
             >
               {testimonials.map((testimonial) => (
                 <div key={testimonial.id} className="w-full flex-shrink-0">
-                  <Card className="mx-auto max-w-2xl">
-                    <CardContent className="pt-8">
+                  <div className="mx-auto max-w-2xl">
+                    <div className="pt-8">
                       <p className="text-lg text-foreground italic">"{testimonial.quote}"</p>
                       <div className="mt-6 flex items-center gap-4 justify-center">
                         <Avatar className="w-14 h-14">
@@ -121,8 +121,8 @@ export default function TestimonialsCarousel() {
                         </div>
                       </div>
                       {testimonial.rating && <StarRating rating={testimonial.rating} className="justify-center mt-4" />}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
