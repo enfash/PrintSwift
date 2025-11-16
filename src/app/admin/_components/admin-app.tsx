@@ -210,7 +210,8 @@ function MobileSidebar() {
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
             <SheetHeader className="p-4 flex flex-row items-center justify-between">
-                <SheetTitle>Admin Menu</SheetTitle>
+                <SheetTitle className="sr-only">Admin Menu</SheetTitle>
+                <SheetDescription className="sr-only">Navigation links for the admin dashboard.</SheetDescription>
                  <SheetClose asChild>
                     <Button variant="ghost" size="icon">
                         <X className="h-5 w-5"/>
@@ -262,9 +263,9 @@ function AdminHeader() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full relative">
             <Bell className="h-5 w-5" />
-            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
+            <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
             </span>
             <span className="sr-only">Notifications</span>
           </Button>
