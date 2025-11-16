@@ -356,7 +356,7 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
           <Sidebar>
             <SidebarMenuContent />
           </Sidebar>
-          <div className="flex flex-col flex-grow sm:pl-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:sm:pl-[var(--sidebar-width)] transition-all duration-300 ease-in-out">
+          <div className="flex flex-col flex-grow transition-all duration-300 ease-in-out">
             <AdminHeader />
             <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-4 md:gap-8">
               {children}
