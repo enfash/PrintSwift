@@ -518,7 +518,15 @@
         },
         "backgroundColor": {
           "type": "string",
-          "description": "Background color for the promo popup (hex code)."
+          "description": "Background color for the promo (hex code)."
+        },
+        "titleColor": {
+          "type": "string",
+          "description": "Text color for the title (hex code)."
+        },
+        "descriptionColor": {
+          "type": "string",
+          "description": "Text color for the description (hex code)."
         },
         "ctaText": {
           "type": "string",
@@ -527,6 +535,14 @@
         "ctaLink": {
           "type": "string",
           "description": "The destination URL for the CTA button."
+        },
+        "ctaBackgroundColor": {
+          "type": "string",
+          "description": "Background color for the CTA button (hex code)."
+        },
+        "ctaTextColor": {
+          "type": "string",
+          "description": "Text color for the CTA button (hex code)."
         },
         "placement": {
           "type": "string",

@@ -84,9 +84,9 @@ export default function PromoPopup() {
     const renderPopup = () => {
         if (!activePopup || !isOpen) return null;
         
-        const contentStyle = activePopup.backgroundColor
-            ? { backgroundColor: activePopup.backgroundColor }
-            : {};
+        const contentStyle = { 
+            backgroundColor: activePopup.backgroundColor || '#ffffff' 
+        };
 
         return (
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -108,10 +108,29 @@ export default function PromoPopup() {
                         )}
                         <div className="p-8 text-center md:text-left">
                             <DialogHeader>
-                              <DialogTitle className="text-2xl font-bold font-headline mb-2">{activePopup.title}</DialogTitle>
-                              <DialogDescription className="text-muted-foreground mb-6">{activePopup.description}</DialogDescription>
+                              <DialogTitle 
+                                className="text-2xl font-bold font-headline mb-2"
+                                style={{ color: activePopup.titleColor || 'inherit' }}
+                              >
+                                {activePopup.title}
+                              </DialogTitle>
+                              <DialogDescription 
+                                className="mb-6"
+                                style={{ color: activePopup.descriptionColor || 'inherit' }}
+                              >
+                                {activePopup.description}
+                              </DialogDescription>
                             </DialogHeader>
-                            <Button asChild size="lg" className="w-full sm:w-auto" onClick={() => setIsOpen(false)}>
+                            <Button 
+                                asChild 
+                                size="lg" 
+                                className="w-full sm:w-auto" 
+                                onClick={() => setIsOpen(false)}
+                                style={{ 
+                                    backgroundColor: activePopup.ctaBackgroundColor || 'hsl(var(--primary))',
+                                    color: activePopup.ctaTextColor || 'hsl(var(--primary-foreground))'
+                                }}
+                            >
                                 <Link href={activePopup.ctaLink}>{activePopup.ctaText}</Link>
                             </Button>
                         </div>
@@ -124,11 +143,27 @@ export default function PromoPopup() {
     const renderBanner = () => {
         if (!activeBanner) return null;
         return (
-            <div id="promo-banner" style={{backgroundColor: activeBanner.backgroundColor || 'hsl(var(--primary))'}} className="relative text-primary-foreground px-4 py-3 sm:px-6 lg:px-8">
+            <div 
+                id="promo-banner" 
+                style={{
+                    backgroundColor: activeBanner.backgroundColor || 'hsl(var(--primary))',
+                    color: activeBanner.descriptionColor || 'hsl(var(--primary-foreground))',
+                }} 
+                className="relative px-4 py-3 sm:px-6 lg:px-8"
+            >
                 <div className="container mx-auto max-w-7xl flex items-center justify-center text-center">
                     <p className="text-sm font-medium">
-                        {activeBanner.title} - {activeBanner.description} &nbsp;
-                        <Link href={activeBanner.ctaLink} className="font-bold underline hover:opacity-80 transition-opacity">
+                        <span style={{ color: activeBanner.titleColor || 'inherit' }} className="font-bold">{activeBanner.title}</span>
+                        <span className="mx-2">-</span>
+                        {activeBanner.description} &nbsp;
+                        <Link 
+                            href={activeBanner.ctaLink} 
+                            style={{ 
+                                color: activeBanner.ctaTextColor || 'inherit', 
+                                backgroundColor: activeBanner.ctaBackgroundColor || 'transparent' 
+                            }} 
+                            className="font-bold underline hover:opacity-80 transition-opacity px-2 py-1 rounded-md"
+                        >
                             {activeBanner.ctaText}
                         </Link>
                     </p>
