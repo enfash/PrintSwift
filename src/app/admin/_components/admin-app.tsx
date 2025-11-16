@@ -55,7 +55,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FirebaseClientProvider, useUser, useAuth } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import LoginPage from '../login/page';
@@ -391,8 +391,6 @@ export default function AdminApp({
   children: React.ReactNode;
 }) {
   return (
-    <FirebaseClientProvider>
-        <AdminProtectedContent>{children}</AdminProtectedContent>
-    </FirebaseClientProvider>
+    <AdminProtectedContent>{children}</AdminProtectedContent>
   );
 }

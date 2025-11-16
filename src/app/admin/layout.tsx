@@ -3,6 +3,7 @@ import '../globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import AdminApp from './_components/admin-app';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata = {
   title: 'Admin - BOMedia',
@@ -16,7 +17,9 @@ export default function AdminRootLayout({
 }) {
   return (
     <div className={cn('font-body antialiased')}>
-      <AdminApp>{children}</AdminApp>
+      <FirebaseClientProvider>
+        <AdminApp>{children}</AdminApp>
+      </FirebaseClientProvider>
       <Toaster />
     </div>
   );
