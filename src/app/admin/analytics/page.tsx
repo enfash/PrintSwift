@@ -22,16 +22,19 @@ import {
   Percent,
   File,
   LoaderCircle,
+  ShieldAlert,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, Timestamp } from 'firebase/firestore';
 import { startOfMonth, endOfMonth, subMonths, format, eachDayOfInterval, parseISO } from 'date-fns';
+import { useAdminRole } from '@/hooks/use-admin-role';
 
 // --- Data Fetching Hook ---
 const useAnalyticsData = (dateRange: 'this-month' | 'last-month') => {
     const firestore = useFirestore();
+    const { isAdmin, isRoleLoading } = useAdminRole();
 
     const { startDate, endDate } = useMemo(() => {
         const now = new Date();
@@ -45,17 +48,19 @@ const useAnalyticsData = (dateRange: 'this-month' | 'last-month') => {
     }, [dateRange]);
 
     const quotesQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !isAdmin) return null;
         return query(
             collection(firestore, 'quotes'),
             where('createdAt', '>=', Timestamp.fromDate(startDate)),
             where('createdAt', '<=', Timestamp.fromDate(endDate))
         );
-    }, [firestore, startDate, endDate]);
+    }, [firestore, startDate, endDate, isAdmin]);
 
-    const { data: quotes, isLoading } = useCollection<any>(quotesQuery);
+    const { data: quotes, isLoading: isLoadingQuotes } = useCollection<any>(quotesQuery);
 
-    return { quotes, isLoading, dateRange: { startDate, endDate } };
+    const isLoading = isRoleLoading || (isAdmin && isLoadingQuotes);
+
+    return { quotes, isLoading, isAdmin, dateRange: { startDate, endDate } };
 };
 
 
@@ -138,7 +143,7 @@ const processAnalytics = (quotes: any[] | null, dateRange: { startDate: Date, en
 
 export default function AnalyticsPage() {
     const [dateRange, setDateRange] = useState<'this-month' | 'last-month'>('this-month');
-    const { quotes, isLoading } = useAnalyticsData(dateRange);
+    const { quotes, isLoading, isAdmin } = useAnalyticsData(dateRange);
     
     const { kpis, revenueData, ordersByStatusData, topProductsData, quoteFunnelData } = processAnalytics(quotes, useMemo(() => {
         const now = new Date();
@@ -156,6 +161,19 @@ export default function AnalyticsPage() {
               <LoaderCircle className="h-10 w-10 animate-spin" />
           </div>
       )
+  }
+  
+  if (!isAdmin) {
+    return (
+        <Card className="mt-6">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><ShieldAlert /> Permission Denied</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p>You do not have permission to view this page.</p>
+            </CardContent>
+        </Card>
+    )
   }
 
   return (
