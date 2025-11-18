@@ -77,7 +77,7 @@ export default function ArtworkPage() {
 
     const { data: artworkQueue, isLoading: isLoadingQueue } = useCollection<any>(ordersWithArtworkQuery);
     
-    const isLoading = isRoleLoading || isLoadingQueue;
+    const isLoading = isRoleLoading || (isAdmin && isLoadingQueue);
 
     if (isRoleLoading) {
       return (
