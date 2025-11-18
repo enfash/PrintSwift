@@ -115,16 +115,14 @@ const ProductsList = () => {
         filtered.sort((a, b) => {
             const [key, order] = sortOption.split('-');
             
-            if (!a[key] || !b[key]) return 0;
-            
             let comparison = 0;
             if (key === 'updatedAt' || key === 'createdAt') {
-                const dateA = a[key]?.toDate() || 0;
-                const dateB = b[key]?.toDate() || 0;
+                const dateA = a[key]?.toDate ? a[key].toDate() : 0;
+                const dateB = b[key]?.toDate ? b[key].toDate() : 0;
                 comparison = dateA - dateB;
-            } else if (typeof a[key] === 'string') {
+            } else if (a[key] && b[key] && typeof a[key] === 'string') {
                 comparison = a[key].localeCompare(b[key]);
-            } else {
+            } else if (a[key] && b[key] && typeof a[key] === 'number') {
                 comparison = a[key] - b[key];
             }
             
