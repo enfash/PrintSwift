@@ -8,34 +8,36 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
-import { LoaderCircle, User, Package, FileText } from 'lucide-react';
+import { LoaderCircle, User, Package, FileText, ShieldAlert } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
+import { useAdminRole } from '@/hooks/use-admin-role';
 
 const useActivityFeed = () => {
     const firestore = useFirestore();
+    const { isAdmin, isRoleLoading } = useAdminRole();
 
     const recentQuotesQuery = useMemoFirebase(
-        () => firestore ? query(collection(firestore, 'quotes'), orderBy('updatedAt', 'desc'), limit(10)) : null,
-        [firestore]
+        () => (firestore && isAdmin) ? query(collection(firestore, 'quotes'), orderBy('updatedAt', 'desc'), limit(10)) : null,
+        [firestore, isAdmin]
     );
     const recentProductsQuery = useMemoFirebase(
-        () => firestore ? query(collection(firestore, 'products'), orderBy('updatedAt', 'desc'), limit(10)) : null,
-        [firestore]
+        () => (firestore && isAdmin) ? query(collection(firestore, 'products'), orderBy('updatedAt', 'desc'), limit(10)) : null,
+        [firestore, isAdmin]
     );
     const recentCustomersQuery = useMemoFirebase(
-        () => firestore ? query(collection(firestore, 'customers'), orderBy('createdAt', 'desc'), limit(10)) : null,
-        [firestore]
+        () => (firestore && isAdmin) ? query(collection(firestore, 'customers'), orderBy('createdAt', 'desc'), limit(10)) : null,
+        [firestore, isAdmin]
     );
 
     const { data: quotes, isLoading: loadingQuotes } = useCollection<any>(recentQuotesQuery);
     const { data: products, isLoading: loadingProducts } = useCollection<any>(recentProductsQuery);
     const { data: customers, isLoading: loadingCustomers } = useCollection<any>(recentCustomersQuery);
 
-    const isLoading = loadingQuotes || loadingProducts || loadingCustomers;
+    const isLoading = isRoleLoading || (isAdmin && (loadingQuotes || loadingProducts || loadingCustomers));
 
     const combinedFeed = React.useMemo(() => {
-        if (isLoading) return [];
+        if (!isAdmin || isLoading) return [];
 
         const quoteActivities = quotes?.map(q => ({
             id: q.id,
@@ -69,9 +71,9 @@ const useActivityFeed = () => {
         allActivities.sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0));
 
         return allActivities.slice(0, 15); // Return the top 15 most recent activities
-    }, [quotes, products, customers, isLoading]);
+    }, [quotes, products, customers, isLoading, isAdmin]);
 
-    return { activities: combinedFeed, isLoading };
+    return { activities: combinedFeed, isLoading, isAdmin };
 };
 
 const getActionBadge = (action: string) => {
@@ -84,7 +86,28 @@ const getActionBadge = (action: string) => {
 }
 
 export default function ActivityLogPage() {
-    const { activities, isLoading } = useActivityFeed();
+    const { activities, isLoading, isAdmin } = useActivityFeed();
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-48">
+                <LoaderCircle className="h-8 w-8 animate-spin text-muted-foreground"/>
+            </div>
+        )
+    }
+
+    if (!isAdmin) {
+         return (
+             <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><ShieldAlert /> Permission Denied</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>You do not have permission to view the activity log.</p>
+                </CardContent>
+             </Card>
+        )
+    }
 
     return (
         <>
