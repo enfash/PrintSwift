@@ -2,7 +2,7 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, useAdminRole } from '@/firebase';
 import { collection, doc, writeBatch, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -75,19 +75,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const CustomerQuickView = ({ customer }: { customer: any }) => {
     const router = useRouter();
     const firestore = useFirestore();
+    const { isAdmin, isRoleLoading } = useAdminRole();
 
     const quoteRequestsQuery = useMemoFirebase(
-      () => firestore ? query(collection(firestore, 'quote_requests'), where('customerId', '==', customer.id)) : null,
-      [firestore, customer.id]
+      () => (firestore && isAdmin) ? query(collection(firestore, 'quote_requests'), where('customerId', '==', customer.id)) : null,
+      [firestore, customer.id, isAdmin]
     );
     const { data: quoteRequests, isLoading: isLoadingRequests } = useCollection<any>(quoteRequestsQuery);
 
     const quotesQuery = useMemoFirebase(
-      () => firestore ? query(collection(firestore, 'quotes'), where('customerId', '==', customer.id)) : null,
-      [firestore, customer.id]
+      () => (firestore && isAdmin) ? query(collection(firestore, 'quotes'), where('customerId', '==', customer.id)) : null,
+      [firestore, customer.id, isAdmin]
     );
     const { data: quotes, isLoading: isLoadingQuotes } = useCollection<any>(quotesQuery);
     const orders = useMemo(() => quotes?.filter(q => q.status === 'won') || [], [quotes]);
+
+    const isLoading = isRoleLoading || isLoadingRequests || isLoadingQuotes;
 
     return (
         <DialogContent className="sm:max-w-2xl">
@@ -105,8 +108,8 @@ const CustomerQuickView = ({ customer }: { customer: any }) => {
             <Tabs defaultValue="details">
                 <TabsList>
                     <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="requests">Requests ({isLoadingRequests ? '...' : quoteRequests?.length || 0})</TabsTrigger>
-                    <TabsTrigger value="orders">Orders ({isLoadingQuotes ? '...' : orders.length || 0})</TabsTrigger>
+                    <TabsTrigger value="requests">Requests ({isLoading ? '...' : quoteRequests?.length || 0})</TabsTrigger>
+                    <TabsTrigger value="orders">Orders ({isLoading ? '...' : orders.length || 0})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="details" className="pt-4">
                      <div className="space-y-2 text-sm">
@@ -117,7 +120,7 @@ const CustomerQuickView = ({ customer }: { customer: any }) => {
                     </div>
                 </TabsContent>
                 <TabsContent value="requests" className="pt-4">
-                     {isLoadingRequests ? <LoaderCircle className="animate-spin" /> : quoteRequests && quoteRequests.length > 0 ? (
+                     {isLoading ? <LoaderCircle className="animate-spin" /> : quoteRequests && quoteRequests.length > 0 ? (
                         <div className="space-y-2">
                             {quoteRequests.map((req: any) => (
                                 <div key={req.id} className="flex justify-between items-center p-2 border rounded-md">
@@ -132,7 +135,7 @@ const CustomerQuickView = ({ customer }: { customer: any }) => {
                     ) : <p className="text-sm text-muted-foreground">No quote requests found.</p>}
                 </TabsContent>
                  <TabsContent value="orders" className="pt-4">
-                     {isLoadingQuotes ? <LoaderCircle className="animate-spin" /> : orders.length > 0 ? (
+                     {isLoading ? <LoaderCircle className="animate-spin" /> : orders.length > 0 ? (
                         <div className="space-y-2">
                              {orders.map((order: any) => (
                                 <div key={order.id} className="flex justify-between items-center p-2 border rounded-md">
