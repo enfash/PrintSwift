@@ -28,6 +28,7 @@ import {
   Download,
   File as FileIcon,
   LoaderCircle,
+  ShieldAlert,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAdminRole } from '@/hooks/use-admin-role';
 
 const preflightChecks = [
     { text: 'Size matches product (90x54mm + 3mm bleed)', status: 'pass' },
@@ -65,14 +67,40 @@ const getStatusIcon = (status:string) => {
 
 export default function ArtworkPage() {
     const firestore = useFirestore();
+    const { isAdmin, isRoleLoading } = useAdminRole();
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
     const ordersWithArtworkQuery = useMemoFirebase(
-        () => firestore ? query(collection(firestore, 'quotes'), where('status', '==', 'won'), where('artworkUrls', '!=', [])) : null,
-        [firestore]
+        () => (firestore && isAdmin) ? query(collection(firestore, 'quotes'), where('status', '==', 'won'), where('artworkUrls', '!=', [])) : null,
+        [firestore, isAdmin]
     );
 
-    const { data: artworkQueue, isLoading } = useCollection<any>(ordersWithArtworkQuery);
+    const { data: artworkQueue, isLoading: isLoadingQueue } = useCollection<any>(ordersWithArtworkQuery);
+    
+    const isLoading = isRoleLoading || isLoadingQueue;
+
+    if (isRoleLoading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <LoaderCircle className="h-8 w-8 animate-spin" />
+        </div>
+      );
+    }
+    
+    if (!isAdmin) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldAlert /> Permission Denied
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>You do not have the required permissions to view this page.</p>
+          </CardContent>
+        </Card>
+      );
+    }
 
 
   return (
