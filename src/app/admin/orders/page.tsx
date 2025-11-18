@@ -18,7 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft, ChevronRight, FileText, Upload, Download, LoaderCircle, File as FileIcon, Search } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, FileText, Upload, Download, LoaderCircle, File as FileIcon, Search, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -36,6 +36,8 @@ import { collection, query, where, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useAdminRole } from '@/hooks/use-admin-role';
+
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -55,15 +57,18 @@ const productionStatuses = [
 export default function OrdersPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
+    const { isAdmin, isRoleLoading } = useAdminRole();
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
     const ordersQuery = useMemoFirebase(
-        () => firestore ? query(collection(firestore, 'quotes'), where('status', '==', 'won')) : null,
-        [firestore]
+        () => (firestore && isAdmin) ? query(collection(firestore, 'quotes'), where('status', '==', 'won')) : null,
+        [firestore, isAdmin]
     );
-    const { data: orders, isLoading } = useCollection<any>(ordersQuery);
+    const { data: orders, isLoading: isLoadingOrders } = useCollection<any>(ordersQuery);
+    
+    const isLoading = isRoleLoading || isLoadingOrders;
 
     const filteredOrders = useMemo(() => {
         if (!orders) return [];
@@ -103,6 +108,19 @@ export default function OrdersPage() {
             description: `Order #${selectedOrder.id.substring(0,6)} is now "${newStatus}".`
         });
     };
+    
+    if (!isRoleLoading && !isAdmin) {
+         return (
+             <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><ShieldAlert /> Permission Denied</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>You do not have permission to view this page.</p>
+                </CardContent>
+             </Card>
+        )
+    }
 
     return (
         <div className="grid gap-6">
