@@ -90,7 +90,7 @@ const processAnalytics = (quotes: any[] | null, dateRange: { startDate: Date, en
     }, {} as Record<string, number>);
 
     wonQuotes.forEach(q => {
-        if (q.createdAt) {
+        if (q.createdAt?.toDate) {
             const dateStr = format(q.createdAt.toDate(), 'yyyy-MM-dd');
             if (revenueByDay[dateStr] !== undefined) {
                 revenueByDay[dateStr] += q.total || 0;

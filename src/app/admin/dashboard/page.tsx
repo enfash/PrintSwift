@@ -17,7 +17,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { format } from 'date-fns';
@@ -78,7 +78,7 @@ export default function Dashboard() {
     if (!quotes) return [];
     return quotes
       .filter(q => q.status === 'won')
-      .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
+      .sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0))
       .slice(0, 5);
   }, [quotes]);
 
@@ -114,7 +114,7 @@ export default function Dashboard() {
     }));
 
     quotes.forEach(quote => {
-        if (quote.status === 'won' && quote.createdAt) {
+        if (quote.status === 'won' && quote.createdAt?.toDate) {
             const day = format(quote.createdAt.toDate(), 'MMM dd');
             const index = data.findIndex(d => d.name === day);
             if (index !== -1) {
@@ -127,9 +127,9 @@ export default function Dashboard() {
   }, [quotes]);
   
 
-  const isLoading = isRoleLoading || isLoadingQuotes || isLoadingRequests;
+  const isLoading = isRoleLoading || (isAdmin && (isLoadingQuotes || isLoadingRequests));
   
-  if (isLoading) {
+  if (isRoleLoading) {
     return (
         <div className="flex h-full w-full items-center justify-center">
             <LoaderCircle className="h-10 w-10 animate-spin" />
@@ -147,6 +147,14 @@ export default function Dashboard() {
                 <p>You do not have permission to view this page. Please contact an administrator if you believe this is an error.</p>
             </CardContent>
          </Card>
+    )
+  }
+  
+  if (isLoading) {
+    return (
+        <div className="flex h-full w-full items-center justify-center">
+            <LoaderCircle className="h-10 w-10 animate-spin" />
+        </div>
     )
   }
 
