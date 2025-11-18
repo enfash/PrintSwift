@@ -17,8 +17,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        heading: ['"Plus Jakarta Sans"', 'sans-serif'],
+        sans: ['var(--font-inter)', 'sans-serif'],
+        heading: ['var(--font-plus-jakarta-sans)', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
