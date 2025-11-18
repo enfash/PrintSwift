@@ -305,7 +305,7 @@ const ProductsList = () => {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-muted-foreground text-xs">
-                                        {product.updatedAt ? `${formatDistanceToNow(product.updatedAt.toDate())} ago` : 'N/A'}
+                                        {product.updatedAt?.toDate ? `${formatDistanceToNow(product.updatedAt.toDate())} ago` : 'N/A'}
                                     </TableCell>
                                     <TableCell>
                                         <AlertDialog>
