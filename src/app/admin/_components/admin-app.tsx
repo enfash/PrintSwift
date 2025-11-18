@@ -210,11 +210,11 @@ function MobileSidebar() {
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs p-0 flex flex-col">
             <SheetHeader className="p-4 border-b">
-                <SheetTitle className="sr-only">Admin Menu</SheetTitle>
-                <SheetDescription className="sr-only">Navigation links for the admin dashboard.</SheetDescription>
                  <Link href="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
                     <Logo className="h-8 w-auto" />
-                  </Link>
+                 </Link>
+                <SheetTitle className="sr-only">Admin Menu</SheetTitle>
+                <SheetDescription className="sr-only">Navigation links for the admin dashboard.</SheetDescription>
             </SheetHeader>
             <SidebarMenuContent onLinkClick={() => setIsOpen(false)} />
         </SheetContent>
@@ -394,3 +394,5 @@ export default function AdminApp({
     <AdminProtectedContent>{children}</AdminProtectedContent>
   );
 }
+
+    
