@@ -155,14 +155,14 @@ export default function PromoPopup() {
                     <p className="text-sm font-medium">
                         <span style={{ color: activeBanner.titleColor || 'inherit' }} className="font-bold">{activeBanner.title}</span>
                         <span className="mx-2">-</span>
-                        {activeBanner.description} &nbsp;
+                        {activeBanner.description}
                         <Link 
                             href={activeBanner.ctaLink} 
                             style={{ 
                                 color: activeBanner.ctaTextColor || 'inherit', 
                                 backgroundColor: activeBanner.ctaBackgroundColor || 'transparent' 
                             }} 
-                            className="font-bold underline hover:opacity-80 transition-opacity px-2 py-1 rounded-md"
+                            className="font-bold underline hover:opacity-80 transition-opacity px-2 py-1 rounded-md ml-2"
                         >
                             {activeBanner.ctaText}
                         </Link>
