@@ -316,6 +316,7 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                 form.setValue('seo.title', result.seo.title);
                 form.setValue('seo.description', result.seo.description);
                 form.setValue('tags', result.tags);
+                form.setValue('keywords', result.tags);
                 toast({ title: 'Content Generated!', description: 'The product content has been filled in.' });
             }
         } catch (error) {
