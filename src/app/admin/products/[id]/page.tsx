@@ -417,7 +417,7 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                                     render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Category</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select a category"} />

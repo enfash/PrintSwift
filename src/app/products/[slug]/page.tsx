@@ -162,6 +162,19 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     return tiers.reduce((min: number, tier: any) => Math.min(min, tier.minQty), Infinity);
   }, [product]);
 
+  const getStepForQuantity = useCallback((currentQuantity: number) => {
+    if (!product || !product.pricing || !product.pricing.tiers) {
+        return 1;
+    }
+    const tier = product.pricing.tiers
+        .slice()
+        .sort((a: any, b: any) => b.minQty - a.minQty)
+        .find((t: any) => currentQuantity >= t.minQty);
+
+    return tier?.step || 1;
+  }, [product]);
+
+
   const calculatePrice = useCallback(() => {
     if (!product || !product.pricing || !product.pricing.tiers) {
       return null;
@@ -403,6 +416,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                           value={quantity} 
                           setValue={setQuantity} 
                           min={minQty}
+                          step={getStepForQuantity(quantity)}
                       />
                   </div>
                   
@@ -455,7 +469,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                       <TabsTrigger value="faq">FAQ</TabsTrigger>
                   </TabsList>
                   <TabsContent value="description" className="py-6 prose max-w-none">
-                      <p>{product.description}</p>
+                      <div dangerouslySetInnerHTML={{ __html: product.description || '<p>No description provided.</p>' }} />
                   </TabsContent>
                   <TabsContent value="details" className="py-6 prose max-w-none">
                       <div dangerouslySetInnerHTML={{ __html: product.longDescription || '<p>No details provided.</p>' }} />
