@@ -84,6 +84,18 @@ export default function ProductDetailClientPage({ product, faqs, categories, all
     return tiers.reduce((min: number, tier: any) => Math.min(min, tier.minQty), Infinity);
   }, [product]);
 
+  const getStepForQuantity = useCallback(() => {
+    if (!product || !product.pricing || !product.pricing.tiers) {
+        return 1;
+    }
+    const tier = product.pricing.tiers
+        .slice()
+        .sort((a: any, b: any) => b.minQty - a.minQty)
+        .find((t: any) => quantity >= t.minQty);
+
+    return tier?.step || 1;
+  }, [product, quantity]);
+
   const calculatePrice = useCallback(() => {
     if (!product || !product.pricing || !product.pricing.tiers) {
       return null;
@@ -212,6 +224,7 @@ export default function ProductDetailClientPage({ product, faqs, categories, all
                         setValue={(value) => handleOptionChange(detail.label, value.toString())}
                         min={detail.min}
                         max={detail.max}
+                        step={1}
                     />
                 </div>
             )
@@ -310,6 +323,7 @@ export default function ProductDetailClientPage({ product, faqs, categories, all
                           value={quantity} 
                           setValue={setQuantity} 
                           min={minQty}
+                          step={getStepForQuantity()}
                       />
                   </div>
               </div>
@@ -376,3 +390,5 @@ export default function ProductDetailClientPage({ product, faqs, categories, all
     </>
   );
 }
+
+    

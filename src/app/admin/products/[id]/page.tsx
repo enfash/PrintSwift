@@ -51,6 +51,7 @@ const addonSchema = z.object({
 
 const tierSchema = z.object({
   minQty: z.coerce.number(),
+  step: z.coerce.number().min(1).default(1),
   setup: z.coerce.number(),
   unitCost: z.coerce.number(),
   margin: z.coerce.number(),
@@ -688,6 +689,7 @@ Value two"
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Min Qty</TableHead>
+                                            <TableHead>Step</TableHead>
                                             <TableHead>Setup Cost (₦)</TableHead>
                                             <TableHead>Unit Cost (₦)</TableHead>
                                             <TableHead>Margin %</TableHead>
@@ -699,6 +701,7 @@ Value two"
                                         {tierFields.map((field, index) => (
                                             <TableRow key={field.id}>
                                                 <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.minQty`)} className="w-24"/></TableCell>
+                                                <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.step`)} className="w-24"/></TableCell>
                                                 <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.setup`)} className="w-24"/></TableCell>
                                                 <TableCell><Input type="number" step="0.01" {...form.register(`pricing.tiers.${index}.unitCost`)} className="w-24"/></TableCell>
                                                 <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.margin`)} className="w-24"/></TableCell>
@@ -711,7 +714,7 @@ Value two"
                                     </TableBody>
                                 </Table>
                                 <div className="mt-4 flex gap-2">
-                                    <Button type="button" variant="outline" onClick={() => appendTier({ minQty: 0, setup: 0, unitCost: 0, margin: 40 })}>Add Tier</Button>
+                                    <Button type="button" variant="outline" onClick={() => appendTier({ minQty: 0, setup: 0, unitCost: 0, margin: 40, step: 1 })}>Add Tier</Button>
                                 </div>
                             </CardContent>
                         </Card>
@@ -868,3 +871,5 @@ Value two"
         </Form>
     );
 }
+
+    

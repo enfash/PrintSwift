@@ -12,26 +12,28 @@ type CounterProps = {
   setValue: (value: number) => void;
   min?: number;
   max?: number;
+  step?: number;
   className?: string;
 };
 
-function Counter({ value, setValue, min, max, className }: CounterProps) {
+function Counter({ value, setValue, min, max, step = 1, className }: CounterProps) {
   const { toast } = useToast();
 
   const handleDecrement = () => {
-    if (min !== undefined && value <= min) {
-      toast({
-        title: 'Minimum Reached',
-        description: `The minimum value is ${min}.`,
-        variant: 'destructive',
-      });
+    const newValue = value - step;
+    if (min !== undefined && newValue < min) {
+      // Don't show toast if we just snap to min
+      if (value !== min) {
+        setValue(min);
+      }
       return;
     }
-    setValue(value - 1);
+    setValue(newValue);
   };
 
   const handleIncrement = () => {
-    if (max !== undefined && value >= max) {
+    const newValue = value + step;
+    if (max !== undefined && newValue > max) {
       toast({
         title: 'Maximum Reached',
         description: `The maximum value is ${max}.`,
@@ -39,7 +41,7 @@ function Counter({ value, setValue, min, max, className }: CounterProps) {
       });
       return;
     }
-    setValue(value + 1);
+    setValue(newValue);
   };
 
   return (
@@ -55,6 +57,7 @@ function Counter({ value, setValue, min, max, className }: CounterProps) {
         size="icon"
         className="h-10 w-10 rounded-r-none"
         onClick={handleDecrement}
+        disabled={(min !== undefined && value <= min)}
       >
         <Minus className="h-4 w-4" />
       </Button>
@@ -69,6 +72,7 @@ function Counter({ value, setValue, min, max, className }: CounterProps) {
         size="icon"
         className="h-10 w-10 rounded-l-none"
         onClick={handleIncrement}
+        disabled={(max !== undefined && value >= max)}
       >
         <Plus className="h-4 w-4" />
       </Button>
@@ -77,3 +81,5 @@ function Counter({ value, setValue, min, max, className }: CounterProps) {
 }
 
 export { Counter };
+
+    

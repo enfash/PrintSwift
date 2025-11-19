@@ -51,6 +51,7 @@ const addonSchema = z.object({
 
 const tierSchema = z.object({
   minQty: z.coerce.number(),
+  step: z.coerce.number().min(1).default(1),
   setup: z.coerce.number(),
   unitCost: z.coerce.number(),
   margin: z.coerce.number(),
@@ -124,7 +125,7 @@ export default function ProductFormPage() {
                 baseCost: 0,
                 tax: 7.5,
                 addons: [],
-                tiers: [{ minQty: 100, setup: 10, unitCost: 0.5, margin: 40 }],
+                tiers: [{ minQty: 100, step: 50, setup: 10, unitCost: 0.5, margin: 40 }],
             },
             subcategory: '',
             tags: [],
@@ -598,6 +599,7 @@ export default function ProductFormPage() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Min Qty</TableHead>
+                                            <TableHead>Step</TableHead>
                                             <TableHead>Setup Cost (₦)</TableHead>
                                             <TableHead>Unit Cost (₦)</TableHead>
                                             <TableHead>Margin %</TableHead>
@@ -609,6 +611,7 @@ export default function ProductFormPage() {
                                         {tierFields.map((field, index) => (
                                             <TableRow key={field.id}>
                                                 <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.minQty`)} className="w-24"/></TableCell>
+                                                <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.step`)} className="w-24"/></TableCell>
                                                 <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.setup`)} className="w-24"/></TableCell>
                                                 <TableCell><Input type="number" step="0.01" {...form.register(`pricing.tiers.${index}.unitCost`)} className="w-24"/></TableCell>
                                                 <TableCell><Input type="number" {...form.register(`pricing.tiers.${index}.margin`)} className="w-24"/></TableCell>
@@ -621,7 +624,7 @@ export default function ProductFormPage() {
                                     </TableBody>
                                 </Table>
                                 <div className="mt-4 flex gap-2">
-                                    <Button type="button" variant="outline" onClick={() => appendTier({ minQty: 0, setup: 0, unitCost: 0, margin: 40 })}>Add Tier</Button>
+                                    <Button type="button" variant="outline" onClick={() => appendTier({ minQty: 0, step: 1, setup: 0, unitCost: 0, margin: 40 })}>Add Tier</Button>
                                 </div>
                             </CardContent>
                         </Card>
@@ -757,3 +760,5 @@ export default function ProductFormPage() {
         </Form>
     );
 }
+
+    
