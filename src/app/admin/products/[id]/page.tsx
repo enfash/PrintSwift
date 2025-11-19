@@ -264,15 +264,16 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                 updatedAt: serverTimestamp(),
             };
             
+            // This is a temporary solution to strip out undefined values before sending to Firestore
             const cleanData = (obj: any): any => {
               const newObj: any = {};
               for (const key in obj) {
                 if (obj[key] !== undefined && obj[key] !== null) {
                   if (Array.isArray(obj[key])) {
                     newObj[key] = obj[key].map((item: any) =>
-                      (item && typeof item === 'object') ? cleanData(item) : item
+                      (item && typeof item === 'object' && !('seconds' in item && 'nanoseconds' in item)) ? cleanData(item) : item
                     );
-                  } else if (obj[key] && typeof obj[key] === 'object' && !obj[key].hasOwnProperty('_nanoseconds')) { // Exclude Timestamps
+                  } else if (obj[key] && typeof obj[key] === 'object' && !('seconds' in obj[key] && 'nanoseconds' in obj[key])) { // Exclude Timestamps
                     newObj[key] = cleanData(obj[key]);
                   } else if (obj[key] !== undefined) {
                     newObj[key] = obj[key];
@@ -317,7 +318,8 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                 form.setValue('seo.title', result.seo.title);
                 form.setValue('seo.description', result.seo.description);
                 form.setValue('tags', result.tags);
-                form.setValue('keywords', result.tags);
+                form.setValue('keywords', result.keywords);
+                form.setValue('subcategory', result.subcategory);
                 toast({ title: 'Content Generated!', description: 'The product content has been filled in.' });
             }
         } catch (error) {
@@ -871,5 +873,3 @@ Value two"
         </Form>
     );
 }
-
-    

@@ -280,7 +280,8 @@ export default function ProductFormPage() {
                 form.setValue('seo.title', result.seo.title);
                 form.setValue('seo.description', result.seo.description);
                 form.setValue('tags', result.tags);
-                form.setValue('keywords', result.tags);
+                form.setValue('keywords', result.keywords);
+                form.setValue('subcategory', result.subcategory);
                 toast({ title: 'Content Generated!', description: 'The product content has been filled in.' });
             }
         } catch (error) {
@@ -760,5 +761,3 @@ export default function ProductFormPage() {
         </Form>
     );
 }
-
-    

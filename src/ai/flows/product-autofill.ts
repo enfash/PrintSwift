@@ -20,11 +20,13 @@ export type ProductAutofillInput = z.infer<typeof ProductAutofillInputSchema>;
 const ProductAutofillOutputSchema = z.object({
   description: z.string().describe('A concise, one-sentence summary for a product card.'),
   longDescription: z.string().describe('A detailed, HTML-formatted description for the product page.'),
+  subcategory: z.string().describe("A descriptive subcategory, like 'Premium' or 'Eco-Friendly'."),
   seo: z.object({
     title: z.string().describe('An SEO-friendly title, under 60 characters.'),
     description: z.string().describe('A compelling meta description, under 160 characters.'),
   }),
   tags: z.array(z.string()).describe('An array of 5-7 relevant, lowercase tags for filtering.'),
+  keywords: z.array(z.string()).describe('An array of 5-7 relevant, lowercase keywords for search.'),
 });
 export type ProductAutofillOutput = z.infer<typeof ProductAutofillOutputSchema>;
 
@@ -47,9 +49,11 @@ Product Name: "{{productName}}"
 Generate the following fields:
 - description: A concise and appealing one-sentence summary for a product card.
 - longDescription: A detailed, paragraph-based description for the main product page. Use simple HTML for formatting, like "<p>" and "<ul>" tags. Highlight key features and benefits.
+- subcategory: A descriptive subcategory, like 'Premium' or 'Eco-Friendly'.
 - seo.title: An SEO-friendly title, under 60 characters, including the product name and relevant keywords like "printing" or "Lagos".
 - seo.description: A compelling meta description, under 160 characters, that encourages clicks from search engine results.
-- tags: An array of 5-7 relevant, lowercase, single-word or hyphenated-word tags for filtering and search (e.g., "business-cards", "matte-finish", "corporate-branding").`,
+- tags: An array of 5-7 relevant, lowercase, single-word or hyphenated-word tags for filtering and search (e.g., "business-cards", "matte-finish", "corporate-branding").
+- keywords: An array of 5-7 relevant, lowercase, single-word or hyphenated-word keywords for search.`,
 });
 
 
