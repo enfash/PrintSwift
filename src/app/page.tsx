@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import HowItWorks from '@/components/home/HowItWorks';
 import WhyChooseUs from '@/components/home/WhyChooseUs';
 import TestimonialsCarousel from '@/components/home/TestimonialsCarousel';
+import { cn } from '@/lib/utils';
 
 
 const categoryIcons: { [key: string]: React.ReactElement } = {
@@ -102,7 +103,7 @@ export default function Home() {
               Discover our exclusive <br/>printing categories
             </h2>
           </div>
-          <div className="overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible">
+          <div className={cn("overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible", "no-scrollbar")}>
             <div className="flex flex-row md:grid md:grid-cols-3 lg:grid-cols-6 gap-6 w-max md:w-auto">
                 {isLoadingCategories ? (
                     Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={i} />)
