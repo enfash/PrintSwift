@@ -22,7 +22,6 @@ function Counter({ value, setValue, min, max, step = 1, className }: CounterProp
   const handleDecrement = () => {
     const newValue = value - step;
     if (min !== undefined && newValue < min) {
-      // Don't show toast if we just snap to min
       if (value !== min) {
         setValue(min);
       }
@@ -81,5 +80,3 @@ function Counter({ value, setValue, min, max, step = 1, className }: CounterProp
 }
 
 export { Counter };
-
-    
