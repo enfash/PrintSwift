@@ -44,7 +44,7 @@ const CategorySkeleton = () => (
 
 const ProductSkeleton = () => (
     <Card className="overflow-hidden group h-full">
-        <Skeleton className="aspect-[4/3] w-full" />
+        <Skeleton className="aspect-square w-full" />
         <CardContent className="p-4">
             <Skeleton className="h-5 w-3/4 mb-2" />
         </CardContent>
@@ -110,7 +110,7 @@ export default function Home() {
                 ) : (
                     categories?.slice(0, 6).map((category) => (
                         <Link href={`/products?category=${category.id}`} key={category.id} className="group flex-shrink-0 w-36 sm:w-auto">
-                        <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 hover:-translate-y-1 h-full">
+                        <Card className="text-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
                             <div className="flex justify-center items-center mb-4 text-primary group-hover:text-accent transition-colors">
                             {categoryIcons[category.name] || categoryIcons['Default']}
                             </div>
@@ -143,9 +143,9 @@ export default function Home() {
 
                     return (
                     <Link key={product.id} href={`/products/${product.slug}`}>
-                        <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full">
+                        <Card className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
                         <div className="overflow-hidden">
-                            <div className="aspect-[4/3] relative">
+                            <div className="aspect-square relative">
                                 <Image
                                 src={mainImageUrl}
                                 alt={product.name}

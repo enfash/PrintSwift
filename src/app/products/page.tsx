@@ -44,7 +44,7 @@ function calculateStartingPrice(product: any) {
 
 const ProductCardSkeleton = () => (
     <Card className="overflow-hidden group h-full flex flex-col">
-        <Skeleton className="aspect-[4/3] w-full" />
+        <Skeleton className="aspect-square w-full" />
         <CardContent className="p-4 flex-grow flex flex-col">
             <Skeleton className="h-5 w-3/4 mb-2" />
             <Skeleton className="h-4 w-1/2 mb-4" />
@@ -278,9 +278,9 @@ function ProductsComponent() {
 
                                 return (
                                     <Link key={product.id} href={`/products/${product.slug}`} className="block">
-                                        <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col">
+                                        <Card className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full flex flex-col">
                                             <div className="overflow-hidden">
-                                                <div className="aspect-[4/3] relative">
+                                                <div className="aspect-square relative">
                                                     <Image
                                                         src={mainImageUrl}
                                                         alt={product.name}
