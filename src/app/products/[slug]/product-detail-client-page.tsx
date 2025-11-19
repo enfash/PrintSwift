@@ -390,5 +390,3 @@ export default function ProductDetailClientPage({ product, faqs, categories, all
     </>
   );
 }
-
-    
