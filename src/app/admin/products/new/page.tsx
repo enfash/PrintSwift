@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoaderCircle, X, PlusCircle, Trash2, UploadCloud } from 'lucide-react';
+import { LoaderCircle, X, PlusCircle, Trash2, UploadCloud, Sparkles } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useStorage } from '@/firebase';
@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { cn, getSafeImageUrl, generateSearchTerms } from '@/lib/utils';
+import { productAutofill } from '@/ai/flows/product-autofill';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -101,6 +102,7 @@ export default function ProductFormPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isUploading, setIsUploading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     const [productId] = useState(() => doc(collection(firestore, 'products')).id); // Generate ID once
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
@@ -257,6 +259,36 @@ export default function ProductFormPage() {
         }
     };
 
+    const handleGenerateContent = async () => {
+        const productName = form.getValues('name');
+        if (!productName || productName.length < 3) {
+            toast({
+                variant: 'destructive',
+                title: 'Product Name Required',
+                description: 'Please enter a product name before generating content.',
+            });
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const result = await productAutofill({ productName });
+            if (result) {
+                form.setValue('description', result.description);
+                form.setValue('longDescription', result.longDescription);
+                form.setValue('seo.title', result.seo.title);
+                form.setValue('seo.description', result.seo.description);
+                form.setValue('tags', result.tags);
+                toast({ title: 'Content Generated!', description: 'The product content has been filled in.' });
+            }
+        } catch (error) {
+            console.error('AI content generation failed:', error);
+            toast({ variant: 'destructive', title: 'AI Error', description: 'Could not generate content.' });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const setMainImage = (index: number) => {
         form.setValue('mainImageIndex', index);
     };
@@ -302,7 +334,13 @@ export default function ProductFormPage() {
                                 <FormField control={form.control} name="name" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Product Name</FormLabel>
-                                        <FormControl><Input placeholder="e.g., Custom Mugs" {...field} /></FormControl>
+                                        <div className="flex gap-2">
+                                            <FormControl><Input placeholder="e.g., Custom Mugs" {...field} /></FormControl>
+                                            <Button type="button" variant="outline" onClick={handleGenerateContent} disabled={isGenerating}>
+                                                {isGenerating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                                                <span className="ml-2 hidden sm:inline">Generate with AI</span>
+                                            </Button>
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}/>
