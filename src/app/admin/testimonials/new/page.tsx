@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 
 const MAX_QUOTE_LENGTH = 280;
 
@@ -36,7 +37,6 @@ export default function NewTestimonialPage() {
     const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [hoverRating, setHoverRating] = useState(0);
     const [testimonialId] = useState(() => doc(collection(firestore, 'testimonials')).id);
@@ -53,25 +53,27 @@ export default function NewTestimonialPage() {
         },
     });
     
+    const { formState: { isDirty, isSubmitting } } = form;
+    useUnsavedChangesWarning(isDirty);
+
     const currentRating = form.watch('rating');
     const quoteValue = form.watch('quote');
     const imageUrl = form.watch('imageUrl');
 
     const onSubmit = async (values: z.infer<typeof testimonialSchema>) => {
         if (!firestore) return;
-        setIsSubmitting(true);
         
         try {
             const testimonialsCollection = collection(firestore, 'testimonials');
             await addDocumentNonBlocking(testimonialsCollection, {...values, id: testimonialId});
             
             toast({ title: 'Testimonial Created', description: `The new testimonial has been added.` });
+            form.reset();
             router.push('/admin/testimonials');
 
         } catch (error) {
             console.error("Error saving testimonial:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not save the testimonial.' });
-            setIsSubmitting(false);
         }
     };
     
@@ -100,7 +102,7 @@ export default function NewTestimonialPage() {
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                form.setValue('imageUrl', downloadURL);
+                form.setValue('imageUrl', downloadURL, { shouldDirty: true });
                 setIsUploading(false);
                 toast({ title: 'Image Uploaded', description: 'Image is ready to be saved with the testimonial.' });
             }
@@ -273,4 +275,3 @@ export default function NewTestimonialPage() {
         </Form>
     );
 }
-

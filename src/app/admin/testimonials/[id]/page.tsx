@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 
 
 const MAX_QUOTE_LENGTH = 280;
@@ -38,7 +39,6 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
     const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [hoverRating, setHoverRating] = useState(0);
 
@@ -57,6 +57,9 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
         }
     });
 
+    const { formState: { isDirty, isSubmitting } } = form;
+    useUnsavedChangesWarning(isDirty);
+
     useEffect(() => {
         if (testimonial) {
             form.reset({
@@ -73,19 +76,18 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
 
     const onSubmit = async (values: z.infer<typeof testimonialSchema>) => {
         if (!firestore) return;
-        setIsSubmitting(true);
 
         try {
             const testimonialDocRef = doc(firestore, 'testimonials', params.id);
             await updateDocumentNonBlocking(testimonialDocRef, values);
             
             toast({ title: 'Testimonial Updated', description: `The testimonial has been successfully updated.` });
+            form.reset(values);
             router.push('/admin/testimonials');
 
         } catch (error) {
             console.error("Error updating testimonial:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update the testimonial.' });
-            setIsSubmitting(false);
         }
     };
     
@@ -114,7 +116,7 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                form.setValue('imageUrl', downloadURL);
+                form.setValue('imageUrl', downloadURL, { shouldDirty: true });
                 setIsUploading(false);
                 toast({ title: 'Image Uploaded', description: 'Image is ready to be saved with the testimonial.' });
             }
@@ -295,4 +297,3 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
         </Form>
     );
 }
-

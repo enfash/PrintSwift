@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
 import Link from 'next/link';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 
 const promoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -93,7 +94,6 @@ export default function NewPromoPage() {
     const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [promoId] = useState(() => doc(collection(firestore, 'promos')).id);
 
@@ -116,6 +116,9 @@ export default function NewPromoPage() {
             autoDismissSeconds: 0,
         },
     });
+
+    const { formState: { isDirty, isSubmitting } } = form;
+    useUnsavedChangesWarning(isDirty);
 
     const watchedData = form.watch();
     const imageUrl = form.watch('imageUrl');
@@ -145,7 +148,7 @@ export default function NewPromoPage() {
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                form.setValue('imageUrl', downloadURL);
+                form.setValue('imageUrl', downloadURL, { shouldDirty: true });
                 setIsUploading(false);
                 toast({ title: 'Image Uploaded', description: 'Image is ready to be saved.' });
             }
@@ -154,19 +157,18 @@ export default function NewPromoPage() {
 
     const onSubmit = async (values: PromoFormValues) => {
         if (!firestore) return;
-        setIsSubmitting(true);
         
         try {
             const promosCollection = collection(firestore, 'promos');
             await addDocumentNonBlocking(promosCollection, { ...values, id: promoId });
             
             toast({ title: 'Promotion Created', description: `The "${values.title}" promotion has been created.` });
+            form.reset(); // Make form not dirty
             router.push('/admin/promos');
 
         } catch (error) {
             console.error("Error creating promotion:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not create the promotion.' });
-            setIsSubmitting(false);
         }
     };
 

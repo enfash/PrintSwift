@@ -26,6 +26,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { cn, getSafeImageUrl, generateSearchTerms } from '@/lib/utils';
 import { productAutofill } from '@/ai/flows/product-autofill';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -134,6 +137,9 @@ export default function ProductFormPage() {
             seo: { title: '', description: '', keywords: [] },
         },
     });
+
+    const { formState: { isDirty } } = form;
+    useUnsavedChangesWarning(isDirty);
 
     const { fields: imageFields, append: appendImage, remove: removeImage } = useFieldArray({
         control: form.control,
@@ -253,6 +259,7 @@ export default function ProductFormPage() {
         try {
             await addDocumentNonBlocking(collection(firestore, 'products'), finalProductData, { id: finalProductData.id });
             toast({ title: 'Product Created', description: `${values.name} has been successfully created.` });
+            form.reset(); // Make form not dirty
             router.push('/admin/products');
         } catch (error) {
             console.error("Error saving product:", error);
@@ -275,13 +282,13 @@ export default function ProductFormPage() {
         try {
             const result = await productAutofill({ productName });
             if (result) {
-                form.setValue('description', result.description);
-                form.setValue('longDescription', result.longDescription);
-                form.setValue('seo.title', result.seo.title);
-                form.setValue('seo.description', result.seo.description);
-                form.setValue('tags', result.tags);
-                form.setValue('keywords', result.keywords);
-                form.setValue('subcategory', result.subcategory);
+                form.setValue('description', result.description, { shouldDirty: true });
+                form.setValue('longDescription', result.longDescription, { shouldDirty: true });
+                form.setValue('seo.title', result.seo.title, { shouldDirty: true });
+                form.setValue('seo.description', result.seo.description, { shouldDirty: true });
+                form.setValue('tags', result.tags, { shouldDirty: true });
+                form.setValue('keywords', result.keywords, { shouldDirty: true });
+                form.setValue('subcategory', result.subcategory, { shouldDirty: true });
                 toast({ title: 'Content Generated!', description: 'The product content has been filled in.' });
             }
         } catch (error) {
@@ -389,8 +396,8 @@ export default function ProductFormPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Full Description / Product Details</FormLabel>
-                                            <FormControl><Textarea rows={8} placeholder="Provide detailed information about the product. You can use HTML here for formatting." {...field} /></FormControl>
-                                            <FormDescription>This will appear in the 'Product Details' tab. HTML is supported.</FormDescription>
+                                            <FormControl><Textarea rows={8} placeholder="Provide detailed information about the product. You can use Markdown here for formatting." {...field} /></FormControl>
+                                            <FormDescription>This will appear in the 'Product Details' tab. Markdown is supported.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}

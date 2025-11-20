@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -26,6 +27,7 @@ import { createCustomer } from '@/lib/firebase/customers';
 import { Counter } from '@/components/ui/counter';
 import { Combobox } from '@/components/ui/combobox';
 import InvoiceGenerator from '@/components/admin/quotes/InvoiceGenerator';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 
 
 const lineItemOptionSchema = z.object({
@@ -101,6 +103,9 @@ export default function NewQuotePage() {
       depositPercentage: 0,
     },
   });
+
+  const { formState: { isDirty } } = form;
+  useUnsavedChangesWarning(isDirty);
 
   useEffect(() => {
     if (quoteRequest && uniqueProducts.length > 0) {
@@ -247,10 +252,10 @@ export default function NewQuotePage() {
   const handleCustomerSelect = (customerId: string) => {
     const customer = customers?.find(c => c.id === customerId);
     if (customer) {
-        form.setValue('customerId', customer.id);
-        form.setValue('company', customer.company || '');
-        form.setValue('email', customer.email);
-        form.setValue('phone', customer.phone || '');
+        form.setValue('customerId', customer.id, { shouldDirty: true });
+        form.setValue('company', customer.company || '', { shouldDirty: true });
+        form.setValue('email', customer.email, { shouldDirty: true });
+        form.setValue('phone', customer.phone || '', { shouldDirty: true });
     }
   }
 
@@ -273,7 +278,7 @@ export default function NewQuotePage() {
   const saveQuote = async (status: 'draft' | 'sent') => {
     if (!firestore) return;
 
-    form.setValue('status', status);
+    form.setValue('status', status, { shouldDirty: true });
     const quoteData = form.getValues();
     let customerId = quoteData.customerId;
 
@@ -314,6 +319,7 @@ export default function NewQuotePage() {
         await addDocumentNonBlocking(quotesCollection, finalData, { id: finalData.id });
         
         toast({ title: `Quote ${status === 'draft' ? 'Saved as Draft' : 'Submitted'}`, description: `The quote has been successfully saved.` });
+        form.reset(); // Make form not dirty
         router.push('/admin/quotes');
     } catch (error) {
         console.error(`Error saving quote as ${status}:`, error);

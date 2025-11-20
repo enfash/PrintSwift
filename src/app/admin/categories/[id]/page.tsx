@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useEffect, useState, use } from 'react';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 
 const categorySchema = z.object({
   name: z.string().min(3, 'Category name must be at least 3 characters.'),
@@ -28,7 +29,6 @@ export default function CategoryEditPage({ params: paramsProp }: { params: { id:
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const categoryRef = useMemoFirebase(() => firestore ? doc(firestore, 'product_categories', id) : null, [firestore, id]);
     const { data: category, isLoading: isLoadingCategory } = useDoc<z.infer<typeof categorySchema>>(categoryRef);
@@ -41,6 +41,9 @@ export default function CategoryEditPage({ params: paramsProp }: { params: { id:
         }
     });
 
+    const { formState: { isDirty, isSubmitting } } = form;
+    useUnsavedChangesWarning(isDirty);
+
     useEffect(() => {
         if (category) {
             form.reset({
@@ -52,17 +55,16 @@ export default function CategoryEditPage({ params: paramsProp }: { params: { id:
     
     const onSubmit = async (values: z.infer<typeof categorySchema>) => {
         if (!firestore) return;
-        setIsSubmitting(true);
         
         try {
             const categoryDocRef = doc(firestore, 'product_categories', id);
             updateDocumentNonBlocking(categoryDocRef, values);
             toast({ title: 'Category Updated', description: `Category "${values.name}" has been successfully updated.` });
+            form.reset(values); // Reset form to new values, making it not dirty
             router.push('/admin/categories');
         } catch (error) {
             console.error("Error updating category:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update the category.' });
-            setIsSubmitting(false);
         }
     };
 

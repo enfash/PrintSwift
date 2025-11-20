@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback, use, useMemo } from 'react';
@@ -25,6 +26,7 @@ import Link from 'next/link';
 import { Counter } from '@/components/ui/counter';
 import { Combobox } from '@/components/ui/combobox';
 import InvoiceGenerator from '@/components/admin/quotes/InvoiceGenerator';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 
 
 const lineItemOptionSchema = z.object({
@@ -87,6 +89,9 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
         depositPercentage: 0,
     }
   });
+
+  const { formState: { isDirty } } = form;
+  useUnsavedChangesWarning(isDirty);
   
     const uniqueProducts = useMemo(() => {
         if (!products) return [];
@@ -237,10 +242,10 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   const handleCustomerSelect = (customerId: string) => {
     const customer = customers?.find(c => c.id === customerId);
     if (customer) {
-        form.setValue('customerId', customer.id);
-        form.setValue('company', customer.company || '');
-        form.setValue('email', customer.email);
-        form.setValue('phone', customer.phone || '');
+        form.setValue('customerId', customer.id, { shouldDirty: true });
+        form.setValue('company', customer.company || '', { shouldDirty: true });
+        form.setValue('email', customer.email, { shouldDirty: true });
+        form.setValue('phone', customer.phone || '', { shouldDirty: true });
     }
   }
   
@@ -263,7 +268,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   const saveQuote = async (status: 'draft' | 'sent') => {
     if (!firestore) return;
 
-    form.setValue('status', status);
+    form.setValue('status', status, { shouldDirty: true });
     const quoteData = form.getValues();
     const finalData = {
       ...quoteData,
@@ -280,6 +285,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
         await updateDocumentNonBlocking(quoteDocRef, finalData);
         
         toast({ title: `Quote Updated`, description: `The quote has been successfully updated.` });
+        form.reset(quoteData); // Make form not dirty
         router.push('/admin/quotes');
     } catch (error) {
         console.error(`Error saving quote as ${status}:`, error);
@@ -293,6 +299,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
     try {
         await updateDocumentNonBlocking(quoteDocRef, { status: 'won', updatedAt: serverTimestamp() });
         toast({ title: 'Quote Converted!', description: 'The quote status has been updated to "won". Redirecting to orders.' });
+        form.reset({ ...form.getValues(), status: 'won' }); // Make form not dirty
         router.push('/admin/orders');
     } catch (error) {
         console.error('Error converting quote to order:', error);

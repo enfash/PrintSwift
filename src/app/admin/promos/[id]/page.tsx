@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
 import Link from 'next/link';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 
 const promoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -117,6 +118,9 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
         },
     });
 
+    const { formState: { isDirty, isSubmitting } } = form;
+    useUnsavedChangesWarning(isDirty);
+
     const watchedData = form.watch();
 
     useEffect(() => {
@@ -164,7 +168,7 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                form.setValue('imageUrl', downloadURL);
+                form.setValue('imageUrl', downloadURL, { shouldDirty: true });
                 setIsUploading(false);
                 toast({ title: 'Image Uploaded', description: 'Image is ready to be saved.' });
             }
@@ -179,6 +183,7 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
             await updateDocumentNonBlocking(promoDocRef, values);
             
             toast({ title: 'Promotion Updated', description: `The "${values.title}" promotion has been updated.` });
+            form.reset(values); // Make form not dirty
             router.push('/admin/promos');
 
         } catch (error) {
@@ -187,8 +192,6 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
         }
     };
     
-    const isSubmitting = form.formState.isSubmitting;
-
     if (isLoading) {
         return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
     }
@@ -297,5 +300,3 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
         </Form>
     );
 }
-
-    

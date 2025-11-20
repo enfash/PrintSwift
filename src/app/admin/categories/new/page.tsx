@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useState } from 'react';
+import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 
 const categorySchema = z.object({
   id: z.string().min(3, 'Slug/ID must be at least 3 characters. Use lowercase and dashes (e.g., "new-category").'),
@@ -27,7 +28,6 @@ export default function CategoryFormPage() {
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<z.infer<typeof categorySchema>>({
         resolver: zodResolver(categorySchema),
@@ -38,9 +38,11 @@ export default function CategoryFormPage() {
         },
     });
 
+    const { formState: { isDirty, isSubmitting } } = form;
+    useUnsavedChangesWarning(isDirty);
+
     const onSubmit = async (values: z.infer<typeof categorySchema>) => {
         if (!firestore) return;
-        setIsSubmitting(true);
         
         try {
             const categoryDocRef = doc(firestore, 'product_categories', values.id);
@@ -53,12 +55,12 @@ export default function CategoryFormPage() {
             addDocumentNonBlocking(collection(firestore, 'product_categories'), values)
 
             toast({ title: 'Category Created', description: `Category "${values.name}" has been successfully created.` });
+            form.reset();
             router.push('/admin/categories');
 
         } catch (error) {
             console.error("Error saving category:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not save the category.' });
-            setIsSubmitting(false);
         }
     };
 
