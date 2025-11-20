@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for automatically generating product marketing content.
@@ -19,7 +20,7 @@ export type ProductAutofillInput = z.infer<typeof ProductAutofillInputSchema>;
 
 const ProductAutofillOutputSchema = z.object({
   description: z.string().describe('A concise, one-sentence summary for a product card.'),
-  longDescription: z.string().describe('A detailed, HTML-formatted description for the product page.'),
+  longDescription: z.string().describe('A detailed, Markdown-formatted description for the product page.'),
   subcategory: z.string().describe("A descriptive subcategory, like 'Premium' or 'Eco-Friendly'."),
   seo: z.object({
     title: z.string().describe('An SEO-friendly title, under 60 characters.'),
@@ -48,7 +49,7 @@ Product Name: "{{productName}}"
 
 Generate the following fields:
 - description: A concise and appealing one-sentence summary for a product card.
-- longDescription: A detailed, paragraph-based description for the main product page. Use simple HTML for formatting, like "<p>" and "<ul>" tags. Highlight key features and benefits.
+- longDescription: A detailed, paragraph-based description for the main product page. Use Markdown for formatting (e.g., **bold**, *italics*, and lists with - or *).
 - subcategory: A descriptive subcategory, like 'Premium' or 'Eco-Friendly'.
 - seo.title: An SEO-friendly title, under 60 characters, including the product name and relevant keywords like "printing" or "Lagos".
 - seo.description: A compelling meta description, under 160 characters, that encourages clicks from search engine results.

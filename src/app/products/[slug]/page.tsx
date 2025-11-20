@@ -20,6 +20,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/context/cart-context';
 import { useRouter } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 async function getProductBySlug(firestore: any, slug: string) {
     if (!firestore || !slug) return null;
@@ -469,10 +471,10 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                       <TabsTrigger value="faq">FAQ</TabsTrigger>
                   </TabsList>
                   <TabsContent value="description" className="py-6 prose max-w-none">
-                      <div dangerouslySetInnerHTML={{ __html: product.description || '<p>No description provided.</p>' }} />
+                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.description || 'No description provided.'}</ReactMarkdown>
                   </TabsContent>
                   <TabsContent value="details" className="py-6 prose max-w-none">
-                      <div dangerouslySetInnerHTML={{ __html: product.longDescription || '<p>No details provided.</p>' }} />
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.longDescription || 'No details provided.'}</ReactMarkdown>
                   </TabsContent>
                   <TabsContent value="faq" className="py-6">
                       <FaqSection />
@@ -488,4 +490,3 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     </>
   );
 }
-
