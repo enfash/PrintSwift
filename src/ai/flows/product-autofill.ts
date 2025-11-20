@@ -48,13 +48,28 @@ The output MUST be a valid JSON object.
 Product Name: "{{productName}}"
 
 Generate the following fields:
-- description: A concise and appealing one-sentence summary for a product card.
-- longDescription: A detailed, paragraph-based description for the main product page. Use Markdown for formatting (e.g., **bold**, *italics*, and lists with - or *).
-- subcategory: A descriptive subcategory, like 'Premium' or 'Eco-Friendly'.
-- seo.title: An SEO-friendly title, under 60 characters, including the product name and relevant keywords like "printing" or "Lagos".
-- seo.description: A compelling meta description, under 160 characters, that encourages clicks from search engine results.
-- tags: An array of 5-7 relevant, lowercase, single-word or hyphenated-word tags for filtering and search (e.g., "business-cards", "matte-finish", "corporate-branding").
-- keywords: An array of 5-7 relevant, lowercase, single-word or hyphenated-word keywords for search.`,
+
+1.  **description**:
+    A concise, engaging 1-sentence summary suitable for a product card.
+
+2.  **longDescription**:
+    A premium, well-structured Markdown-formatted product description.
+    Follow this style:
+    - Start with a clean introduction paragraph.
+    - Add a "### Benefits" section.
+    - Add a "### Features" or "### What You Get" section (using bullet points).
+    - Use Markdown for emphasis (e.g., **bold**, _italics_).
+    - If relevant, include a well-formatted Markdown table summarizing specifications (e.g., sizes, materials, print sides).
+
+3.  **subcategory**: A descriptive subcategory, like 'Premium' or 'Eco-Friendly'.
+
+4.  **seo.title**: An SEO-friendly title, under 60 characters, including the product name and relevant keywords like "printing" or "Lagos".
+
+5.  **seo.description**: A compelling meta description, under 160 characters, that encourages clicks from search engine results.
+
+6.  **tags**: An array of 5-7 relevant, lowercase, single-word or hyphenated-word tags for filtering and search (e.g., "business-cards", "matte-finish", "corporate-branding").
+
+7.  **keywords**: An array of 5-7 relevant, lowercase, single-word or hyphenated-word keywords for search.`,
 });
 
 
