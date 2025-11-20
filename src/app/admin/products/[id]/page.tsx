@@ -270,28 +270,7 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                 updatedAt: serverTimestamp(),
             };
             
-            // This is a temporary solution to strip out undefined values before sending to Firestore
-            const cleanData = (obj: any): any => {
-              const newObj: any = {};
-              for (const key in obj) {
-                if (obj[key] !== undefined && obj[key] !== null) {
-                  if (Array.isArray(obj[key])) {
-                    newObj[key] = obj[key].map((item: any) =>
-                      (item && typeof item === 'object' && !('seconds' in item && 'nanoseconds' in item)) ? cleanData(item) : item
-                    );
-                  } else if (obj[key] && typeof obj[key] === 'object' && !('seconds' in obj[key] && 'nanoseconds' in obj[key])) { // Exclude Timestamps
-                    newObj[key] = cleanData(obj[key]);
-                  } else if (obj[key] !== undefined) {
-                    newObj[key] = obj[key];
-                  }
-                }
-              }
-              return newObj;
-            };
-            
-            const sanitizedData = cleanData(updateData);
-            
-            await updateDocumentNonBlocking(productDocRef, sanitizedData);
+            await updateDocumentNonBlocking(productDocRef, updateData);
             toast({ title: 'Product Updated', description: `${values.name} has been successfully updated.` });
             form.reset(values); // Make form not dirty
             router.push('/admin/products');
@@ -424,7 +403,7 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                                     render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Category</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select a category"} />
@@ -598,9 +577,9 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                                                             placeholder="Enter one value per line, e.g.,
 Value one
 Value two"
-                                                            defaultValue={field.value?.map(v => v.value).join('\n')}
+                                                            defaultValue={field.value?.map(v => v.value).join('\\n')}
                                                             onBlur={(e) => {
-                                                                const textValues = e.target.value.split('\n').filter(v => v.trim());
+                                                                const textValues = e.target.value.split('\\n').filter(v => v.trim());
                                                                 const newValues = textValues.map(tv => {
                                                                     const existing = field.value?.find(fv => fv.value === tv);
                                                                     return existing || { value: tv, cost: 0 };
@@ -776,12 +755,14 @@ Value two"
                                             <FormLabel>Keywords</FormLabel>
                                             <FormControl>
                                                 <Textarea 
-                                                    placeholder="Lagos business cards&#10;cheap flyers&#10;custom mugs Nigeria" 
+                                                    placeholder="Lagos business cards
+cheap flyers
+custom mugs Nigeria" 
                                                     onBlur={(e) => {
-                                                        const keywords = e.target.value.split('\n').map(kw => kw.trim()).filter(Boolean);
+                                                        const keywords = e.target.value.split('\\n').map(kw => kw.trim()).filter(Boolean);
                                                         field.onChange(keywords);
                                                     }}
-                                                    defaultValue={Array.isArray(field.value) ? field.value.join('\n') : ''}
+                                                    defaultValue={Array.isArray(field.value) ? field.value.join('\\n') : ''}
                                                 />
                                             </FormControl>
                                             <FormDescription>One high-priority search phrase per line.</FormDescription>
