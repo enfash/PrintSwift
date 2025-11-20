@@ -262,8 +262,11 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                 values.description
             );
 
+            // Create a clean data object, excluding fields that shouldn't be touched on update
+            const cleanData = { ...values };
+
             const updateData = { 
-                ...values,
+                ...cleanData,
                 searchTerms,
                 name_lower: values.name.toLowerCase(),
                 categoryName,
