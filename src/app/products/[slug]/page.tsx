@@ -487,8 +487,8 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                       <TabsTrigger id="details-tab" value="details">Product Details</TabsTrigger>
                       <TabsTrigger value="faq">FAQ</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="description" className="py-6 prose max-w-none">
-                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.longDescription || 'No description provided.'}</ReactMarkdown>
+                  <TabsContent value="description" className="py-6 prose max-w-none prose-p:text-muted-foreground">
+                       <p>{product.description || 'No description provided.'}</p>
                   </TabsContent>
                   <TabsContent value="details" className="py-6 prose max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.longDescription || 'No details provided.'}</ReactMarkdown>
