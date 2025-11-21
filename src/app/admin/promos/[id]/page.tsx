@@ -87,15 +87,15 @@ function LivePreview({ formData }: { formData: Partial<PromoFormValues> }) {
     )
 }
 
-export default function EditPromoPage({ params: paramsProp }: { params: { id: string } }) {
-    const params = use(paramsProp);
+export default function EditPromoPage({ params }: { params: { id: string } }) {
+    const { id } = use(params);
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
     const [isUploading, setIsUploading] = useState(false);
     
-    const promoRef = useMemoFirebase(() => firestore ? doc(firestore, 'promos', params.id) : null, [firestore, params.id]);
+    const promoRef = useMemoFirebase(() => firestore ? doc(firestore, 'promos', id) : null, [firestore, id]);
     const { data: promo, isLoading } = useDoc<any>(promoRef);
 
     const form = useForm<PromoFormValues>({
@@ -156,7 +156,7 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
             return;
         }
 
-        const path = `promos/${params.id}/${file.name}`;
+        const path = `promos/${id}/${file.name}`;
         const fileRef = storageRef(storage, path);
         const uploadTask = uploadBytesResumable(fileRef, file);
 
@@ -179,7 +179,7 @@ export default function EditPromoPage({ params: paramsProp }: { params: { id: st
         if (!firestore) return;
         
         try {
-            const promoDocRef = doc(firestore, 'promos', params.id);
+            const promoDocRef = doc(firestore, 'promos', id);
             await updateDocumentNonBlocking(promoDocRef, values);
             
             toast({ title: 'Promotion Updated', description: `The "${values.title}" promotion has been updated.` });

@@ -23,9 +23,8 @@ const categorySchema = z.object({
 });
 
 
-export default function CategoryEditPage({ params: paramsProp }: { params: { id: string } }) {
-    const params = use(paramsProp);
-    const id = params.id;
+export default function CategoryEditPage({ params }: { params: { id: string } }) {
+    const { id } = use(params);
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();

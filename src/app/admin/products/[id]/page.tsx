@@ -92,9 +92,8 @@ const productSchema = z.object({
   seo: seoSchema.optional(),
 });
 
-export default function ProductEditPage({ params: paramsProp }: { params: { id: string } }) {
-    const params = use(paramsProp);
-    const productId = params.id;
+export default function ProductEditPage({ params }: { params: { id: string } }) {
+    const { id: productId } = use(params);
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();
@@ -262,11 +261,8 @@ export default function ProductEditPage({ params: paramsProp }: { params: { id: 
                 values.description
             );
 
-            // Create a clean data object, excluding fields that shouldn't be touched on update
-            const cleanData = { ...values };
-
             const updateData = { 
-                ...cleanData,
+                ...values,
                 searchTerms,
                 name_lower: values.name.toLowerCase(),
                 categoryName,

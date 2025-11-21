@@ -62,8 +62,8 @@ const quoteSchema = z.object({
 
 export type QuoteFormValues = z.infer<typeof quoteSchema>;
 
-export default function EditQuotePage({ params: paramsProp }: { params: { id: string } }) {
-  const params = use(paramsProp);
+export default function EditQuotePage({ params }: { params: { id: string } }) {
+  const { id } = use(params);
   const { toast } = useToast();
   const firestore = useFirestore();
   const router = useRouter();
@@ -74,7 +74,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
   const customersRef = useMemoFirebase(() => firestore ? collection(firestore, 'customers') : null, [firestore]);
   const { data: customers, isLoading: isLoadingCustomers } = useCollection<any>(customersRef);
 
-  const quoteRef = useMemoFirebase(() => firestore ? doc(firestore, 'quotes', params.id) : null, [firestore, params.id]);
+  const quoteRef = useMemoFirebase(() => firestore ? doc(firestore, 'quotes', id) : null, [firestore, id]);
   const { data: quote, isLoading: isLoadingQuote } = useDoc<any>(quoteRef);
   
   const form = useForm<QuoteFormValues>({
@@ -281,7 +281,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
     }
 
     try {
-        const quoteDocRef = doc(firestore, 'quotes', params.id);
+        const quoteDocRef = doc(firestore, 'quotes', id);
         await updateDocumentNonBlocking(quoteDocRef, finalData);
         
         toast({ title: `Quote Updated`, description: `The quote has been successfully updated.` });
@@ -295,7 +295,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
 
   const handleConvertToOrder = async () => {
     if (!firestore) return;
-    const quoteDocRef = doc(firestore, 'quotes', params.id);
+    const quoteDocRef = doc(firestore, 'quotes', id);
     try {
         await updateDocumentNonBlocking(quoteDocRef, { status: 'won', updatedAt: serverTimestamp() });
         toast({ title: 'Quote Converted!', description: 'The quote status has been updated to "won". Redirecting to orders.' });
@@ -576,7 +576,7 @@ export default function EditQuotePage({ params: paramsProp }: { params: { id: st
                 <InvoiceGenerator 
                     quote={form.getValues()} 
                     summary={summary}
-                    fileName={`BOMedia-Quote-${params.id.substring(0,6)}.pdf`} 
+                    fileName={`BOMedia-Quote-${id.substring(0,6)}.pdf`} 
                 />
                 <Button type="button" onClick={handleConvertToOrder}>Convert to Order</Button>
                 <Button type="button" variant="ghost" className="text-muted-foreground" onClick={() => toast({ title: 'Coming Soon!', description: 'Archive functionality is not yet implemented.' })}>Archive</Button>

@@ -13,9 +13,8 @@ import { useEffect, useState, use } from 'react';
 import CustomerForm, { type CustomerFormValues } from '@/components/admin/customers/CustomerForm';
 import { updateCustomer } from '@/lib/firebase/customers';
 
-export default function CustomerEditPage({ params: paramsProp }: { params: { id: string } }) {
-    const params = use(paramsProp);
-    const id = params.id;
+export default function CustomerEditPage({ params }: { params: { id: string } }) {
+    const { id } = use(params);
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();

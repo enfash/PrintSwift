@@ -137,11 +137,10 @@ function ProductJsonLd({ product, price }: { product: any, price: number | null 
     );
 }
 
-export default function ProductDetailPage({ params: paramsProp }: { params: { slug: string } }) {
-  const params = use(paramsProp);
+export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const { slug } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const slug = params.slug;
   const firestore = useFirestore();
   const { toast } = useToast();
   const { addToCart } = useCart();

@@ -33,8 +33,8 @@ const testimonialSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
-export default function EditTestimonialPage({ params: paramsProp }: { params: { id: string } }) {
-    const params = use(paramsProp);
+export default function EditTestimonialPage({ params }: { params: { id: string } }) {
+    const { id } = use(params);
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();
@@ -42,7 +42,7 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
     const [isUploading, setIsUploading] = useState(false);
     const [hoverRating, setHoverRating] = useState(0);
 
-    const testimonialRef = useMemoFirebase(() => firestore ? doc(firestore, 'testimonials', params.id) : null, [firestore, params.id]);
+    const testimonialRef = useMemoFirebase(() => firestore ? doc(firestore, 'testimonials', id) : null, [firestore, id]);
     const { data: testimonial, isLoading } = useDoc<z.infer<typeof testimonialSchema>>(testimonialRef);
 
     const form = useForm<z.infer<typeof testimonialSchema>>({
@@ -78,7 +78,7 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
         if (!firestore) return;
 
         try {
-            const testimonialDocRef = doc(firestore, 'testimonials', params.id);
+            const testimonialDocRef = doc(firestore, 'testimonials', id);
             await updateDocumentNonBlocking(testimonialDocRef, values);
             
             toast({ title: 'Testimonial Updated', description: `The testimonial has been successfully updated.` });
@@ -104,7 +104,7 @@ export default function EditTestimonialPage({ params: paramsProp }: { params: { 
             return;
         }
 
-        const path = `testimonials/${params.id}/${file.name}`;
+        const path = `testimonials/${id}/${file.name}`;
         const fileRef = storageRef(storage, path);
         const uploadTask = uploadBytesResumable(fileRef, file);
 
