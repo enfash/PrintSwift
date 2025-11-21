@@ -19,6 +19,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
+import { cn } from '@/lib/utils';
 
 function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
@@ -64,6 +65,41 @@ const FilterSkeleton = () => (
         ))}
     </div>
 );
+
+const TiltCard = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+    const cardRef = React.useRef<HTMLDivElement>(null);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current) return;
+        const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+        const x = e.clientX - left - width / 2;
+        const y = e.clientY - top - height / 2;
+        
+        const rotateX = (y / height) * -20; // Tilt intensity
+        const rotateY = (x / width) * 20;
+
+        cardRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
+        cardRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
+    };
+
+    const handleMouseLeave = () => {
+        if (cardRef.current) {
+            cardRef.current.style.setProperty('--rotate-x', '0deg');
+            cardRef.current.style.setProperty('--rotate-y', '0deg');
+        }
+    };
+
+    return (
+        <div 
+            ref={cardRef} 
+            className={cn('tilt-card', className)} 
+            onMouseMove={handleMouseMove} 
+            onMouseLeave={handleMouseLeave}
+        >
+            {children}
+        </div>
+    );
+};
 
 
 function ProductsComponent() {
@@ -277,34 +313,37 @@ function ProductsComponent() {
                                 const mainImageUrl = rawUrl || `https://placehold.co/600x400/e2e8f0/e2e8f0`;
 
                                 return (
-                                    <Link key={product.id} href={`/products/${product.slug}`} className="block">
-                                        <Card className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full flex flex-col">
-                                            <div className="overflow-hidden">
-                                                <div className="aspect-square relative">
-                                                    <Image
-                                                        src={mainImageUrl}
-                                                        alt={product.name}
-                                                        fill
-                                                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                                                        sizes="(max-width: 640px) 50vw, (max-width: 1280px) 50vw, 33vw"
-                                                    />
+                                    <TiltCard key={product.id}>
+                                        <Link href={`/products/${product.slug}`} className="block h-full">
+                                            <Card className="overflow-hidden group transition-shadow duration-300 shadow-md hover:shadow-2xl h-full flex flex-col">
+                                                <div className="overflow-hidden">
+                                                    <div className="aspect-square relative">
+                                                        <Image
+                                                            src={mainImageUrl}
+                                                            alt={product.name}
+                                                            fill
+                                                            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                                            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <CardContent className="p-4 flex-grow flex flex-col">
-                                                <h3 className="font-semibold text-lg truncate">{product.name}</h3>
-                                                <p className="text-sm text-muted-foreground flex-grow">{product.categoryName || categories?.find(c => c.id === product.categoryId)?.name}</p>
-                                                {startingPrice !== null && !isNaN(startingPrice) ? (
-                                                     <p className="font-bold text-lg mt-2">
-                                                        Starts at ₦{Math.ceil(startingPrice).toLocaleString()}
-                                                     </p>
-                                                ) : (
-                                                     <p className="font-bold text-lg mt-2 text-muted-foreground">
-                                                        View Pricing
-                                                     </p>
-                                                )}
-                                            </CardContent>
-                                        </Card>
-                                    </Link>
+                                                <CardContent className="p-4 flex-grow flex flex-col">
+                                                    <h3 className="font-semibold text-lg truncate">{product.name}</h3>
+                                                    <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                                                    <div className="flex-grow" />
+                                                    {startingPrice !== null && !isNaN(startingPrice) ? (
+                                                        <p className="font-bold text-lg mt-2">
+                                                            Starts at ₦{Math.ceil(startingPrice).toLocaleString()}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="font-bold text-lg mt-2 text-primary">
+                                                            View Pricing
+                                                        </p>
+                                                    )}
+                                                </CardContent>
+                                            </Card>
+                                        </Link>
+                                    </TiltCard>
                                 );
                             })}
                         </div>

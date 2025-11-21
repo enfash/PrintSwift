@@ -5,7 +5,7 @@ import { notFound, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LoaderCircle, UploadCloud, Star, ShoppingCart } from 'lucide-react';
+import { LoaderCircle, UploadCloud, Star, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, limit, doc } from 'firebase/firestore';
@@ -280,6 +280,15 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
     router.push(`/quote?product=${encodeURIComponent(product.name)}`);
   };
 
+  const handlePrevImage = () => {
+    setSelectedImage(prev => (prev === 0 ? product.imageUrls.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setSelectedImage(prev => (prev === product.imageUrls.length - 1 ? 0 : prev + 1));
+  };
+
+
   const renderDetailField = (detail: any) => {
     switch (detail.type) {
         case 'dropdown':
@@ -358,7 +367,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
           <div className="grid md:grid-cols-2 gap-8 md:gap-12">
             {/* Product Image Gallery */}
             <div className="space-y-4 md:sticky top-24 self-start">
-              <div className="aspect-square relative rounded-lg border overflow-hidden">
+              <div className="aspect-square relative rounded-lg border overflow-hidden group">
                   <Image
                       src={mainImageUrl}
                       alt={product.name}
@@ -367,6 +376,14 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                       sizes="(max-width: 768px) 100vw, 50vw"
                       priority
                   />
+                  <div className="absolute inset-0 flex items-center justify-between px-2">
+                    <Button variant="ghost" size="icon" onClick={handlePrevImage} className="bg-background/50 hover:bg-background/80">
+                      <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={handleNextImage} className="bg-background/50 hover:bg-background/80">
+                      <ChevronRight className="h-6 w-6" />
+                    </Button>
+                  </div>
               </div>
               <div className="grid grid-cols-5 gap-2">
                   {product.imageUrls?.map((url: string, index: number) => {
@@ -471,7 +488,7 @@ export default function ProductDetailPage({ params: paramsProp }: { params: { sl
                       <TabsTrigger value="faq">FAQ</TabsTrigger>
                   </TabsList>
                   <TabsContent value="description" className="py-6 prose max-w-none">
-                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.description || 'No description provided.'}</ReactMarkdown>
+                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.longDescription || 'No description provided.'}</ReactMarkdown>
                   </TabsContent>
                   <TabsContent value="details" className="py-6 prose max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.longDescription || 'No details provided.'}</ReactMarkdown>

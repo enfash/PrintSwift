@@ -21,6 +21,7 @@ import HowItWorks from '@/components/home/HowItWorks';
 import WhyChooseUs from '@/components/home/WhyChooseUs';
 import TestimonialsCarousel from '@/components/home/TestimonialsCarousel';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
 
 const categoryIcons: { [key: string]: React.ReactElement } = {
@@ -50,6 +51,41 @@ const ProductSkeleton = () => (
         </CardContent>
     </Card>
 );
+
+const TiltCard = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+    const cardRef = React.useRef<HTMLDivElement>(null);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current) return;
+        const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+        const x = e.clientX - left - width / 2;
+        const y = e.clientY - top - height / 2;
+        
+        const rotateX = (y / height) * -20; // Tilt intensity
+        const rotateY = (x / width) * 20;
+
+        cardRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
+        cardRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
+    };
+
+    const handleMouseLeave = () => {
+        if (cardRef.current) {
+            cardRef.current.style.setProperty('--rotate-x', '0deg');
+            cardRef.current.style.setProperty('--rotate-y', '0deg');
+        }
+    };
+
+    return (
+        <div 
+            ref={cardRef} 
+            className={cn('tilt-card', className)} 
+            onMouseMove={handleMouseMove} 
+            onMouseLeave={handleMouseLeave}
+        >
+            {children}
+        </div>
+    );
+};
 
 
 export default function Home() {
@@ -142,25 +178,27 @@ export default function Home() {
                     const mainImageUrl = rawUrl || `https://placehold.co/600x400/e2e8f0/e2e8f0`;
 
                     return (
-                    <Link key={product.id} href={`/products/${product.slug}`}>
-                        <Card className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
-                        <div className="overflow-hidden">
-                            <div className="aspect-square relative">
-                                <Image
-                                src={mainImageUrl}
-                                alt={product.name}
-                                fill
-                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-                                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                                data-ai-hint="product image"
-                                />
+                    <TiltCard key={product.id}>
+                        <Link href={`/products/${product.slug}`}>
+                            <Card className="overflow-hidden group transition-all duration-300 shadow-md h-full">
+                            <div className="overflow-hidden">
+                                <div className="aspect-square relative">
+                                    <Image
+                                    src={mainImageUrl}
+                                    alt={product.name}
+                                    fill
+                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
+                                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                    data-ai-hint="product image"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <CardContent className="p-4">
-                            <h3 className="font-semibold text-lg">{product.name}</h3>
-                        </CardContent>
-                        </Card>
-                    </Link>
+                            <CardContent className="p-4">
+                                <h3 className="font-semibold text-lg">{product.name}</h3>
+                            </CardContent>
+                            </Card>
+                        </Link>
+                    </TiltCard>
                     );
                 })
             )}
