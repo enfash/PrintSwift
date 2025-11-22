@@ -110,8 +110,6 @@ function ProductsComponent() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [sortOption, setSortOption] = useState('popularity-desc');
-    const [searchResults, setSearchResults] = useState<any[] | null>(null);
-    const [isSearching, setIsSearching] = useState(false);
     
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -127,42 +125,6 @@ function ProductsComponent() {
         const newSearch = searchParams.get('search');
         setSearchTerm(newSearch || '');
     }, [searchParams]);
-    
-    useEffect(() => {
-        // If there's no search term and no categories selected, we should show all products.
-        // The API endpoint isn't designed for fetching all products, so we reset searchResults to null
-        // to let the client-side logic take over.
-        if (debouncedSearchTerm === '' && selectedCategories.length === 0) {
-            setSearchResults(null);
-            setIsSearching(false);
-            return;
-        }
-
-        const performSearch = async () => {
-            setIsSearching(true);
-            const params = new URLSearchParams();
-            if (debouncedSearchTerm) {
-                params.set('q', debouncedSearchTerm);
-            }
-            if (selectedCategories.length > 0) {
-                params.set('category', selectedCategories.join(','));
-            }
-            
-            try {
-                const response = await fetch(`/api/search?${params.toString()}`);
-                const data = await response.json();
-                setSearchResults(data.results || []);
-            } catch (error) {
-                console.error("Search API failed:", error);
-                setSearchResults([]); // On error, show no results
-            } finally {
-                setIsSearching(false);
-            }
-        };
-
-        performSearch();
-    }, [debouncedSearchTerm, selectedCategories]);
-
 
     const updateURLParams = (newParams: Record<string, string | undefined>) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -188,16 +150,30 @@ function ProductsComponent() {
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newSearchTerm = e.target.value;
         setSearchTerm(newSearchTerm);
-        updateURLParams({ search: newSearchTerm || undefined });
+        updateURLParams({ search: newSearchTerm || undefined, category: selectedCategories.join(',') || undefined });
     }
 
-    const sortedProducts = useMemo(() => {
-        const productsToDisplay = searchResults === null ? allProducts : searchResults;
-        if (!productsToDisplay) return [];
+    const filteredAndSortedProducts = useMemo(() => {
+        if (!allProducts) return [];
 
-        const sorted = [...productsToDisplay];
-        
-        sorted.sort((a, b) => {
+        let filtered = [...allProducts];
+
+        // Filter by selected categories
+        if (selectedCategories.length > 0) {
+            filtered = filtered.filter(p => p.categoryId && selectedCategories.includes(p.categoryId));
+        }
+
+        // Filter by search term
+        if (debouncedSearchTerm) {
+            const lowercasedTerm = debouncedSearchTerm.toLowerCase();
+            filtered = filtered.filter(p => 
+                (p.searchTerms && p.searchTerms.some((st: string) => st.includes(lowercasedTerm))) ||
+                p.name?.toLowerCase().includes(lowercasedTerm)
+            );
+        }
+
+        // Sort the filtered products
+        filtered.sort((a, b) => {
             const [key, order] = sortOption.split('-');
             if (key === 'price') {
                  const priceA = calculateStartingPrice(a) || (order === 'asc' ? Infinity : -Infinity);
@@ -207,16 +183,14 @@ function ProductsComponent() {
             if (key === 'name') {
                 return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
             }
-            // Default to popularity (featured first, then by score if available)
-            const scoreA = a._score ?? (a.featured ? 1 : 0);
-            const scoreB = b._score ?? (b.featured ? 1 : 0);
-            if(scoreA !== scoreB) return scoreB - scoreA;
-
-            return 0;
+            // Default to popularity (featured first)
+            const featuredA = a.featured ? 1 : 0;
+            const featuredB = b.featured ? 1 : 0;
+            return featuredB - featuredA;
         });
 
-        return sorted;
-    }, [sortOption, allProducts, searchResults]);
+        return filtered;
+    }, [allProducts, selectedCategories, debouncedSearchTerm, sortOption]);
 
     const isLoading = isLoadingCategories || isLoadingProducts;
     
@@ -280,7 +254,7 @@ function ProductsComponent() {
                 <main className="lg:col-span-3">
                     <div className="flex justify-between items-center mb-6">
                         <p className="text-sm text-muted-foreground">
-                            {(isLoading || isSearching) ? 'Loading...' : `Showing ${sortedProducts.length} products`}
+                            {isLoading ? 'Loading...' : `Showing ${filteredAndSortedProducts.length} products`}
                         </p>
                         <div className="flex items-center gap-2">
                             <Label htmlFor="sort-by" className="text-sm">Sort by:</Label>
@@ -299,13 +273,13 @@ function ProductsComponent() {
                         </div>
                     </div>
                     
-                    {(isLoading || isSearching) ? (
+                    {isLoading ? (
                          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                             {Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
                          </div>
-                    ) : sortedProducts.length > 0 ? (
+                    ) : filteredAndSortedProducts.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-                            {sortedProducts.map((product) => {
+                            {filteredAndSortedProducts.map((product) => {
                                 const startingPrice = calculateStartingPrice(product);
                                 const rawUrl = product.imageUrls && product.imageUrls.length > 0
                                     ? product.imageUrls[product.mainImageIndex || 0]
