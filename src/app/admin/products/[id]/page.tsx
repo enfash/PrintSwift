@@ -27,8 +27,7 @@ import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebas
 import { cn, getSafeImageUrl, generateSearchTerms } from '@/lib/utils';
 import { productAutofill } from '@/ai/flows/product-autofill';
 import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 const detailValueSchema = z.object({
   value: z.string().min(1, "Value is required."),
@@ -90,10 +89,11 @@ const productSchema = z.object({
   details: z.array(productDetailOptionSchema).optional(),
   pricing: pricingSchema.optional(),
   seo: seoSchema.optional(),
+  relatedProductIds: z.array(z.string()).optional(),
 });
 
 export default function ProductEditPage({ params }: { params: { id: string } }) {
-    const { id: productId } = use(params);
+    const { id: productId } = React.use(params);
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();
@@ -103,6 +103,9 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
     
     const productRef = useMemoFirebase(() => firestore ? doc(firestore, 'products', productId) : null, [firestore, productId]);
     const { data: product, isLoading: isLoadingProduct } = useDoc<z.infer<typeof productSchema> & { id: string }>(productRef);
+
+    const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
+    const { data: allProducts, isLoading: isLoadingAllProducts } = useCollection<any>(productsRef);
 
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
     const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
@@ -130,6 +133,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
             keywords: [],
             searchTerms: [],
             seo: { title: '', description: '', keywords: [] },
+            relatedProductIds: [],
         }
     });
 
@@ -241,6 +245,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                     description: product.seo?.description || '',
                     keywords: product.seo?.keywords || [],
                 },
+                relatedProductIds: product.relatedProductIds || [],
             });
         }
     }, [product, form]);
@@ -331,13 +336,15 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
     const isSubmitting = form.formState.isSubmitting;
     const currentTiers = form.watch('pricing.tiers');
 
-    if (isLoadingProduct) {
+    if (isLoadingProduct || isLoadingAllProducts) {
         return <div className="flex h-96 items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
     }
     
     if (!product) {
         return <div className="flex h-96 items-center justify-center"><p>Product not found.</p></div>;
     }
+
+    const productOptions = allProducts?.filter(p => p.id !== productId).map(p => ({ value: p.id, label: p.name })) || [];
 
     return (
         <Form {...form}>
@@ -358,7 +365,7 @@ export default function ProductEditPage({ params }: { params: { id: string } }) 
                         <TabsTrigger value="general">General</TabsTrigger>
                         <TabsTrigger value="details">Details & Media</TabsTrigger>
                         <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                        <TabsTrigger value="seo">SEO &amp; Search</TabsTrigger>
+                        <TabsTrigger value="seo">SEO & Relations</TabsTrigger>
                         <TabsTrigger value="publishing">Publishing</TabsTrigger>
                     </TabsList>
                     <TabsContent value="general" className="pt-6">
@@ -798,6 +805,33 @@ custom mugs Nigeria"
                                     )}
                                 />
                              </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Related Products</CardTitle>
+                                <CardDescription>Select products to show in the "You might also like" section.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <FormField
+                                    control={form.control}
+                                    name="relatedProductIds"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Related Products</FormLabel>
+                                            <FormControl>
+                                                <MultiSelect
+                                                    options={productOptions}
+                                                    selected={field.value || []}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select related products..."
+                                                    className="w-full"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
                         </Card>
                     </TabsContent>
                     <TabsContent value="publishing" className="pt-6">

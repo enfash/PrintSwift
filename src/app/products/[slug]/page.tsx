@@ -22,6 +22,7 @@ import { useCart } from '@/context/cart-context';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import RelatedProductsCarousel from '@/components/related-products-carousel';
 
 async function getProductBySlug(firestore: any, slug: string) {
     if (!firestore || !slug) return null;
@@ -138,7 +139,7 @@ function ProductJsonLd({ product, price }: { product: any, price: number | null 
 }
 
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const { slug } = use(params);
+  const { slug } = React.use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const firestore = useFirestore();
@@ -371,11 +372,11 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                       src={mainImageUrl}
                       alt={product.name}
                       fill
-                      className="object-cover"
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
                       sizes="(max-width: 768px) 100vw, 50vw"
                       priority
                   />
-                  <div className="absolute inset-0 flex items-center justify-between px-2">
+                  <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <Button variant="ghost" size="icon" onClick={handlePrevImage} className="bg-background/50 hover:bg-background/80">
                       <ChevronLeft className="h-6 w-6" />
                     </Button>
@@ -478,29 +479,25 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
               </div>
             </div>
           </div>
-          <div className="mt-16 grid grid-cols-1 lg:grid-cols-10 gap-8">
-            <div className="lg:col-span-7">
-              <Tabs defaultValue="description">
-                  <TabsList>
-                      <TabsTrigger value="description">Description</TabsTrigger>
-                      <TabsTrigger id="details-tab" value="details">Product Details</TabsTrigger>
-                      <TabsTrigger value="faq">FAQ</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="description" className="py-6 prose max-w-none prose-p:text-muted-foreground">
-                       <p>{product.description || 'No description provided.'}</p>
-                  </TabsContent>
-                  <TabsContent value="details" className="py-6 prose max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.longDescription || 'No details provided.'}</ReactMarkdown>
-                  </TabsContent>
-                  <TabsContent value="faq" className="py-6">
-                      <FaqSection />
-                  </TabsContent>
-              </Tabs>
-            </div>
-            <div className="lg:col-span-3">
-                {/* This is the 35% placeholder column. Content will be added later. */}
-            </div>
+          <div className="mt-16">
+            <Tabs defaultValue="description">
+                <TabsList>
+                    <TabsTrigger value="description">Description</TabsTrigger>
+                    <TabsTrigger id="details-tab" value="details">Product Details</TabsTrigger>
+                    <TabsTrigger value="faq">FAQ</TabsTrigger>
+                </TabsList>
+                <TabsContent value="description" className="py-6 prose max-w-none prose-p:text-muted-foreground">
+                     <p>{product.description || 'No description provided.'}</p>
+                </TabsContent>
+                <TabsContent value="details" className="py-6 prose max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{product.longDescription || 'No details provided.'}</ReactMarkdown>
+                </TabsContent>
+                <TabsContent value="faq" className="py-6">
+                    <FaqSection />
+                </TabsContent>
+            </Tabs>
           </div>
+          <RelatedProductsCarousel currentProduct={product} />
         </div>
       </div>
     </>
