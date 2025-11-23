@@ -22,6 +22,7 @@ import WhyChooseUs from '@/components/home/WhyChooseUs';
 import TestimonialsCarousel from '@/components/home/TestimonialsCarousel';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { FlipWords } from '@/components/ui/flip-words';
 
 
 const categoryIcons: { [key: string]: React.ReactElement } = {
@@ -33,6 +34,19 @@ const categoryIcons: { [key: string]: React.ReactElement } = {
   'Signage & Display Systems': <MonitorPlay className="w-8 h-8" />,
   'Default': <Briefcase className="w-8 h-8" />
 };
+
+const words = [
+  'Delivered Fast',
+  'Printed to Perfection',
+  'Ready When You Need It',
+  'Built for Your Business',
+  'Designed to Stand Out',
+  'Crafted with Precision',
+  'Made for Small Businesses',
+  'Shipped Nationwide',
+  'Engineered for Impact',
+  'Quality You Can Trust',
+];
 
 const CategorySkeleton = () => (
     <div className="flex-shrink-0 w-36 sm:w-auto">
@@ -112,7 +126,14 @@ export default function Home() {
           />
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-primary-foreground">
           <h1 className="text-4xl md:text-[62px] font-extrabold font-heading tracking-tight leading-tight">
-            Affordable Custom Branding, Delivered Fast
+            Affordable Custom Branding,{' '}
+            <FlipWords
+                words={words}
+                interval={5000}
+                letterDelay={0.04}
+                wordDelay={0.22}
+                className="text-accent"
+            />
           </h1>
           <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto text-primary-foreground/80">
             Transform your business with premium custom printing solutions. From branded packaging to corporate gifts,
@@ -180,7 +201,7 @@ export default function Home() {
                     return (
                     <TiltCard key={product.id}>
                         <Link href={`/products/${product.slug}`}>
-                            <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full border-none shadow-none">
+                            <Card className="overflow-hidden group transition-shadow duration-300 h-full border-none">
                             <div className="overflow-hidden">
                                 <div className="aspect-square relative">
                                     <Image
