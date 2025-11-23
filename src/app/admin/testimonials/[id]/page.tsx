@@ -171,7 +171,7 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Company</FormLabel>
-                                            <FormControl><Input placeholder="e.g., Lagos Tech Hub" {...field} /></FormControl>
+                                            <FormControl><Input placeholder="e.g., Lagos Tech Hub" {...field} value={field.value || ''} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}

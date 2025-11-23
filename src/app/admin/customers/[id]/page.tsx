@@ -27,7 +27,12 @@ export default function CustomerEditPage({ params }: { params: { id: string } })
 
     useEffect(() => {
         if (customer) {
-            form.reset(customer);
+            form.reset({
+                ...customer,
+                company: customer.company || '',
+                notes: customer.notes || '',
+                phone: customer.phone || ''
+            });
         }
     }, [customer, form]);
     
