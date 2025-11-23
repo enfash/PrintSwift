@@ -139,7 +139,7 @@ function ProductJsonLd({ product, price }: { product: any, price: number | null 
 }
 
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const { slug } = React.use(params);
+  const { slug } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const firestore = useFirestore();

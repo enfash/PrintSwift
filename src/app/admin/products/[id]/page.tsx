@@ -93,7 +93,7 @@ const productSchema = z.object({
 });
 
 export default function ProductEditPage({ params }: { params: { id: string } }) {
-    const { id: productId } = React.use(params);
+    const { id: productId } = use(params);
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();
