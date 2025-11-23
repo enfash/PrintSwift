@@ -301,7 +301,7 @@ function ProductsComponent() {
                                 return (
                                     <TiltCard key={product.id}>
                                         <Link href={`/products/${product.slug}`} className="block h-full">
-                                            <Card className="overflow-hidden group transition-shadow duration-300 shadow-md hover:shadow-2xl h-full flex flex-col">
+                                            <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col">
                                                 <div className="overflow-hidden">
                                                     <div className="aspect-square relative">
                                                         <Image
