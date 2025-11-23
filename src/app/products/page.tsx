@@ -48,21 +48,31 @@ const ProductCardSkeleton = () => (
         <Skeleton className="aspect-square w-full" />
         <CardContent className="p-4 flex-grow flex flex-col">
             <Skeleton className="h-5 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2 mb-4" />
+            <Skeleton className="h-4 w-full mb-1" />
+            <Skeleton className="h-4 w-2/3 mb-4" />
             <div className="flex-grow" />
-            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-6 w-1/3 mt-auto" />
         </CardContent>
     </Card>
 );
 
 const FilterSkeleton = () => (
-    <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center space-x-2">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-3/4" />
+    <div className="space-y-6">
+        <div>
+            <Skeleton className="h-6 w-20 mb-3" />
+            <Skeleton className="h-10 w-full" />
+        </div>
+        <div>
+            <Skeleton className="h-6 w-24 mb-3" />
+            <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center space-x-2">
+                        <Skeleton className="h-4 w-4" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </div>
+                ))}
             </div>
-        ))}
+        </div>
     </div>
 );
 
@@ -217,35 +227,37 @@ function ProductsComponent() {
                             <CardTitle>Filters</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div>
-                                <h3 className="font-semibold mb-3">Search</h3>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input 
-                                        placeholder="Search products..."
-                                        className="pl-9"
-                                        value={searchTerm}
-                                        onChange={handleSearchChange}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold mb-3">Category</h3>
-                                {isLoadingCategories ? <FilterSkeleton /> : (
-                                    <div className="space-y-3">
-                                        {categories?.map(category => (
-                                            <div key={category.id} className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id={category.id}
-                                                    onCheckedChange={(checked) => handleCategoryChange(category.id, checked)}
-                                                    checked={selectedCategories.includes(category.id)}
-                                                />
-                                                <Label htmlFor={category.id} className="font-normal cursor-pointer">{category.name}</Label>
-                                            </div>
-                                        ))}
+                            {isLoading ? <FilterSkeleton /> : (
+                                <>
+                                    <div>
+                                        <h3 className="font-semibold mb-3">Search</h3>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                placeholder="Search products..."
+                                                className="pl-9"
+                                                value={searchTerm}
+                                                onChange={handleSearchChange}
+                                            />
+                                        </div>
                                     </div>
-                                )}
-                            </div>
+                                    <div>
+                                        <h3 className="font-semibold mb-3">Category</h3>
+                                        <div className="space-y-3">
+                                            {categories?.map(category => (
+                                                <div key={category.id} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={category.id}
+                                                        onCheckedChange={(checked) => handleCategoryChange(category.id, checked)}
+                                                        checked={selectedCategories.includes(category.id)}
+                                                    />
+                                                    <Label htmlFor={category.id} className="font-normal cursor-pointer">{category.name}</Label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
                 </aside>

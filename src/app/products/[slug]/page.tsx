@@ -63,9 +63,9 @@ function FaqSection() {
 
 const ProductDetailSkeleton = () => (
     <div className="container mx-auto max-w-7xl px-4 py-8 md:py-16">
-        <Skeleton className="h-4 w-1/3 mb-4" />
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-            <div className="space-y-4">
+        <Skeleton className="h-6 w-1/3 mb-4" />
+        <div className="grid md:grid-cols-5 gap-8 md:gap-12">
+            <div className="md:col-span-3 space-y-4">
                 <Skeleton className="aspect-square w-full rounded-lg" />
                 <div className="grid grid-cols-5 gap-2">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -73,7 +73,7 @@ const ProductDetailSkeleton = () => (
                     ))}
                 </div>
             </div>
-            <div className="space-y-6">
+            <div className="md:col-span-2 space-y-6">
                 <Skeleton className="h-10 w-3/4" />
                 <Skeleton className="h-5 w-1/4" />
                 <div className="space-y-6 pt-6">

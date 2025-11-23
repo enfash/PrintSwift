@@ -35,19 +35,19 @@ const categoryIcons: { [key: string]: React.ReactElement } = {
 };
 
 const CategorySkeleton = () => (
-    <Card className="text-center p-6 h-full flex-shrink-0 w-36 sm:w-auto">
-        <div className="flex justify-center items-center mb-4">
-            <Skeleton className="h-8 w-8 rounded-full" />
-        </div>
-        <Skeleton className="h-4 w-2/3 mx-auto" />
-    </Card>
+    <div className="flex-shrink-0 w-36 sm:w-auto">
+        <Card className="text-center p-6 h-full flex flex-col items-center justify-center">
+            <Skeleton className="h-10 w-10 rounded-full mb-4" />
+            <Skeleton className="h-4 w-20" />
+        </Card>
+    </div>
 );
 
 const ProductSkeleton = () => (
     <Card className="overflow-hidden group h-full">
         <Skeleton className="aspect-square w-full" />
         <CardContent className="p-4">
-            <Skeleton className="h-5 w-3/4 mb-2" />
+            <Skeleton className="h-5 w-3/4" />
         </CardContent>
     </Card>
 );
