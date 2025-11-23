@@ -364,16 +364,16 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                   <span className="text-foreground">{product.name}</span>
               </div>
           )}
-          <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+          <div className="grid md:grid-cols-5 gap-8 md:gap-12">
             {/* Product Image Gallery */}
-            <div className="space-y-4 md:sticky top-24 self-start md:col-span-2">
+            <div className="space-y-4 md:sticky top-24 self-start md:col-span-3">
               <div className="aspect-square relative rounded-lg border overflow-hidden group">
                   <Image
                       src={mainImageUrl}
                       alt={product.name}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
-                      sizes="(max-width: 768px) 100vw, 66vw"
+                      sizes="(max-width: 768px) 100vw, 60vw"
                       priority
                   />
                   <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -411,7 +411,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             </div>
 
             {/* Product Details & Customization */}
-            <div className="space-y-6 md:col-span-1">
+            <div className="space-y-6 md:col-span-2">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold font-heading">{product.name}</h1>
                 <div className="mt-3 flex items-center gap-2">
