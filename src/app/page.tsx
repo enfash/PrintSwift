@@ -180,7 +180,7 @@ export default function Home() {
                     return (
                     <TiltCard key={product.id}>
                         <Link href={`/products/${product.slug}`}>
-                            <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full">
+                            <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full border-none shadow-none">
                             <div className="overflow-hidden">
                                 <div className="aspect-square relative">
                                     <Image
