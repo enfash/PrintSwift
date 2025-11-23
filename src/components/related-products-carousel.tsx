@@ -5,7 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { collection, query, where, limit, documentId } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,7 +31,8 @@ const RelatedProductsCarousel = ({ currentProduct }: { currentProduct: any }) =>
     // Query for related products if IDs are specified
     const relatedProductsQuery = useMemoFirebase(() => {
         if (firestore && relatedIds.length > 0) {
-            return query(collection(firestore, 'products'), where('id', 'in', relatedIds));
+            // Corrected query using documentId()
+            return query(collection(firestore, 'products'), where(documentId(), 'in', relatedIds));
         }
         return null;
     }, [firestore, relatedIds]);
