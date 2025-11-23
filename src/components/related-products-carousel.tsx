@@ -65,7 +65,7 @@ const RelatedProductsCarousel = ({ currentProduct }: { currentProduct: any }) =>
                 <Carousel opts={{ align: 'start', loop: true }}>
                     <CarouselContent>
                         {Array.from({ length: 4 }).map((_, index) => (
-                            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/4">
+                            <CarouselItem key={index} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
                                 <ProductCardSkeleton />
                             </CarouselItem>
                         ))}
@@ -87,9 +87,9 @@ const RelatedProductsCarousel = ({ currentProduct }: { currentProduct: any }) =>
                     {productsToShow.map((product) => {
                         const imageUrl = getSafeImageUrl(product.imageUrls?.[product.mainImageIndex || 0]);
                         return (
-                            <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/4">
+                            <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
                                 <Link href={`/products/${product.slug}`}>
-                                    <Card className="overflow-hidden group transition-shadow duration-300 shadow-md hover:shadow-xl h-full">
+                                    <Card className="overflow-hidden group transition-shadow duration-300 shadow-none hover:shadow-xl h-full border-none">
                                         <div className="aspect-square relative overflow-hidden">
                                             <Image
                                                 src={imageUrl}
