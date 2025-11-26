@@ -22,6 +22,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
@@ -59,41 +60,11 @@ const ProductCardSkeleton = () => (
 );
 
 const FilterSkeleton = () => (
-    <div className="space-y-6">
-        <div>
-            <Skeleton className="h-6 w-20 mb-3" />
-            <Skeleton className="h-10 w-full" />
-        </div>
-        <div>
-            <Skeleton className="h-6 w-24 mb-3" />
-            <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center space-x-2">
-                        <Skeleton className="h-4 w-4" />
-                        <Skeleton className="h-4 w-3/4" />
-                    </div>
-                ))}
-            </div>
-        </div>
-        <div>
-            <Skeleton className="h-6 w-20 mb-3" />
-            <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex items-center space-x-2">
-                        <Skeleton className="h-4 w-4 rounded-full" />
-                        <Skeleton className="h-4 w-2/4" />
-                    </div>
-                ))}
-            </div>
-        </div>
-        <div>
-            <Skeleton className="h-6 w-16 mb-3" />
-            <div className="flex flex-wrap gap-2">
-                {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-6 w-16 rounded-full" />
-                ))}
-            </div>
-        </div>
+    <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-16 w-full" />
     </div>
 );
 
@@ -245,9 +216,9 @@ function ProductsComponent() {
             });
         }
         
-        // Filter by tags
+        // Filter by tags (OR condition)
         if (selectedTags.length > 0) {
-            filtered = filtered.filter(p => p.tags && selectedTags.every(tag => p.tags.includes(tag)));
+            filtered = filtered.filter(p => p.tags && selectedTags.some(tag => p.tags.includes(tag)));
         }
 
         // Sort the filtered products
@@ -296,61 +267,69 @@ function ProductsComponent() {
                         <CardHeader>
                             <CardTitle>Filters</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                            {isLoading ? <FilterSkeleton /> : (
-                                <>
-                                    <div>
-                                        <h3 className="font-semibold mb-3">Search</h3>
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input 
-                                                placeholder="Search products..."
-                                                className="pl-9"
-                                                value={searchTerm}
-                                                onChange={handleSearchChange}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-3">Category</h3>
-                                        <div className="space-y-3">
-                                            {categories?.map(category => (
-                                                <div key={category.id} className="flex items-center space-x-2">
-                                                    <Checkbox
-                                                        id={category.id}
-                                                        onCheckedChange={(checked) => handleCategoryChange(category.id, checked)}
-                                                        checked={selectedCategories.includes(category.id)}
-                                                    />
-                                                    <Label htmlFor={category.id} className="font-normal cursor-pointer">{category.name}</Label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-3">Price Per Unit</h3>
-                                        <RadioGroup value={priceRange} onValueChange={handlePriceChange}>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="all" id="price-all" /><Label htmlFor="price-all" className="font-normal">All</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="0-50" id="price-1" /><Label htmlFor="price-1" className="font-normal">Under ₦50</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="50-200" id="price-2" /><Label htmlFor="price-2" className="font-normal">₦50 - ₦200</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="200" id="price-3" /><Label htmlFor="price-3" className="font-normal">Over ₦200</Label></div>
-                                        </RadioGroup>
-                                    </div>
-                                     <div>
-                                        <h3 className="font-semibold mb-3">Tags</h3>
-                                        <div className="flex flex-wrap gap-2">
-                                            {allTags.map(tag => (
-                                                <Badge
-                                                    key={tag}
-                                                    variant={selectedTags.includes(tag) ? 'default' : 'secondary'}
-                                                    onClick={() => handleTagChange(tag)}
-                                                    className="cursor-pointer"
-                                                >
-                                                    {tag}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </>
+                        <CardContent>
+                             {isLoading ? <FilterSkeleton /> : (
+                                <Accordion type="multiple" defaultValue={['search', 'category']} className="w-full">
+                                    <AccordionItem value="search">
+                                        <AccordionTrigger className="text-base font-semibold">Search</AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input 
+                                                    placeholder="Search products..."
+                                                    className="pl-9"
+                                                    value={searchTerm}
+                                                    onChange={handleSearchChange}
+                                                />
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                    <AccordionItem value="category">
+                                        <AccordionTrigger className="text-base font-semibold">Category</AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                                                {categories?.map(category => (
+                                                    <div key={category.id} className="flex items-center space-x-2">
+                                                        <Checkbox
+                                                            id={category.id}
+                                                            onCheckedChange={(checked) => handleCategoryChange(category.id, checked)}
+                                                            checked={selectedCategories.includes(category.id)}
+                                                        />
+                                                        <Label htmlFor={category.id} className="font-normal cursor-pointer">{category.name}</Label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                    <AccordionItem value="price">
+                                        <AccordionTrigger className="text-base font-semibold">Price Per Unit</AccordionTrigger>
+                                        <AccordionContent>
+                                            <RadioGroup value={priceRange} onValueChange={handlePriceChange} className="space-y-2">
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="all" id="price-all" /><Label htmlFor="price-all" className="font-normal">All</Label></div>
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="0-50" id="price-1" /><Label htmlFor="price-1" className="font-normal">Under ₦50</Label></div>
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="50-200" id="price-2" /><Label htmlFor="price-2" className="font-normal">₦50 - ₦200</Label></div>
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="200" id="price-3" /><Label htmlFor="price-3" className="font-normal">Over ₦200</Label></div>
+                                            </RadioGroup>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                     <AccordionItem value="tags">
+                                        <AccordionTrigger className="text-base font-semibold">Tags</AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                                                {allTags.map(tag => (
+                                                    <Badge
+                                                        key={tag}
+                                                        variant={selectedTags.includes(tag) ? 'default' : 'secondary'}
+                                                        onClick={() => handleTagChange(tag)}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        {tag}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
                             )}
                         </CardContent>
                     </Card>
