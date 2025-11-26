@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -339,7 +338,7 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
           router.replace('/admin/dashboard');
       }
     }
-  }, [user, isUserLoading, router, pathname, isLoginPage]);
+  }, [user, isUserLoading, router, isLoginPage, pathname]);
 
   if (isUserLoading) {
     return (
@@ -349,39 +348,46 @@ function AdminProtectedContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && isLoginPage) {
+  // If user is not logged in, only render the LoginPage.
+  // This prevents the main layout from flashing.
+  if (!user) {
+    if (isLoginPage) {
       return <LoginPage />;
-  }
-
-  if (user) {
+    }
+    // For any other non-user pages, show loader while redirecting.
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-muted/40">
-          <Sidebar>
-            <SidebarMenuContent />
-          </Sidebar>
-          <div className="flex flex-col flex-grow transition-all duration-300 ease-in-out">
-            <AdminHeader />
-            <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-4 md:gap-8">
-              {children}
-            </main>
-          </div>
+        <div className="flex h-screen items-center justify-center">
+            <LoaderCircle className="h-8 w-8 animate-spin" />
         </div>
-      </SidebarProvider>
     );
   }
-
-  // Fallback for non-user, non-login page case during initial load.
-  // This helps prevent rendering children that might rely on an authenticated user.
-  if (!isLoginPage) {
+  
+  // If user is logged in but on the login page, show loader while redirecting.
+  if (user && isLoginPage) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <LoaderCircle className="h-8 w-8 animate-spin" />
-      </div>
+        <div className="flex h-screen items-center justify-center">
+            <LoaderCircle className="h-8 w-8 animate-spin" />
+        </div>
     );
   }
 
-  return null;
+
+  // If user is logged in and not on login page, show the admin app.
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-muted/40">
+        <Sidebar>
+          <SidebarMenuContent />
+        </Sidebar>
+        <div className="flex flex-col flex-grow transition-all duration-300 ease-in-out">
+          <AdminHeader />
+          <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-4 md:gap-8">
+            {children}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
 }
 
 
@@ -394,5 +400,3 @@ export default function AdminApp({
     <AdminProtectedContent>{children}</AdminProtectedContent>
   );
 }
-
-    
