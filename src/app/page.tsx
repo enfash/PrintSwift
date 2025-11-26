@@ -5,12 +5,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-    Briefcase,
-    Gift,
-    Printer,
-    Box,
-    Shirt,
-    MonitorPlay,
     ArrowRight,
     LoaderCircle,
 } from 'lucide-react';
@@ -108,8 +102,8 @@ function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { tit
           <Image
             src={imageUrl}
             alt=""
-            width={120}
-            height={120}
+            width={140}
+            height={140}
             className="object-contain drop-shadow-[0_12px_24px_rgba(16,24,40,0.12)]"
           />
         </div>
