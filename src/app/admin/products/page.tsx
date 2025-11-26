@@ -46,6 +46,7 @@ import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
+import { getSafeImageUrl } from '@/lib/utils';
 
 const ProductsList = () => {
     const firestore = useFirestore();
@@ -121,7 +122,7 @@ const ProductsList = () => {
                 const dateB = b[key]?.toDate ? b[key].toDate() : 0;
                 comparison = dateA - dateB;
             } else if (a[key] && b[key] && typeof a[key] === 'string') {
-                comparison = a[key].localeCompare(b[key]);
+                comparison = a.name.localeCompare(b.name);
             } else if (a[key] && b[key] && typeof a[key] === 'number') {
                 comparison = a[key] - b[key];
             }
@@ -272,12 +273,7 @@ const ProductsList = () => {
                                     </TableCell>
                                 </TableRow>
                             ) : filteredAndSortedProducts && filteredAndSortedProducts.length > 0 ? filteredAndSortedProducts.map(product => {
-                                const rawUrl = product.imageUrls && product.imageUrls.length > 0 
-                                    ? product.imageUrls[product.mainImageIndex || 0] 
-                                    : null;
-
-                                const mainImageUrl = rawUrl || `https://placehold.co/40x40/e2e8f0/e2e8f0`;
-
+                                const mainImageUrl = getSafeImageUrl(product.imageUrls?.[product.mainImageIndex || 0], product.id);
 
                                 return (
                                 <TableRow key={product.id} data-state={selectedProducts.includes(product.id) ? "selected" : ""}>

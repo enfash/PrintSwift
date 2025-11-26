@@ -32,7 +32,7 @@ const words = [
 ];
 
 const CategorySkeleton = () => (
-    <div className="flex-shrink-0 w-full">
+    <div className="w-1/2 flex-shrink-0 md:w-auto">
         <Card className="text-center p-5 h-full flex flex-col items-center justify-center shadow-sm">
             <Skeleton className="h-24 w-full mb-4" />
             <Skeleton className="h-6 w-3/4 mt-2" />

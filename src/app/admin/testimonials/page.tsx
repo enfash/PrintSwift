@@ -42,6 +42,7 @@ import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Image from 'next/image';
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -194,5 +195,3 @@ export default function TestimonialsPage() {
     </>
   );
 }
-
-    
