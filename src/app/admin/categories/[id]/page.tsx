@@ -8,26 +8,33 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { LoaderCircle } from 'lucide-react';
-import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { LoaderCircle, UploadCloud } from 'lucide-react';
+import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking, useStorage } from '@/firebase';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useEffect, useState, use } from 'react';
+import Image from 'next/image';
 import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
+import { cn } from '@/lib/utils';
+
 
 const categorySchema = z.object({
   name: z.string().min(3, 'Category name must be at least 3 characters.'),
   description: z.string().optional(),
+  iconUrl: z.string().url().optional().or(z.literal('')),
 });
 
 
 export default function CategoryEditPage({ params }: { params: { id: string } }) {
     const { id } = use(params);
     const firestore = useFirestore();
+    const storage = useStorage();
     const router = useRouter();
     const { toast } = useToast();
+    const [isUploading, setIsUploading] = useState(false);
     
     const categoryRef = useMemoFirebase(() => firestore ? doc(firestore, 'product_categories', id) : null, [firestore, id]);
     const { data: category, isLoading: isLoadingCategory } = useDoc<z.infer<typeof categorySchema>>(categoryRef);
@@ -37,6 +44,7 @@ export default function CategoryEditPage({ params }: { params: { id: string } })
         defaultValues: {
             name: '',
             description: '',
+            iconUrl: '',
         }
     });
 
@@ -48,16 +56,57 @@ export default function CategoryEditPage({ params }: { params: { id: string } })
             form.reset({
                 ...category,
                 description: category.description || '', // Ensure description is not undefined
+                iconUrl: category.iconUrl || '',
             });
         }
     }, [category, form]);
+
+    const iconUrl = form.watch('iconUrl');
+
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!storage || !event.target.files || event.target.files.length === 0) return;
+        const file = event.target.files[0];
+        setIsUploading(true);
+
+        const MAX_MB = 2;
+        if (file.size > MAX_MB * 1024 * 1024) {
+            setIsUploading(false);
+            toast({ variant: 'destructive', title: 'File too large', description: `Max file size is ${MAX_MB}MB.` });
+            return;
+        }
+        
+        // Allow SVG and common image types
+        if (!file.type.startsWith('image/')) {
+            setIsUploading(false);
+            toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Only SVG and image files are allowed.'});
+            return;
+        }
+
+        const path = `category-icons/${id}/${file.name}`;
+        const fileRef = storageRef(storage, path);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+
+        uploadTask.on('state_changed',
+            () => {},
+            (error) => {
+                setIsUploading(false);
+                toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                form.setValue('iconUrl', downloadURL, { shouldDirty: true });
+                setIsUploading(false);
+                toast({ title: 'Icon Uploaded', description: 'Icon is ready to be saved.' });
+            }
+        );
+    };
     
     const onSubmit = async (values: z.infer<typeof categorySchema>) => {
         if (!firestore) return;
         
         try {
             const categoryDocRef = doc(firestore, 'product_categories', id);
-            updateDocumentNonBlocking(categoryDocRef, values);
+            await updateDocumentNonBlocking(categoryDocRef, {...values, updatedAt: serverTimestamp()});
             toast({ title: 'Category Updated', description: `Category "${values.name}" has been successfully updated.` });
             form.reset(values); // Reset form to new values, making it not dirty
             router.push('/admin/categories');
@@ -78,8 +127,8 @@ export default function CategoryEditPage({ params }: { params: { id: string } })
                     <h1 className="text-3xl font-bold tracking-tight">Edit Category</h1>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" type="button" onClick={() => router.push('/admin/categories')}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" disabled={isSubmitting || isUploading}>
+                            {(isSubmitting || isUploading) && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                             Save Changes
                         </Button>
                     </div>
@@ -117,6 +166,35 @@ export default function CategoryEditPage({ params }: { params: { id: string } })
                                     </FormItem>
                                 )}
                             />
+                             <FormField
+                                control={form.control}
+                                name="iconUrl"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Category Icon</FormLabel>
+                                        <div className="flex items-center gap-4">
+                                            {iconUrl && (
+                                                <Image
+                                                    src={iconUrl}
+                                                    alt="Icon preview"
+                                                    width={64}
+                                                    height={64}
+                                                    className="rounded-md object-contain border p-2"
+                                                />
+                                            )}
+                                            <label className={cn("flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition", isUploading && "opacity-50 cursor-not-allowed")}>
+                                                <div className="flex flex-col items-center justify-center text-center">
+                                                    {isUploading ? <LoaderCircle className="w-6 h-6 text-muted-foreground animate-spin"/> : <UploadCloud className="w-6 h-6 text-muted-foreground"/>}
+                                                    <p className="mt-1 text-xs text-muted-foreground">{isUploading ? 'Uploading...' : 'Click to upload SVG or image'}</p>
+                                                </div>
+                                                <Input id="iconUpload" type="file" className="hidden" accept="image/svg+xml,image/*" onChange={handleFileUpload} disabled={isUploading}/>
+                                            </label>
+                                        </div>
+                                         <FormControl><Input type="hidden" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
                 </div>
@@ -124,3 +202,5 @@ export default function CategoryEditPage({ params }: { params: { id: string } })
         </Form>
     );
 }
+
+    

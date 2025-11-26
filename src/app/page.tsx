@@ -50,9 +50,10 @@ const words = [
 
 const CategorySkeleton = () => (
     <div className="flex-shrink-0 w-36 sm:w-auto">
-        <Card className="text-center p-6 h-full flex flex-col items-center justify-center">
-            <Skeleton className="h-10 w-10 rounded-full mb-4" />
+        <Card className="text-center p-5 h-full flex flex-col items-center justify-center shadow-sm">
+            <Skeleton className="h-9 w-9 mb-3" />
             <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16 mt-1" />
         </Card>
     </div>
 );
@@ -160,19 +161,31 @@ export default function Home() {
               Discover our exclusive <br/>printing categories
             </h2>
           </div>
-          <div className={cn("overflow-x-auto pb-2 -mx-4 px-4 md:overflow-visible", "no-scrollbar")}>
+          <div className={cn("overflow-x-auto pb-4 -mx-4 px-4 md:overflow-visible", "no-scrollbar")}>
             <div className="flex flex-row md:grid md:grid-cols-3 lg:grid-cols-6 gap-6 w-max md:w-auto">
                 {isLoadingCategories ? (
                     Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
                     categories?.slice(0, 6).map((category) => (
-                        <Link href={`/products?category=${category.id}`} key={category.id} className="group flex-shrink-0 w-36 sm:w-auto">
-                        <Card className="text-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
-                            <div className="flex justify-center items-center mb-4 text-primary group-hover:text-accent transition-colors">
-                            {categoryIcons[category.name] || categoryIcons['Default']}
-                            </div>
-                            <h3 className="font-semibold">{category.name}</h3>
-                        </Card>
+                        <Link 
+                          href={`/products?category=${category.id}`} 
+                          key={category.id} 
+                          className="group block bg-card rounded-lg border p-5 min-h-[110px] text-center shadow-sm transition-transform transform hover:-translate-y-1.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-200"
+                        >
+                          <div className="flex justify-center mb-3">
+                            {category.iconUrl ? (
+                                <Image 
+                                  src={category.iconUrl} 
+                                  alt={`${category.name} icon`} 
+                                  width={36} 
+                                  height={36}
+                                  className="w-9 h-9 transition-transform group-hover:-translate-y-1.5"
+                                />
+                            ) : (
+                                <Briefcase className="w-9 h-9 stroke-[1.4] text-primary transition-transform group-hover:-translate-y-1.5" />
+                            )}
+                          </div>
+                          <div className="text-sm font-semibold text-card-foreground leading-tight">{category.name}</div>
                         </Link>
                     ))
                 )}
@@ -239,3 +252,5 @@ export default function Home() {
     </>
   );
 }
+
+    
