@@ -89,7 +89,7 @@ function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { tit
   return (
     <a
       href={href}
-      className="group block bg-white rounded-2xl border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary w-40"
+      className="group block bg-white rounded-2xl border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary w-48"
       aria-label={title}
     >
       <div className="relative pt-4 px-4 pb-2">
@@ -98,12 +98,12 @@ function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { tit
           style={{ background: accent }}
           className="absolute left-4 right-4 top-4 bottom-14 rounded-lg z-0"
         />
-        <div className="relative z-10 flex items-center justify-center" style={{ height: '120px' }}>
+        <div className="relative z-10 flex items-center justify-center" style={{ height: '140px' }}>
           <Image
             src={imageUrl}
             alt=""
-            width={120}
-            height={120}
+            width={140}
+            height={140}
             className="object-contain drop-shadow-[0_12px_24px_rgba(16,24,40,0.12)]"
           />
         </div>
@@ -185,7 +185,7 @@ export default function Home() {
                             <CategoryCard
                             title={category.name}
                             href={`/products?category=${category.id}`}
-                            imageUrl={category.iconUrl || `https://placehold.co/120x120/e2e8f0/e2e8f0`}
+                            imageUrl={category.iconUrl || `https://placehold.co/140x140/e2e8f0/e2e8f0`}
                             accent={category.backgroundColor || '#E2E8F0'}
                             />
                         </div>
