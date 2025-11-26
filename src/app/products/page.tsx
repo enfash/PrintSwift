@@ -51,7 +51,7 @@ const ProductCardSkeleton = () => (
             <Skeleton className="h-4 w-full mb-1" />
             <Skeleton className="h-4 w-2/3 mb-4" />
             <div className="flex-grow" />
-            <Skeleton className="h-6 w-1/3 mt-auto" />
+            <Skeleton className="h-10 w-full mt-auto" />
         </CardContent>
     </Card>
 );
@@ -85,8 +85,8 @@ const TiltCard = ({ children, className }: { children: React.ReactNode, classNam
         const x = e.clientX - left - width / 2;
         const y = e.clientY - top - height / 2;
         
-        const rotateX = (y / height) * -20; // Tilt intensity
-        const rotateY = (x / width) * 20;
+        const rotateX = (y / height) * -15; // Tilt intensity
+        const rotateY = (x / width) * 15;
 
         cardRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
         cardRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
@@ -300,8 +300,8 @@ function ProductsComponent() {
 
                                 return (
                                     <TiltCard key={product.id}>
-                                        <Link href={`/products/${product.slug}`} className="block h-full">
-                                            <Card className="overflow-hidden group transition-shadow duration-300 hover:shadow-xl h-full flex flex-col border-none shadow-none">
+                                        <Card className="overflow-hidden group transition-shadow duration-300 h-full flex flex-col">
+                                            <Link href={`/products/${product.slug}`} className="block">
                                                 <div className="overflow-hidden">
                                                     <div className="aspect-square relative">
                                                         <Image
@@ -313,22 +313,24 @@ function ProductsComponent() {
                                                         />
                                                     </div>
                                                 </div>
-                                                <CardContent className="p-4 flex-grow flex flex-col">
-                                                    <h3 className="font-semibold text-lg truncate">{product.name}</h3>
-                                                    <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                                                    <div className="flex-grow" />
-                                                    {startingPrice !== null && !isNaN(startingPrice) ? (
-                                                        <p className="font-bold text-lg mt-2">
-                                                            Starts at ₦{Math.ceil(startingPrice).toLocaleString()}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="font-bold text-lg mt-2 text-primary">
-                                                            View Pricing
-                                                        </p>
-                                                    )}
-                                                </CardContent>
-                                            </Card>
-                                        </Link>
+                                            </Link>
+                                            <CardContent className="p-4 flex-grow flex flex-col">
+                                                <h3 className="font-semibold text-lg truncate">{product.name}</h3>
+                                                {startingPrice !== null && !isNaN(startingPrice) ? (
+                                                    <p className="font-bold text-lg text-primary">
+                                                        Starts at ₦{Math.ceil(startingPrice).toLocaleString()}
+                                                    </p>
+                                                ) : (
+                                                     <p className="text-sm text-muted-foreground h-6">
+                                                        &nbsp;
+                                                    </p>
+                                                )}
+                                                <div className="flex-grow" />
+                                                <Button asChild className="mt-4 w-full">
+                                                    <Link href={`/products/${product.slug}`}>View Product</Link>
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
                                     </TiltCard>
                                 );
                             })}
