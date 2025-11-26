@@ -24,17 +24,6 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 import { FlipWords } from '@/components/ui/flip-words';
 
-
-const categoryIcons: { [key: string]: React.ReactElement } = {
-  'Marketing & Business Prints': <Briefcase className="w-8 h-8" />,
-  'Corporate Gifts': <Gift className="w-8 h-8" />,
-  'Large Format & Outdoor': <Printer className="w-8 h-8" />,
-  'Packaging Prints': <Box className="w-8 h-8" />,
-  'Apparel & Textile Printing': <Shirt className="w-8 h-8" />,
-  'Signage & Display Systems': <MonitorPlay className="w-8 h-8" />,
-  'Default': <Briefcase className="w-8 h-8" />
-};
-
 const words = [
   'Delivered Fast',
   'Printed to Perfection',
@@ -102,6 +91,39 @@ const TiltCard = ({ children, className }: { children: React.ReactNode, classNam
 };
 
 
+function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { title: string, href?: string, imageUrl: string, accent?: string }) {
+  return (
+    <a
+      href={href}
+      className="group block bg-white rounded-2xl border border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      aria-label={title}
+    >
+      <div className="relative pt-4 px-4 pb-2">
+        <div
+          aria-hidden="true"
+          style={{ background: accent }}
+          className="absolute left-4 right-4 top-4 bottom-14 rounded-lg z-0"
+        />
+        <div className="relative z-10 flex items-center justify-center" style={{ height: '140px' }}>
+          <Image
+            src={imageUrl}
+            alt=""
+            width={120}
+            height={120}
+            className="object-contain drop-shadow-[0_12px_24px_rgba(16,24,40,0.12)]"
+          />
+        </div>
+      </div>
+      <div className="px-4 pb-4 text-center">
+        <div className="text-sm md:text-base font-semibold text-slate-900 leading-tight">
+          {title}
+        </div>
+      </div>
+    </a>
+  );
+}
+
+
 export default function Home() {
   const firestore = useFirestore();
 
@@ -160,36 +182,18 @@ export default function Home() {
               Discover our exclusive <br/>printing categories
             </h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-center">
                 {isLoadingCategories ? (
-                    Array.from({ length: 4 }).map((_, i) => <CategorySkeleton key={i} />)
+                    Array.from({ length: 5 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
-                    categories?.slice(0, 8).map((category) => (
-                        <Link 
-                          href={`/products?category=${category.id}`} 
-                          key={category.id} 
-                          className="group block bg-card rounded-xl overflow-hidden shadow-sm transition-transform transform hover:-translate-y-1.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <div
-                            style={{ backgroundColor: category.backgroundColor || '#E2E8F0' }} 
-                            className="p-5 flex items-center justify-center aspect-[4/3] rounded-t-xl"
-                           >
-                            {category.iconUrl ? (
-                                <Image 
-                                  src={category.iconUrl} 
-                                  alt={`${category.name} icon`} 
-                                  width={120} 
-                                  height={90}
-                                  className="w-full h-full object-contain transition-transform group-hover:scale-110"
-                                />
-                            ) : (
-                                <Briefcase className="w-16 h-16 stroke-[1] text-slate-500" />
-                            )}
-                          </div>
-                          <div className="p-4 bg-card">
-                            <h3 className="text-base font-semibold text-card-foreground leading-tight text-center">{category.name}</h3>
-                          </div>
-                        </Link>
+                    categories?.slice(0, 10).map((category) => (
+                        <CategoryCard
+                          key={category.id}
+                          title={category.name}
+                          href={`/products?category=${category.id}`}
+                          imageUrl={category.iconUrl || `https://placehold.co/120x120/e2e8f0/e2e8f0`}
+                          accent={category.backgroundColor || '#E2E8F0'}
+                        />
                     ))
                 )}
             </div>
@@ -216,7 +220,7 @@ export default function Home() {
                     return (
                     <TiltCard key={product.id}>
                         <Link href={`/products/${product.slug}`}>
-                            <Card className="overflow-hidden group transition-shadow duration-300 h-full border-none shadow-none hover:shadow-xl">
+                            <Card className="overflow-hidden group transition-shadow duration-300 h-full shadow-sm hover:shadow-xl">
                             <div className="overflow-hidden">
                                 <div className="aspect-square relative">
                                     <Image
