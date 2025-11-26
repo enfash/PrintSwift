@@ -1,10 +1,9 @@
-
 'use client';
 
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, LoaderCircle, Package } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, LoaderCircle, Trash2 } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -21,7 +20,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -35,8 +34,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { getSafeImageUrl } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 
 
 export default function CategoriesPage() {
@@ -49,6 +50,9 @@ export default function CategoriesPage() {
     const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
     const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
 
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+
     const productCounts = useMemo(() => {
         if (!products) return {};
         return products.reduce((acc, product) => {
@@ -58,6 +62,13 @@ export default function CategoriesPage() {
             return acc;
         }, {} as { [key: string]: number });
     }, [products]);
+    
+    const filteredCategories = useMemo(() => {
+        if (!categories) return [];
+        return categories.filter(category => 
+            category.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [categories, searchTerm]);
 
     const handleDelete = (categoryId: string) => {
         if (!firestore) return;
@@ -67,7 +78,39 @@ export default function CategoriesPage() {
             title: 'Category Deleted',
             description: 'The category has been successfully deleted.',
         });
-    }
+        setSelectedCategories(prev => prev.filter(id => id !== categoryId));
+    };
+
+    const handleMultiDelete = async () => {
+        if (!firestore || selectedCategories.length === 0) return;
+        const batch = writeBatch(firestore);
+        selectedCategories.forEach(categoryId => {
+            const categoryDocRef = doc(firestore, 'product_categories', categoryId);
+            batch.delete(categoryDocRef);
+        });
+        await batch.commit();
+        toast({
+            title: 'Categories Deleted',
+            description: `${selectedCategories.length} categories have been successfully deleted.`,
+        });
+        setSelectedCategories([]);
+    };
+    
+    const handleSelectAll = (checked: boolean | string) => {
+        if (checked) {
+            setSelectedCategories(filteredCategories.map(c => c.id));
+        } else {
+            setSelectedCategories([]);
+        }
+    };
+    
+    const handleSelectCategory = (categoryId: string, checked: boolean | string) => {
+        if (checked) {
+            setSelectedCategories(prev => [...prev, categoryId]);
+        } else {
+            setSelectedCategories(prev => prev.filter(id => id !== categoryId));
+        }
+    };
     
     const isLoading = isLoadingCategories || isLoadingProducts;
 
@@ -83,15 +126,58 @@ export default function CategoriesPage() {
             </div>
             <Card className="mt-6">
                 <CardHeader>
-                    <CardTitle>All Categories</CardTitle>
-                    <CardDescription>
-                        {isLoading ? 'Loading categories...' : `You have a total of ${categories?.length || 0} categories.`}
-                    </CardDescription>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>All Categories</CardTitle>
+                            <CardDescription>
+                                {isLoading ? 'Loading categories...' : `You have ${categories?.length || 0} categories.`}
+                            </CardDescription>
+                        </div>
+                         {selectedCategories.length > 0 && (
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete ({selectedCategories.length})
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete {selectedCategories.length} category/ies.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleMultiDelete} className="bg-destructive hover:bg-destructive/90">
+                                            Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent>
+                    <div className="mb-4">
+                        <Input 
+                            placeholder="Search categories..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="max-w-sm"
+                        />
+                    </div>
                    <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[40px]">
+                                    <Checkbox
+                                        onCheckedChange={handleSelectAll}
+                                        checked={selectedCategories.length === filteredCategories.length && filteredCategories.length > 0}
+                                        aria-label="Select all"
+                                    />
+                                </TableHead>
                                 <TableHead className="hidden w-[64px] sm:table-cell">Icon</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Slug</TableHead>
@@ -105,13 +191,20 @@ export default function CategoriesPage() {
                             {isLoading ? (
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell colSpan={5} className="h-24 text-center">
+                                        <TableCell colSpan={6} className="h-24 text-center">
                                             <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
                                         </TableCell>
                                     </TableRow>
                                 ))
-                            ) : categories && categories.length > 0 ? categories.map(category => (
-                                <TableRow key={category.id}>
+                            ) : filteredCategories && filteredCategories.length > 0 ? filteredCategories.map(category => (
+                                <TableRow key={category.id} data-state={selectedCategories.includes(category.id) ? "selected" : ""}>
+                                     <TableCell>
+                                        <Checkbox
+                                            checked={selectedCategories.includes(category.id)}
+                                            onCheckedChange={(checked) => handleSelectCategory(category.id, checked)}
+                                            aria-label={`Select ${category.name}`}
+                                        />
+                                    </TableCell>
                                      <TableCell className="hidden sm:table-cell">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-muted">
                                             <Image
@@ -125,12 +218,7 @@ export default function CategoriesPage() {
                                     </TableCell>
                                     <TableCell className="font-medium">{category.name}</TableCell>
                                     <TableCell>{category.id}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <Package className="h-4 w-4"/>
-                                            <span>{productCounts[category.id] || 0}</span>
-                                        </div>
-                                    </TableCell>
+                                    <TableCell>{productCounts[category.id] || 0}</TableCell>
                                     <TableCell>
                                        <AlertDialog>
                                             <DropdownMenu>
@@ -170,8 +258,8 @@ export default function CategoriesPage() {
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
-                                        No categories found. Add one to get started.
+                                    <TableCell colSpan={6} className="h-24 text-center">
+                                        No categories found matching your search.
                                     </TableCell>
                                 </TableRow>
                             )}
