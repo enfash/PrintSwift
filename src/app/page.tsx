@@ -32,7 +32,7 @@ const words = [
 ];
 
 const CategorySkeleton = () => (
-    <div className="w-1/2 flex-shrink-0 md:w-auto">
+    <div className="w-2/5 flex-shrink-0 md:w-auto">
         <Card className="text-center p-5 h-full flex flex-col items-center justify-center shadow-sm">
             <Skeleton className="h-24 w-full mb-4" />
             <Skeleton className="h-6 w-3/4 mt-2" />
@@ -181,7 +181,7 @@ export default function Home() {
                     Array.from({ length: 4 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
                     categories?.slice(0, 8).map((category, index) => (
-                        <div key={category.id} className="w-1/2 flex-shrink-0 md:w-auto">
+                        <div key={category.id} className="w-2/5 flex-shrink-0 md:w-auto">
                             <CategoryCard
                             title={category.name}
                             href={`/products?category=${category.id}`}
