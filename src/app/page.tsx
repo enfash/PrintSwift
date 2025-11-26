@@ -176,12 +176,12 @@ export default function Home() {
               Discover our exclusive <br/>printing categories
             </h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar md:grid md:grid-cols-4 md:gap-6">
                 {isLoadingCategories ? (
                     Array.from({ length: 4 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
                     categories?.slice(0, 8).map((category, index) => (
-                        <div key={category.id} className="w-full">
+                        <div key={category.id} className="w-1/2 flex-shrink-0 md:w-auto">
                             <CategoryCard
                             title={category.name}
                             href={`/products?category=${category.id}`}
