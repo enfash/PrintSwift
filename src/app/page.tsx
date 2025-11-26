@@ -201,7 +201,7 @@ export default function Home() {
                     return (
                     <TiltCard key={product.id}>
                         <Link href={`/products/${product.slug}`}>
-                            <Card className="overflow-hidden group transition-shadow duration-300 h-full border-none">
+                            <Card className="overflow-hidden group transition-shadow duration-300 h-full hover:shadow-xl">
                             <div className="overflow-hidden">
                                 <div className="aspect-square relative">
                                     <Image
@@ -214,7 +214,7 @@ export default function Home() {
                                     />
                                 </div>
                             </div>
-                            <CardContent className="p-4">
+                            <CardContent className="p-4 text-center">
                                 <h3 className="font-semibold text-lg">{product.name}</h3>
                             </CardContent>
                             </Card>
