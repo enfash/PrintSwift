@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, LoaderCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, LoaderCircle, Package } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -35,13 +35,29 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Link from 'next/link';
+import { useMemo } from 'react';
+import { getSafeImageUrl } from '@/lib/utils';
 
 
 export default function CategoriesPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
+    
     const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
-    const { data: categories, isLoading } = useCollection<any>(categoriesRef);
+    const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
+
+    const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
+    const { data: products, isLoading: isLoadingProducts } = useCollection<any>(productsRef);
+
+    const productCounts = useMemo(() => {
+        if (!products) return {};
+        return products.reduce((acc, product) => {
+            if (product.categoryId) {
+                acc[product.categoryId] = (acc[product.categoryId] || 0) + 1;
+            }
+            return acc;
+        }, {} as { [key: string]: number });
+    }, [products]);
 
     const handleDelete = (categoryId: string) => {
         if (!firestore) return;
@@ -52,6 +68,8 @@ export default function CategoriesPage() {
             description: 'The category has been successfully deleted.',
         });
     }
+    
+    const isLoading = isLoadingCategories || isLoadingProducts;
 
     return (
         <>
@@ -66,15 +84,18 @@ export default function CategoriesPage() {
             <Card className="mt-6">
                 <CardHeader>
                     <CardTitle>All Categories</CardTitle>
-                    <CardDescription>Organize your products into categories.</CardDescription>
+                    <CardDescription>
+                        {isLoading ? 'Loading categories...' : `You have a total of ${categories?.length || 0} categories.`}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                    <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="hidden w-[100px] sm:table-cell">Image</TableHead>
+                                <TableHead className="hidden w-[64px] sm:table-cell">Icon</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Slug</TableHead>
+                                <TableHead>Products</TableHead>
                                 <TableHead>
                                     <span className="sr-only">Actions</span>
                                 </TableHead>
@@ -82,24 +103,34 @@ export default function CategoriesPage() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
-                                        <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
-                                    </TableCell>
-                                </TableRow>
+                                Array.from({ length: 3 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell colSpan={5} className="h-24 text-center">
+                                            <LoaderCircle className="mx-auto h-8 w-8 animate-spin" />
+                                        </TableCell>
+                                    </TableRow>
+                                ))
                             ) : categories && categories.length > 0 ? categories.map(category => (
                                 <TableRow key={category.id}>
                                      <TableCell className="hidden sm:table-cell">
-                                        <Image
-                                            alt={category.name}
-                                            className="aspect-square rounded-md object-cover"
-                                            height="40"
-                                            src={`https://picsum.photos/seed/${category.id}/40/40`}
-                                            width="40"
-                                        />
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-muted">
+                                            <Image
+                                                alt={category.name}
+                                                className="aspect-square object-contain"
+                                                height="32"
+                                                src={getSafeImageUrl(category.iconUrl, category.id)}
+                                                width="32"
+                                            />
+                                        </div>
                                     </TableCell>
                                     <TableCell className="font-medium">{category.name}</TableCell>
                                     <TableCell>{category.id}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Package className="h-4 w-4"/>
+                                            <span>{productCounts[category.id] || 0}</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                        <AlertDialog>
                                             <DropdownMenu>
@@ -139,8 +170,8 @@ export default function CategoriesPage() {
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
-                                        No categories found. Seed the database from the dashboard.
+                                    <TableCell colSpan={5} className="h-24 text-center">
+                                        No categories found. Add one to get started.
                                     </TableCell>
                                 </TableRow>
                             )}
