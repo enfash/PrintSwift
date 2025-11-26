@@ -10,7 +10,7 @@ import { useDropzone } from 'react-dropzone';
 import { listAll, getDownloadURL, uploadBytes, ref as storageRef, deleteObject } from 'firebase/storage';
 import { useStorage } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getSafeImageUrl } from '@/lib/utils';
+import { getSafeImageUrl, compressImage } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
@@ -51,16 +51,17 @@ export default function MediaPage() {
         fetchMedia();
     }, [fetchMedia]);
 
-    const handleUpload = async (files: File[]) => {
+    const handleUpload = useCallback(async (files: File[]) => {
         if (!storage || files.length === 0) return;
         
         setIsUploading(true);
         let successCount = 0;
 
         for (const file of files) {
-            const newFileRef = storageRef(storage, `product-images/${file.name}`);
             try {
-                await uploadBytes(newFileRef, file);
+                const compressedFile = await compressImage(file, 2.0, 1920);
+                const newFileRef = storageRef(storage, `product-images/${compressedFile.name}`);
+                await uploadBytes(newFileRef, compressedFile);
                 successCount++;
             } catch (error) {
                 console.error("Upload error:", error);
@@ -73,7 +74,7 @@ export default function MediaPage() {
             toast({ title: 'Upload Complete', description: `${successCount} of ${files.length} files uploaded.` });
             await fetchMedia(); // Refresh media library
         }
-    };
+    }, [storage, toast, fetchMedia]);
     
     const handleDelete = async (refPath: string) => {
         if (!storage) return;
@@ -93,21 +94,23 @@ export default function MediaPage() {
         handleUpload(acceptedFiles);
     }, [handleUpload]);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: {'image/*': []} });
 
     return (
         <>
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Media Library</h1>
-                <label className="flex items-center justify-center px-4 h-10 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer">
-                    {isUploading ? (
-                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                    )}
-                    {isUploading ? 'Uploading...' : 'Upload Media'}
+                <div {...getRootProps()}>
                     <input {...getInputProps({ multiple: true })} className="hidden" disabled={isUploading} />
-                </label>
+                    <Button disabled={isUploading}>
+                        {isUploading ? (
+                            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                        )}
+                        {isUploading ? 'Uploading...' : 'Upload Media'}
+                    </Button>
+                </div>
             </div>
             <Card className="mt-6">
                 <CardContent className="p-4">

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import imageCompression from 'browser-image-compression';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -52,3 +53,28 @@ export const getStatusVariant = (status: string) => {
         default: return 'secondary';
     }
 };
+
+/**
+ * Compresses an image file in the browser before uploading.
+ * @param {File} file The image file to compress.
+ * @param {number} maxSizeMB The maximum file size in megabytes.
+ * @param {number} maxWidthOrHeight The maximum width or height of the image.
+ * @returns {Promise<File>} The compressed image file.
+ */
+export async function compressImage(file: File, maxSizeMB: number = 2, maxWidthOrHeight: number = 1920): Promise<File> {
+  const options = {
+    maxSizeMB,
+    maxWidthOrHeight,
+    useWebWorker: true,
+  };
+
+  try {
+    const compressedFile = await imageCompression(file, options);
+    console.log(`Compressed ${file.name} from ${file.size / 1024 / 1024}MB to ${compressedFile.size / 1024 / 1024}MB`);
+    return compressedFile;
+  } catch (error) {
+    console.error('Image compression failed:', error);
+    // If compression fails, return the original file to not break the upload process
+    return file;
+  }
+}

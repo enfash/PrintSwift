@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
+import { cn, compressImage } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
@@ -144,35 +144,34 @@ export default function EditPromoPage({ params }: { params: { id: string } }) {
     const imageUrl = form.watch('imageUrl');
     const placement = form.watch('placement');
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!storage || !event.target.files || event.target.files.length === 0) return;
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!storage || !event.target.files || !event.target.files.length === 0) return;
         const file = event.target.files[0];
         setIsUploading(true);
 
-        const MAX_MB = 5;
-        if (file.size > MAX_MB * 1024 * 1024) {
+        try {
+            const compressedFile = await compressImage(file, 1.5, 1200); // Max 1.5MB, 1200px
+            const path = `promos/${id}/${compressedFile.name}`;
+            const fileRef = storageRef(storage, path);
+            const uploadTask = uploadBytesResumable(fileRef, compressedFile);
+    
+            uploadTask.on('state_changed',
+                () => {},
+                (error) => {
+                    setIsUploading(false);
+                    toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+                },
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    form.setValue('imageUrl', downloadURL, { shouldDirty: true });
+                    setIsUploading(false);
+                    toast({ title: 'Image Uploaded', description: 'Image is ready to be saved.' });
+                }
+            );
+        } catch (error) {
             setIsUploading(false);
-            toast({ variant: 'destructive', title: 'File too large', description: `Max file size is ${MAX_MB}MB.` });
-            return;
+            toast({ variant: 'destructive', title: 'Upload Failed', description: (error as Error).message });
         }
-
-        const path = `promos/${id}/${file.name}`;
-        const fileRef = storageRef(storage, path);
-        const uploadTask = uploadBytesResumable(fileRef, file);
-
-        uploadTask.on('state_changed',
-            () => {},
-            (error) => {
-                setIsUploading(false);
-                toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                form.setValue('imageUrl', downloadURL, { shouldDirty: true });
-                setIsUploading(false);
-                toast({ title: 'Image Uploaded', description: 'Image is ready to be saved.' });
-            }
-        );
     };
     
     const onSubmit = async (values: PromoFormValues) => {

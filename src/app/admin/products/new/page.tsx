@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { cn, getSafeImageUrl, generateSearchTerms } from '@/lib/utils';
+import { cn, getSafeImageUrl, generateSearchTerms, compressImage } from '@/lib/utils';
 import { productAutofill } from '@/ai/flows/product-autofill';
 import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 import ReactMarkdown from 'react-markdown';
@@ -159,28 +159,19 @@ export default function ProductFormPage() {
       const file = event.target.files[0];
       setIsUploading(true);
     
-      const MAX_MB = 25;
-      if (file.size > MAX_MB * 1024 * 1024) {
-        setIsUploading(false);
-        toast({ variant: 'destructive', title: 'File too large', description: `Max file size is ${MAX_MB}MB.` });
-        event.target.value = '';
-        return;
-      }
-    
       try {
-        const safeName = encodeURIComponent(file.name.replace(/\s+/g, '_'));
+        const compressedFile = await compressImage(file, 2.0, 1920); // Compress to max 2MB, 1920px
+        const safeName = encodeURIComponent(compressedFile.name.replace(/\s+/g, '_'));
         const path = `products/${productId}/${safeName}-${Date.now()}`;
         const fileRef = storageRef(storage, path);
     
-        const metadata = { contentType: file.type || 'application/octet-stream' };
+        const metadata = { contentType: compressedFile.type || 'application/octet-stream' };
     
-        const uploadTask = uploadBytesResumable(fileRef, file, metadata);
+        const uploadTask = uploadBytesResumable(fileRef, compressedFile, metadata);
     
         uploadTask.on(
           'state_changed',
-          (snapshot) => {
-            // Optional: implement progress bar here
-          },
+          () => {}, // Optional: implement progress bar here
           (error) => {
             console.error('Upload failed', error);
             toast({

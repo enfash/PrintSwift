@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, compressImage } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
@@ -77,36 +77,35 @@ export default function NewTestimonialPage() {
         }
     };
     
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!storage || !event.target.files || event.target.files.length === 0) return;
 
         const file = event.target.files[0];
         setIsUploading(true);
 
-        const MAX_MB = 5;
-        if (file.size > MAX_MB * 1024 * 1024) {
+        try {
+            const compressedFile = await compressImage(file, 1.0, 800); // Max 1MB, 800px
+            const path = `testimonials/${testimonialId}/${compressedFile.name}`;
+            const fileRef = storageRef(storage, path);
+            const uploadTask = uploadBytesResumable(fileRef, compressedFile);
+    
+            uploadTask.on('state_changed',
+                () => { /* Progress can be handled here */ },
+                (error) => {
+                    setIsUploading(false);
+                    toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+                },
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    form.setValue('imageUrl', downloadURL, { shouldDirty: true });
+                    setIsUploading(false);
+                    toast({ title: 'Image Uploaded', description: 'Image is ready to be saved with the testimonial.' });
+                }
+            );
+        } catch (error) {
             setIsUploading(false);
-            toast({ variant: 'destructive', title: 'File too large', description: `Max file size is ${MAX_MB}MB.` });
-            return;
+            toast({ variant: 'destructive', title: 'Upload Failed', description: (error as Error).message });
         }
-
-        const path = `testimonials/${testimonialId}/${file.name}`;
-        const fileRef = storageRef(storage, path);
-        const uploadTask = uploadBytesResumable(fileRef, file);
-
-        uploadTask.on('state_changed',
-            () => { /* Progress can be handled here */ },
-            (error) => {
-                setIsUploading(false);
-                toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                form.setValue('imageUrl', downloadURL, { shouldDirty: true });
-                setIsUploading(false);
-                toast({ title: 'Image Uploaded', description: 'Image is ready to be saved with the testimonial.' });
-            }
-        );
     };
 
 

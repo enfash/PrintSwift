@@ -19,6 +19,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 import { cn } from '@/lib/utils';
+import { compressImage } from '@/lib/utils';
 
 const categorySchema = z.object({
   id: z.string().min(3, 'Slug/ID must be at least 3 characters.').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase with dashes.'),
@@ -68,7 +69,7 @@ export default function CategoryFormPage() {
         }
     }, [watchName, form]);
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const categoryId = form.getValues('id');
         if (!categoryId) {
             toast({ variant: 'destructive', title: 'Slug/ID required', description: 'Please enter a slug/ID before uploading an icon.' });
@@ -78,36 +79,29 @@ export default function CategoryFormPage() {
         const file = event.target.files[0];
         setIsUploading(true);
 
-        const MAX_MB = 2;
-        if (file.size > MAX_MB * 1024 * 1024) {
+        try {
+            const compressedFile = await compressImage(file, 0.5, 512); // Max 0.5MB, 512px
+            const path = `category-icons/${categoryId}/${compressedFile.name}`;
+            const fileRef = storageRef(storage, path);
+            const uploadTask = uploadBytesResumable(fileRef, compressedFile);
+    
+            uploadTask.on('state_changed',
+                () => {},
+                (error) => {
+                    setIsUploading(false);
+                    toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+                },
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    form.setValue('iconUrl', downloadURL, { shouldDirty: true });
+                    setIsUploading(false);
+                    toast({ title: 'Icon Uploaded', description: 'Icon is ready to be saved.' });
+                }
+            );
+        } catch (error) {
             setIsUploading(false);
-            toast({ variant: 'destructive', title: 'File too large', description: `Max file size is ${MAX_MB}MB.` });
-            return;
+            toast({ variant: 'destructive', title: 'Upload failed', description: (error as Error).message });
         }
-        
-        if (!file.type.startsWith('image/')) {
-            setIsUploading(false);
-            toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Only SVG and image files are allowed.'});
-            return;
-        }
-
-        const path = `category-icons/${categoryId}/${file.name}`;
-        const fileRef = storageRef(storage, path);
-        const uploadTask = uploadBytesResumable(fileRef, file);
-
-        uploadTask.on('state_changed',
-            () => {},
-            (error) => {
-                setIsUploading(false);
-                toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                form.setValue('iconUrl', downloadURL, { shouldDirty: true });
-                setIsUploading(false);
-                toast({ title: 'Icon Uploaded', description: 'Icon is ready to be saved.' });
-            }
-        );
     };
 
     const onSubmit = async (values: z.infer<typeof categorySchema>) => {
@@ -238,5 +232,3 @@ export default function CategoryFormPage() {
         </Form>
     );
 }
-
-    
