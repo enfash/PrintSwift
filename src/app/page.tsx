@@ -89,16 +89,16 @@ function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { tit
   return (
     <a
       href={href}
-      className="group block bg-white rounded-2xl border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary w-48"
+      className="group block bg-white rounded-2xl border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary w-48 h-full flex flex-col"
       aria-label={title}
     >
-      <div className="relative pt-4 px-4 pb-2">
+      <div className="relative pt-4 px-4 pb-2 flex-grow flex flex-col">
         <div
           aria-hidden="true"
           style={{ background: accent }}
           className="absolute left-4 right-4 top-4 bottom-14 rounded-lg z-0"
         />
-        <div className="relative z-10 flex items-center justify-center" style={{ height: '140px' }}>
+        <div className="relative z-10 flex items-center justify-center h-[140px]">
           <Image
             src={imageUrl}
             alt=""
