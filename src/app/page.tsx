@@ -89,7 +89,7 @@ function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { tit
   return (
     <a
       href={href}
-      className="group block bg-white rounded-2xl border border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group block bg-white rounded-2xl border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary w-40"
       aria-label={title}
     >
       <div className="relative pt-4 px-4 pb-2">
@@ -98,12 +98,12 @@ function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { tit
           style={{ background: accent }}
           className="absolute left-4 right-4 top-4 bottom-14 rounded-lg z-0"
         />
-        <div className="relative z-10 flex items-center justify-center" style={{ height: '140px' }}>
+        <div className="relative z-10 flex items-center justify-center" style={{ height: '120px' }}>
           <Image
             src={imageUrl}
             alt=""
-            width={140}
-            height={140}
+            width={120}
+            height={120}
             className="object-contain drop-shadow-[0_12px_24px_rgba(16,24,40,0.12)]"
           />
         </div>
@@ -169,25 +169,26 @@ export default function Home() {
       <HowItWorks />
 
       {/* Browse by Category */}
-      <section className="py-8 bg-background">
+      <section className="py-8 bg-background overflow-hidden">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-heading">
               Discover our exclusive <br/>printing categories
             </h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-center">
+          <div className="flex md:grid md:grid-cols-4 lg:grid-cols-5 gap-6 justify-start md:justify-center overflow-x-auto no-scrollbar pb-4 -mb-4">
                 {isLoadingCategories ? (
                     Array.from({ length: 5 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
                     categories?.slice(0, 10).map((category) => (
-                        <CategoryCard
-                          key={category.id}
-                          title={category.name}
-                          href={`/products?category=${category.id}`}
-                          imageUrl={category.iconUrl || `https://placehold.co/120x120/e2e8f0/e2e8f0`}
-                          accent={category.backgroundColor || '#E2E8F0'}
-                        />
+                        <div key={category.id} className="flex-shrink-0">
+                            <CategoryCard
+                            title={category.name}
+                            href={`/products?category=${category.id}`}
+                            imageUrl={category.iconUrl || `https://placehold.co/120x120/e2e8f0/e2e8f0`}
+                            accent={category.backgroundColor || '#E2E8F0'}
+                            />
+                        </div>
                     ))
                 )}
             </div>
