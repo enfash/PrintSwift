@@ -89,7 +89,7 @@ function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { tit
   return (
     <a
       href={href}
-      className="group block bg-white rounded-2xl border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary w-48 h-full flex flex-col"
+      className="group block bg-white rounded-2xl border-transparent shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary h-full flex flex-col"
       aria-label={title}
     >
       <div className="relative pt-4 px-4 pb-2 flex-grow flex flex-col">
@@ -176,12 +176,12 @@ export default function Home() {
               Discover our exclusive <br/>printing categories
             </h2>
           </div>
-          <div className="flex md:grid md:grid-cols-4 lg:grid-cols-5 gap-6 justify-start md:justify-center overflow-x-auto no-scrollbar pb-4 -mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {isLoadingCategories ? (
-                    Array.from({ length: 5 }).map((_, i) => <CategorySkeleton key={i} />)
+                    Array.from({ length: 4 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
-                    categories?.slice(0, 10).map((category, index) => (
-                        <div key={category.id} className="flex-shrink-0">
+                    categories?.slice(0, 8).map((category, index) => (
+                        <div key={category.id} className="w-full">
                             <CategoryCard
                             title={category.name}
                             href={`/products?category=${category.id}`}
