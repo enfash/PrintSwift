@@ -180,12 +180,12 @@ export default function Home() {
                 {isLoadingCategories ? (
                     Array.from({ length: 5 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
-                    categories?.slice(0, 10).map((category) => (
+                    categories?.slice(0, 10).map((category, index) => (
                         <div key={category.id} className="flex-shrink-0">
                             <CategoryCard
                             title={category.name}
                             href={`/products?category=${category.id}`}
-                            imageUrl={category.iconUrl || `https://placehold.co/140x140/e2e8f0/e2e8f0`}
+                            imageUrl={category.iconUrl || `https://picsum.photos/seed/${category.id || index}/140/140`}
                             accent={category.backgroundColor || '#E2E8F0'}
                             />
                         </div>
@@ -210,7 +210,7 @@ export default function Home() {
                     const rawUrl = product.imageUrls && product.imageUrls.length > 0
                         ? product.imageUrls[product.mainImageIndex || 0]
                         : null;
-                    const mainImageUrl = rawUrl || `https://placehold.co/600x400/e2e8f0/e2e8f0`;
+                    const mainImageUrl = rawUrl || `https://picsum.photos/seed/${product.id}/600/400`;
 
                     return (
                     <TiltCard key={product.id}>
