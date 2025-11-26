@@ -20,6 +20,8 @@ import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 
 function calculateStartingPrice(product: any) {
     if (!product.pricing || !product.pricing.tiers || product.pricing.tiers.length === 0) {
@@ -73,6 +75,25 @@ const FilterSkeleton = () => (
                 ))}
             </div>
         </div>
+        <div>
+            <Skeleton className="h-6 w-20 mb-3" />
+            <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center space-x-2">
+                        <Skeleton className="h-4 w-4 rounded-full" />
+                        <Skeleton className="h-4 w-2/4" />
+                    </div>
+                ))}
+            </div>
+        </div>
+        <div>
+            <Skeleton className="h-6 w-16 mb-3" />
+            <div className="flex flex-wrap gap-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-6 w-16 rounded-full" />
+                ))}
+            </div>
+        </div>
     </div>
 );
 
@@ -120,6 +141,8 @@ function ProductsComponent() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [sortOption, setSortOption] = useState('popularity-desc');
+    const [priceRange, setPriceRange] = useState('all');
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
     
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -130,16 +153,18 @@ function ProductsComponent() {
     const { data: allProducts, isLoading: isLoadingProducts } = useCollection<any>(productsQuery);
 
     useEffect(() => {
-        const newCategory = searchParams.get('category');
-        setSelectedCategories(newCategory ? newCategory.split(',') : []);
-        const newSearch = searchParams.get('search');
-        setSearchTerm(newSearch || '');
-    }, [searchParams]);
+        const params = new URLSearchParams(window.location.search);
+        setSelectedCategories(params.get('category')?.split(',') || []);
+        setSearchTerm(params.get('search') || '');
+        setPriceRange(params.get('price') || 'all');
+        setSelectedTags(params.get('tags')?.split(',') || []);
+        setSortOption(params.get('sort') || 'popularity-desc');
+    }, []);
 
     const updateURLParams = (newParams: Record<string, string | undefined>) => {
         const params = new URLSearchParams(searchParams.toString());
         Object.entries(newParams).forEach(([key, value]) => {
-            if (value) {
+            if (value && value.length > 0) {
                 params.set(key, value);
             } else {
                 params.delete(key);
@@ -154,14 +179,39 @@ function ProductsComponent() {
             : selectedCategories.filter(id => id !== categoryId);
         
         setSelectedCategories(newSelectedCategories);
-        updateURLParams({ category: newSelectedCategories.join(',') || undefined, search: searchTerm || undefined });
+        updateURLParams({ category: newSelectedCategories.join(',') || undefined });
     };
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newSearchTerm = e.target.value;
         setSearchTerm(newSearchTerm);
-        updateURLParams({ search: newSearchTerm || undefined, category: selectedCategories.join(',') || undefined });
-    }
+        updateURLParams({ search: newSearchTerm || undefined });
+    };
+
+    const handlePriceChange = (newPriceRange: string) => {
+        setPriceRange(newPriceRange);
+        updateURLParams({ price: newPriceRange === 'all' ? undefined : newPriceRange });
+    };
+
+    const handleTagChange = (tag: string) => {
+        const newSelectedTags = selectedTags.includes(tag)
+            ? selectedTags.filter(t => t !== tag)
+            : [...selectedTags, tag];
+        setSelectedTags(newSelectedTags);
+        updateURLParams({ tags: newSelectedTags.join(',') || undefined });
+    };
+    
+    const handleSortChange = (newSortOption: string) => {
+        setSortOption(newSortOption);
+        updateURLParams({ sort: newSortOption });
+    };
+
+    const allTags = useMemo(() => {
+        if (!allProducts) return [];
+        const tagsSet = new Set<string>();
+        allProducts.forEach(p => p.tags?.forEach((tag: string) => tagsSet.add(tag)));
+        return Array.from(tagsSet).sort();
+    }, [allProducts]);
 
     const filteredAndSortedProducts = useMemo(() => {
         if (!allProducts) return [];
@@ -180,6 +230,24 @@ function ProductsComponent() {
                 (p.searchTerms && p.searchTerms.some((st: string) => st.includes(lowercasedTerm))) ||
                 p.name?.toLowerCase().includes(lowercasedTerm)
             );
+        }
+        
+        // Filter by price
+        if (priceRange !== 'all') {
+            filtered = filtered.filter(p => {
+                const price = calculateStartingPrice(p);
+                if (price === null) return false;
+                const [min, max] = priceRange.split('-').map(Number);
+                if (max) {
+                    return price >= min && price <= max;
+                }
+                return price >= min;
+            });
+        }
+        
+        // Filter by tags
+        if (selectedTags.length > 0) {
+            filtered = filtered.filter(p => p.tags && selectedTags.every(tag => p.tags.includes(tag)));
         }
 
         // Sort the filtered products
@@ -200,13 +268,15 @@ function ProductsComponent() {
         });
 
         return filtered;
-    }, [allProducts, selectedCategories, debouncedSearchTerm, sortOption]);
+    }, [allProducts, selectedCategories, debouncedSearchTerm, sortOption, priceRange, selectedTags]);
 
     const isLoading = isLoadingCategories || isLoadingProducts;
     
     const clearFilters = () => {
         setSearchTerm('');
         setSelectedCategories([]);
+        setPriceRange('all');
+        setSelectedTags([]);
         router.replace('/products');
     };
 
@@ -256,6 +326,30 @@ function ProductsComponent() {
                                             ))}
                                         </div>
                                     </div>
+                                    <div>
+                                        <h3 className="font-semibold mb-3">Price Per Unit</h3>
+                                        <RadioGroup value={priceRange} onValueChange={handlePriceChange}>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="all" id="price-all" /><Label htmlFor="price-all" className="font-normal">All</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="0-50" id="price-1" /><Label htmlFor="price-1" className="font-normal">Under ₦50</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="50-200" id="price-2" /><Label htmlFor="price-2" className="font-normal">₦50 - ₦200</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="200" id="price-3" /><Label htmlFor="price-3" className="font-normal">Over ₦200</Label></div>
+                                        </RadioGroup>
+                                    </div>
+                                     <div>
+                                        <h3 className="font-semibold mb-3">Tags</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {allTags.map(tag => (
+                                                <Badge
+                                                    key={tag}
+                                                    variant={selectedTags.includes(tag) ? 'default' : 'secondary'}
+                                                    onClick={() => handleTagChange(tag)}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {tag}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </>
                             )}
                         </CardContent>
@@ -270,7 +364,7 @@ function ProductsComponent() {
                         </p>
                         <div className="flex items-center gap-2">
                             <Label htmlFor="sort-by" className="text-sm">Sort by:</Label>
-                            <Select value={sortOption} onValueChange={setSortOption}>
+                            <Select value={sortOption} onValueChange={handleSortChange}>
                                 <SelectTrigger id="sort-by" className="w-[180px]">
                                     <SelectValue placeholder="Sort by" />
                                 </SelectTrigger>
