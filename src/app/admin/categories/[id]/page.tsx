@@ -25,6 +25,7 @@ const categorySchema = z.object({
   name: z.string().min(3, 'Category name must be at least 3 characters.'),
   description: z.string().optional(),
   iconUrl: z.string().url().optional().or(z.literal('')),
+  backgroundColor: z.string().optional(),
 });
 
 
@@ -45,6 +46,7 @@ export default function CategoryEditPage({ params }: { params: { id: string } })
             name: '',
             description: '',
             iconUrl: '',
+            backgroundColor: '#F7FAFC',
         }
     });
 
@@ -57,6 +59,7 @@ export default function CategoryEditPage({ params }: { params: { id: string } })
                 ...category,
                 description: category.description || '', // Ensure description is not undefined
                 iconUrl: category.iconUrl || '',
+                backgroundColor: category.backgroundColor || '#F7FAFC',
             });
         }
     }, [category, form]);
@@ -191,6 +194,22 @@ export default function CategoryEditPage({ params }: { params: { id: string } })
                                             </label>
                                         </div>
                                          <FormControl><Input type="hidden" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="backgroundColor"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Background Color</FormLabel>
+                                        <div className="flex items-center gap-2">
+                                            <FormControl>
+                                                <Input type="color" className="w-12 h-10 p-1" {...field} />
+                                            </FormControl>
+                                            <Input placeholder="#F7FAFC" {...field} />
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}

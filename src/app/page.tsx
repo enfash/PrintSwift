@@ -49,11 +49,10 @@ const words = [
 ];
 
 const CategorySkeleton = () => (
-    <div className="flex-shrink-0 w-36 sm:w-auto">
+    <div className="flex-shrink-0 w-full">
         <Card className="text-center p-5 h-full flex flex-col items-center justify-center shadow-sm">
-            <Skeleton className="h-9 w-9 mb-3" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-16 mt-1" />
+            <Skeleton className="h-24 w-full mb-4" />
+            <Skeleton className="h-6 w-3/4 mt-2" />
         </Card>
     </div>
 );
@@ -161,41 +160,44 @@ export default function Home() {
               Discover our exclusive <br/>printing categories
             </h2>
           </div>
-          <div className={cn("overflow-x-auto pb-4 -mx-4 px-4 md:overflow-visible", "no-scrollbar")}>
-            <div className="flex flex-row md:grid md:grid-cols-3 lg:grid-cols-6 gap-6 w-max md:w-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {isLoadingCategories ? (
-                    Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={i} />)
+                    Array.from({ length: 4 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
-                    categories?.slice(0, 6).map((category) => (
+                    categories?.slice(0, 8).map((category) => (
                         <Link 
                           href={`/products?category=${category.id}`} 
                           key={category.id} 
-                          className="group block bg-card rounded-lg border p-5 min-h-[110px] text-center shadow-sm transition-transform transform hover:-translate-y-1.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-200"
+                          className="group block bg-card rounded-xl overflow-hidden shadow-sm transition-transform transform hover:-translate-y-1.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         >
-                          <div className="flex justify-center mb-3">
+                          <div
+                            style={{ backgroundColor: category.backgroundColor || '#E2E8F0' }} 
+                            className="p-5 flex items-center justify-center aspect-[4/3] rounded-t-xl"
+                           >
                             {category.iconUrl ? (
                                 <Image 
                                   src={category.iconUrl} 
                                   alt={`${category.name} icon`} 
-                                  width={36} 
-                                  height={36}
-                                  className="w-9 h-9 transition-transform group-hover:-translate-y-1.5"
+                                  width={120} 
+                                  height={90}
+                                  className="w-full h-full object-contain transition-transform group-hover:scale-110"
                                 />
                             ) : (
-                                <Briefcase className="w-9 h-9 stroke-[1.4] text-primary transition-transform group-hover:-translate-y-1.5" />
+                                <Briefcase className="w-16 h-16 stroke-[1] text-slate-500" />
                             )}
                           </div>
-                          <div className="text-sm font-semibold text-card-foreground leading-tight">{category.name}</div>
+                          <div className="p-4 bg-card">
+                            <h3 className="text-base font-semibold text-card-foreground leading-tight text-center">{category.name}</h3>
+                          </div>
                         </Link>
                     ))
                 )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Featured Products */}
-      <section className="py-8 bg-card">
+      <section className="py-8 bg-muted/50">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-heading">Featured Products</h2>
@@ -252,5 +254,3 @@ export default function Home() {
     </>
   );
 }
-
-    
