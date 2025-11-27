@@ -87,7 +87,7 @@ const RelatedProductsCarousel = ({ currentProduct }: { currentProduct: any }) =>
                     {productsToShow.map((product) => {
                         const imageUrl = getSafeImageUrl(product.imageUrls?.[product.mainImageIndex || 0]);
                         return (
-                            <CarouselItem key={product.id} className="basis-1/3 sm:basis-1/3 md:basis-1/3 lg:basis-1/4">
+                            <CarouselItem key={product.id} className="basis-[30%] md:basis-1/3 lg:basis-1/4">
                                 <Link href={`/products/${product.slug}`}>
                                     <Card className="overflow-hidden group transition-shadow duration-300 shadow-none hover:shadow-xl h-full border-none">
                                         <div className="aspect-square relative overflow-hidden">
