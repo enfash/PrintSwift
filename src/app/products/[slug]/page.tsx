@@ -1,6 +1,6 @@
 
 'use client';
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState, useRef } from 'react';
 import { notFound, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -36,12 +36,6 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Counter } from '@/components/ui/counter';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -53,6 +47,7 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import RelatedProductsCarousel from '@/components/related-products-carousel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 async function getProductBySlug(firestore: any, slug: string) {
   if (!firestore || !slug) return null;
@@ -69,39 +64,6 @@ async function getProductBySlug(firestore: any, slug: string) {
   }
   const productDoc = querySnapshot.docs[0];
   return { ...productDoc.data(), id: productDoc.id };
-}
-
-function FaqSection() {
-  const firestore = useFirestore();
-  const faqsRef = useMemoFirebase(
-    () =>
-      firestore
-        ? query(collection(firestore, 'faqs'), where('visible', '==', true))
-        : null,
-    [firestore]
-  );
-  const { data: faqs, isLoading } = useCollection<any>(faqsRef);
-
-  if (isLoading) {
-    return <LoaderCircle className="animate-spin" />;
-  }
-
-  if (!faqs || faqs.length === 0) {
-    return (
-      <p className="text-muted-foreground">No frequently asked questions found.</p>
-    );
-  }
-
-  return (
-    <Accordion type="single" collapsible className="w-full">
-      {faqs.map((faq) => (
-        <AccordionItem value={faq.id} key={faq.id}>
-          <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-          <AccordionContent>{faq.answer}</AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
-  );
 }
 
 const ProductDetailSkeleton = () => (
@@ -197,7 +159,6 @@ export default function ProductDetailPage({
 }) {
   const { slug } = use(params);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const firestore = useFirestore();
   const { toast } = useToast();
   const { addToCart } = useCart();
@@ -467,6 +428,13 @@ export default function ProductDetailPage({
   const mainImageUrl =
     product.imageUrls?.[selectedImage] ||
     `https://placehold.co/600x400/e2e8f0/e2e8f0`;
+    
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <>
@@ -490,197 +458,191 @@ export default function ProductDetailPage({
             </div>
           )}
           <div className="grid md:grid-cols-5 gap-8 md:gap-12">
-            {/* Product Image Gallery */}
-            <div className="md:col-span-3 space-y-4 md:sticky top-24 self-start">
-              <div className="aspect-square relative rounded-lg border overflow-hidden group">
-                <Image
-                  src={mainImageUrl}
-                  alt={product.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, 60vw"
-                  priority
-                />
-                <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handlePrevImage}
-                    className="bg-background/50 hover:bg-background/80"
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleNextImage}
-                    className="bg-background/50 hover:bg-background/80"
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-5 gap-2">
-                {product.imageUrls?.map((url: string, index: number) => {
-                  const thumbnailUrl =
-                    url || `https://placehold.co/100x100/e2e8f0/e2e8f0`;
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={cn(
-                        'aspect-square relative rounded-md border overflow-hidden transition',
-                        selectedImage === index
-                          ? 'ring-2 ring-primary ring-offset-2'
-                          : 'hover:opacity-80'
-                      )}
-                    >
-                      <Image
-                        src={thumbnailUrl}
-                        alt={`${product.name} thumbnail ${index + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="20vw"
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Product Details & Customization */}
-            <div className="md:col-span-2 space-y-6">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold font-heading">
-                  {product.name}
-                </h1>
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="h-5 w-5 text-yellow-400 fill-yellow-400"
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    4.8 (1,288 reviews)
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <h2 className="text-2xl font-semibold">Customize Your Order</h2>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {product.details?.map(renderDetailField)}
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Quantity</Label>
-                  <Counter
-                    value={quantity}
-                    setValue={setQuantity}
-                    min={minQty}
-                    step={getStepForQuantity(quantity)}
+            {/* Left Column: Image Gallery & Long-form Content */}
+            <div className="md:col-span-3 space-y-8">
+              <div className="space-y-4 md:sticky top-24 self-start">
+                <div className="aspect-square relative rounded-lg border overflow-hidden group">
+                  <Image
+                    src={mainImageUrl}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                    priority
                   />
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="w-full h-12 text-base"
-                  onClick={handleGetQuote}
-                >
-                  <UploadCloud className="mr-2 h-5 w-5" />
-                  Upload Your Artwork
-                </Button>
-              </div>
-
-              <Separator />
-
-              <div className="bg-muted/50 p-6 rounded-lg space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    {price !== null ? (
-                      <>
-                        <p className="text-3xl font-bold">
-                          ₦{price.toLocaleString()}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          for {quantity} units
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-lg font-semibold text-muted-foreground">
-                        Select options to see price
-                      </p>
-                    )}
+                  <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handlePrevImage}
+                      className="bg-background/50 hover:bg-background/80"
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleNextImage}
+                      className="bg-background/50 hover:bg-background/80"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </Button>
                   </div>
-                  <button
-                    onClick={() => {
-                      const element = document.getElementById('details-tab');
-                      element?.click();
-                      element?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start',
-                      });
-                    }}
-                    className="text-sm font-medium text-primary hover:underline"
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {product.imageUrls?.map((url: string, index: number) => {
+                    const thumbnailUrl =
+                      url || `https://placehold.co/100x100/e2e8f0/e2e8f0`;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImage(index)}
+                        className={cn(
+                          'aspect-square relative rounded-md border overflow-hidden transition',
+                          selectedImage === index
+                            ? 'ring-2 ring-primary ring-offset-2'
+                            : 'hover:opacity-80'
+                        )}
+                      >
+                        <Image
+                          src={thumbnailUrl}
+                          alt={`${product.name} thumbnail ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="20vw"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div className="mt-16 md:mt-8 space-y-12">
+                <div id="description" className="scroll-mt-24">
+                  <h2 className="text-2xl font-bold font-heading mb-4">Description</h2>
+                  <p className="prose max-w-none text-muted-foreground">{product.description || 'No description provided.'}</p>
+                </div>
+                
+                <div id="details" className="scroll-mt-24">
+                    <h2 className="text-2xl font-bold font-heading mb-4">Product Details</h2>
+                    <div className="prose max-w-none">
+                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {product.longDescription || 'No details provided.'}
+                        </ReactMarkdown>
+                    </div>
+                </div>
+
+                <div id="reviews" className="scroll-mt-24">
+                  <h2 className="text-2xl font-bold font-heading mb-4">Reviews</h2>
+                  <p className="text-muted-foreground">See what our customers are saying.</p>
+                  {/* Testimonial component would go here */}
+                </div>
+              </div>
+              
+            </div>
+
+            {/* Right Column: Order Panel */}
+            <div className="md:col-span-2">
+              <div className="md:sticky top-24 space-y-6">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold font-heading">
+                    {product.name}
+                  </h1>
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className="h-5 w-5 text-yellow-400 fill-yellow-400"
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      4.8 (1,288 reviews)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h2 className="text-2xl font-semibold">Customize Your Order</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {product.details?.map(renderDetailField)}
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Quantity</Label>
+                    <Counter
+                      value={quantity}
+                      setValue={setQuantity}
+                      min={minQty}
+                      step={getStepForQuantity(quantity)}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full h-12 text-base"
+                    onClick={handleGetQuote}
                   >
-                    Bulk discounts available
-                  </button>
+                    <UploadCloud className="mr-2 h-5 w-5" />
+                    Upload Your Artwork
+                  </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                    <Button
-                        size="lg"
-                        className="w-full h-12 text-lg font-semibold"
-                        disabled={!allOptionsSelected || price === null}
-                        onClick={handleAddToCart}
-                    >
-                        <ShoppingCart className="mr-2 h-5 w-5" />
-                        Add to Cart
-                    </Button>
-                    <Button
-                        size="lg"
-                        variant="outline"
-                        className="w-full h-12 text-lg font-semibold"
-                        onClick={handleGetQuote}
-                    >
-                        Get a Quote
-                    </Button>
-                </div>
+                <Separator />
 
-                <p className="text-xs text-center text-muted-foreground">
-                  We'll send a final proof for your approval before printing.
-                </p>
+                <Card className="bg-muted/30">
+                    <CardContent className="p-6 space-y-4">
+                        <div className="flex justify-between items-center">
+                        <div>
+                            {price !== null ? (
+                            <>
+                                <p className="text-3xl font-bold">
+                                ₦{price.toLocaleString()}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                for {quantity} units
+                                </p>
+                            </>
+                            ) : (
+                            <p className="text-lg font-semibold text-muted-foreground">
+                                Select options to see price
+                            </p>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => scrollToSection('details')}
+                            className="text-sm font-medium text-primary hover:underline"
+                        >
+                            Bulk discounts available
+                        </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button
+                                size="lg"
+                                className="w-full h-12 text-lg font-semibold"
+                                disabled={!allOptionsSelected || price === null}
+                                onClick={handleAddToCart}
+                            >
+                                <ShoppingCart className="mr-2 h-5 w-5" />
+                                Add to Cart
+                            </Button>
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                className="w-full h-12 text-lg font-semibold"
+                                onClick={handleGetQuote}
+                            >
+                                Get a Quote
+                            </Button>
+                        </div>
+
+                        <p className="text-xs text-center text-muted-foreground">
+                        We'll send a final proof for your approval before printing.
+                        </p>
+                    </CardContent>
+                </Card>
               </div>
             </div>
-          </div>
-          <div className="mt-16">
-            <Tabs defaultValue="description">
-              <TabsList>
-                <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger id="details-tab" value="details">
-                  Product Details
-                </TabsTrigger>
-                <TabsTrigger value="faq">FAQ</TabsTrigger>
-              </TabsList>
-              <TabsContent
-                value="description"
-                className="py-6 prose max-w-none prose-p:text-muted-foreground"
-              >
-                <p>{product.description || 'No description provided.'}</p>
-              </TabsContent>
-              <TabsContent value="details" className="py-6 prose max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {product.longDescription || 'No details provided.'}
-                </ReactMarkdown>
-              </TabsContent>
-              <TabsContent value="faq" className="py-6">
-                <FaqSection />
-              </TabsContent>
-            </Tabs>
           </div>
           <RelatedProductsCarousel currentProduct={product} />
         </div>
