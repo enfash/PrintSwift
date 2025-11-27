@@ -362,6 +362,24 @@ export default function ProductDetailPage({
     router.push(`/quote?product=${encodeURIComponent(product.name)}`);
   };
 
+  const handleAddToCart = () => {
+    if (!product || price === null) return;
+    
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      quantity,
+      price,
+      image: product.imageUrls?.[product.mainImageIndex || 0] || '',
+      options: Object.entries(selectedOptions).map(([label, value]) => ({ label, value })),
+    });
+
+    toast({
+      title: "Added to Cart",
+      description: `${quantity} x ${product.name} has been added to your cart.`,
+    });
+  };
+
   const handlePrevImage = () => {
     setSelectedImage((prev) =>
       prev === 0 ? product.imageUrls.length - 1 : prev - 1
@@ -613,15 +631,26 @@ export default function ProductDetailPage({
                   </button>
                 </div>
 
-                <Button
-                  size="lg"
-                  className="w-full h-12 text-lg font-semibold"
-                  disabled={!allOptionsSelected}
-                  onClick={handleGetQuote}
-                >
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Get a Quote
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                    <Button
+                        size="lg"
+                        className="w-full h-12 text-lg font-semibold"
+                        disabled={!allOptionsSelected || price === null}
+                        onClick={handleAddToCart}
+                    >
+                        <ShoppingCart className="mr-2 h-5 w-5" />
+                        Add to Cart
+                    </Button>
+                    <Button
+                        size="lg"
+                        variant="outline"
+                        className="w-full h-12 text-lg font-semibold"
+                        onClick={handleGetQuote}
+                    >
+                        Get a Quote
+                    </Button>
+                </div>
+
                 <p className="text-xs text-center text-muted-foreground">
                   We'll send a final proof for your approval before printing.
                 </p>
