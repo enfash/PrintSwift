@@ -1,14 +1,13 @@
 
 'use client';
 import { use, useCallback, useEffect, useState, useRef } from 'react';
-import { notFound, useSearchParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
   ChevronRight,
-  LoaderCircle,
   ShoppingCart,
   Star,
   UploadCloud,
@@ -35,19 +34,15 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Counter } from '@/components/ui/counter';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/context/cart-context';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import RelatedProductsCarousel from '@/components/related-products-carousel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 async function getProductBySlug(firestore: any, slug: string) {
   if (!firestore || !slug) return null;
@@ -152,6 +147,19 @@ function ProductJsonLd({
   );
 }
 
+function StarRating({ rating, className }: { rating: number, className?: string }) {
+    return (
+        <div className={cn("flex items-center", className)}>
+            {[...Array(5)].map((_, i) => (
+                <Star
+                    key={i}
+                    className={`h-5 w-5 ${i < rating ? 'text-accent fill-accent' : 'text-muted-foreground/30'}`}
+                />
+            ))}
+        </div>
+    );
+}
+
 export default function ProductDetailPage({
   params,
 }: {
@@ -164,18 +172,25 @@ export default function ProductDetailPage({
   const { addToCart } = useCart();
   const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
     {}
   );
   const [price, setPrice] = useState<number | null>(null);
+  const [carouselApi, setCarouselApi] = React.useState<CarouselApi>()
 
   const categoriesRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'product_categories') : null),
     [firestore]
   );
   const { data: categories } = useCollection<any>(categoriesRef);
+
+  const testimonialsRef = useMemoFirebase(
+    () => firestore ? query(collection(firestore, 'testimonials'), where('visible', '==', true), limit(5)) : null,
+    [firestore]
+  );
+  const { data: testimonials } = useCollection<any>(testimonialsRef);
 
   const getMinQuantity = useCallback(() => {
     if (
@@ -266,7 +281,7 @@ export default function ProductDetailPage({
         notFound();
       } else {
         setProduct(productData);
-        setSelectedImage(productData.mainImageIndex || 0);
+        setSelectedImageIndex(productData.mainImageIndex || 0);
 
         const defaultOptions: Record<string, string> = {};
         if (productData.details) {
@@ -313,6 +328,13 @@ export default function ProductDetailPage({
       document.title = `${product.name} | BOMedia`;
     }
   }, [product?.name]);
+  
+  useEffect(() => {
+    if (!carouselApi) return
+    carouselApi.on("select", () => {
+      setSelectedImageIndex(carouselApi.selectedScrollSnap())
+    })
+  }, [carouselApi])
 
   const handleOptionChange = (label: string, value: string) => {
     setSelectedOptions((prev) => ({ ...prev, [label]: value }));
@@ -341,16 +363,11 @@ export default function ProductDetailPage({
     });
   };
 
-  const handlePrevImage = () => {
-    setSelectedImage((prev) =>
-      prev === 0 ? product.imageUrls.length - 1 : prev - 1
-    );
-  };
-
-  const handleNextImage = () => {
-    setSelectedImage((prev) =>
-      prev === product.imageUrls.length - 1 ? 0 : prev + 1
-    );
+  const handleThumbnailClick = (index: number) => {
+    setSelectedImageIndex(index);
+    if (carouselApi) {
+        carouselApi.scrollTo(index);
+    }
   };
 
   const renderDetailField = (detail: any) => {
@@ -424,10 +441,6 @@ export default function ProductDetailPage({
   const allOptionsSelected = product.details
     ? product.details.every((d: any) => selectedOptions[d.label])
     : true;
-
-  const mainImageUrl =
-    product.imageUrls?.[selectedImage] ||
-    `https://placehold.co/600x400/e2e8f0/e2e8f0`;
     
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -458,48 +471,41 @@ export default function ProductDetailPage({
             </div>
           )}
           <div className="grid md:grid-cols-5 gap-8 md:gap-12">
-            {/* Left Column: Image Gallery & Long-form Content */}
-            <div className="md:col-span-3 space-y-8">
-              <div className="space-y-4 md:sticky top-24 self-start">
-                <div className="aspect-square relative rounded-lg border overflow-hidden group">
-                  <Image
-                    src={mainImageUrl}
-                    alt={product.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
-                    sizes="(max-width: 768px) 100vw, 60vw"
-                    priority
-                  />
-                  <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handlePrevImage}
-                      className="bg-background/50 hover:bg-background/80"
-                    >
-                      <ChevronLeft className="h-6 w-6" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleNextImage}
-                      className="bg-background/50 hover:bg-background/80"
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-5 gap-2">
+            
+            <div className="md:col-span-3">
+               <Carousel setApi={setCarouselApi} className="group">
+                    <CarouselContent>
+                        {product.imageUrls?.map((url: string, index: number) => (
+                            <CarouselItem key={index}>
+                                <div className="aspect-square relative rounded-lg border overflow-hidden">
+                                <Image
+                                    src={url}
+                                    alt={`${product.name} image ${index + 1}`}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 768px) 100vw, 60vw"
+                                    priority={index === 0}
+                                />
+                                </div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 md:hidden">
+                       <CarouselPrevious className="static translate-y-0 bg-background/50 hover:bg-background/80" />
+                       <CarouselNext className="static translate-y-0 bg-background/50 hover:bg-background/80" />
+                    </div>
+                </Carousel>
+                <div className="grid grid-cols-5 gap-2 mt-4">
                   {product.imageUrls?.map((url: string, index: number) => {
                     const thumbnailUrl =
                       url || `https://placehold.co/100x100/e2e8f0/e2e8f0`;
                     return (
                       <button
                         key={index}
-                        onClick={() => setSelectedImage(index)}
+                        onClick={() => handleThumbnailClick(index)}
                         className={cn(
                           'aspect-square relative rounded-md border overflow-hidden transition',
-                          selectedImage === index
+                          selectedImageIndex === index
                             ? 'ring-2 ring-primary ring-offset-2'
                             : 'hover:opacity-80'
                         )}
@@ -515,40 +521,15 @@ export default function ProductDetailPage({
                     );
                   })}
                 </div>
-              </div>
-              
-              <div className="mt-16 md:mt-8 space-y-12">
-                <div id="description" className="scroll-mt-24">
-                  <h2 className="text-2xl font-bold font-heading mb-4">Description</h2>
-                  <p className="prose max-w-none text-muted-foreground">{product.description || 'No description provided.'}</p>
-                </div>
-                
-                <div id="details" className="scroll-mt-24">
-                    <h2 className="text-2xl font-bold font-heading mb-4">Product Details</h2>
-                    <div className="prose max-w-none">
-                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {product.longDescription || 'No details provided.'}
-                        </ReactMarkdown>
-                    </div>
-                </div>
-
-                <div id="reviews" className="scroll-mt-24">
-                  <h2 className="text-2xl font-bold font-heading mb-4">Reviews</h2>
-                  <p className="text-muted-foreground">See what our customers are saying.</p>
-                  {/* Testimonial component would go here */}
-                </div>
-              </div>
-              
             </div>
 
-            {/* Right Column: Order Panel */}
             <div className="md:col-span-2">
               <div className="md:sticky top-24 space-y-6">
                 <div>
                   <h1 className="text-3xl md:text-4xl font-bold font-heading">
                     {product.name}
                   </h1>
-                  <div className="mt-3 flex items-center gap-2">
+                   <div className="mt-3 flex items-center gap-4">
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -557,9 +538,9 @@ export default function ProductDetailPage({
                         />
                       ))}
                     </div>
-                    <span className="text-sm text-muted-foreground">
+                    <a href="#reviews" onClick={(e) => { e.preventDefault(); scrollToSection('reviews')}} className="text-sm text-muted-foreground hover:underline">
                       4.8 (1,288 reviews)
-                    </span>
+                    </a>
                   </div>
                 </div>
 
@@ -644,9 +625,70 @@ export default function ProductDetailPage({
               </div>
             </div>
           </div>
+          
+           <div className="mt-16 md:mt-24 space-y-12">
+            <div className="border-t pt-8">
+                <div className="sticky top-[63px] bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 py-2 border-b mb-6">
+                    <nav className="flex space-x-6">
+                        {['Description', 'Details', 'Reviews'].map((item) => (
+                        <a 
+                            key={item}
+                            href={`#${item.toLowerCase()}`}
+                            onClick={(e) => { e.preventDefault(); scrollToSection(item.toLowerCase())}}
+                            className="text-md font-medium text-muted-foreground hover:text-primary transition-colors"
+                        >
+                            {item}
+                        </a>
+                        ))}
+                    </nav>
+                </div>
+                
+                <div id="description" className="scroll-mt-24 pt-8">
+                  <h2 className="text-2xl font-bold font-heading mb-4">Description</h2>
+                  <div className="prose max-w-none text-muted-foreground">{product.description || 'No description provided.'}</div>
+                </div>
+                
+                <div id="details" className="scroll-mt-24 pt-12">
+                    <h2 className="text-2xl font-bold font-heading mb-4">Product Details</h2>
+                    <div className="prose max-w-none text-muted-foreground">
+                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {product.longDescription || 'No details provided.'}
+                        </ReactMarkdown>
+                    </div>
+                </div>
+
+                <div id="reviews" className="scroll-mt-24 pt-12">
+                  <h2 className="text-2xl font-bold font-heading mb-6">Reviews</h2>
+                  {testimonials && testimonials.length > 0 ? (
+                    <div className="space-y-8">
+                        {testimonials.map((testimonial) => (
+                            <div key={testimonial.id} className="flex gap-4">
+                                <Avatar>
+                                    <AvatarImage src={testimonial.imageUrl} alt={testimonial.name} />
+                                    <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <div className="flex items-center gap-4 mb-1">
+                                        <p className="font-semibold">{testimonial.name}</p>
+                                        <StarRating rating={testimonial.rating} />
+                                    </div>
+                                    <p className="text-muted-foreground">"{testimonial.quote}"</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No reviews for this product yet.</p>
+                  )}
+                </div>
+              </div>
+          </div>
+          
           <RelatedProductsCarousel currentProduct={product} />
         </div>
       </div>
     </>
   );
 }
+
+    
