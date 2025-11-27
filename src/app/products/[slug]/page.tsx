@@ -1,6 +1,6 @@
 
 'use client';
-import { use, useCallback, useEffect, useState, useRef } from 'react';
+import React, { use, useCallback, useEffect, useState, useRef } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -41,7 +41,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import RelatedProductsCarousel from '@/components/related-products-carousel';
 import { Card, CardContent } from '@/components/ui/card';
-import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 async function getProductBySlug(firestore: any, slug: string) {
@@ -178,7 +178,7 @@ export default function ProductDetailPage({
     {}
   );
   const [price, setPrice] = useState<number | null>(null);
-  const [carouselApi, setCarouselApi] = React.useState<CarouselApi>()
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>()
 
   const categoriesRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'product_categories') : null),
@@ -690,5 +690,3 @@ export default function ProductDetailPage({
     </>
   );
 }
-
-    
