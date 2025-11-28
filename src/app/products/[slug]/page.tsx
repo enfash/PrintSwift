@@ -6,8 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
-  ChevronLeft,
-  ChevronRight,
   ShoppingCart,
   Star,
   UploadCloud,
@@ -16,11 +14,12 @@ import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import {
   collection,
-  doc,
   getDocs,
   limit,
   query,
   where,
+  doc,
+  documentId,
 } from 'firebase/firestore';
 import { Label } from '@/components/ui/label';
 import {
@@ -43,6 +42,8 @@ import RelatedProductsCarousel from '@/components/related-products-carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 async function getProductBySlug(firestore: any, slug: string) {
   if (!firestore || !slug) return null;
@@ -191,6 +192,10 @@ export default function ProductDetailPage({
     [firestore]
   );
   const { data: testimonials } = useCollection<any>(testimonialsRef);
+  
+  const faqsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'faqs'), where('visible', '==', true)) : null, [firestore]);
+  const { data: faqs } = useCollection<any>(faqsRef);
+
 
   const getMinQuantity = useCallback(() => {
     if (
@@ -448,6 +453,8 @@ export default function ProductDetailPage({
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+  
+  const relevantFaqs = faqs?.filter(faq => faq.category === category?.name || faq.category === 'General') || [];
 
   return (
     <>
@@ -626,23 +633,23 @@ export default function ProductDetailPage({
             </div>
           </div>
           
-           <div className="mt-16 md:mt-24 space-y-12">
-            <div className="border-t pt-8">
-                <div className="sticky top-[63px] bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 py-2 border-b mb-6">
-                    <nav className="flex space-x-6">
-                        {['Description', 'Details', 'Reviews'].map((item) => (
-                        <a 
-                            key={item}
-                            href={`#${item.toLowerCase()}`}
-                            onClick={(e) => { e.preventDefault(); scrollToSection(item.toLowerCase())}}
-                            className="text-md font-medium text-muted-foreground hover:text-primary transition-colors"
-                        >
-                            {item}
-                        </a>
-                        ))}
-                    </nav>
-                </div>
-                
+           <div className="mt-16 md:mt-24">
+            <div className="sticky top-[63px] bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 py-2 border-b mb-6">
+                <nav className="flex space-x-6">
+                    {['Description', 'Details', 'Reviews', 'FAQ'].map((item) => (
+                    <a 
+                        key={item}
+                        href={`#${item.toLowerCase()}`}
+                        onClick={(e) => { e.preventDefault(); scrollToSection(item.toLowerCase())}}
+                        className="text-md font-medium text-muted-foreground hover:text-primary transition-colors"
+                    >
+                        {item}
+                    </a>
+                    ))}
+                </nav>
+            </div>
+            
+            <div className="space-y-12">
                 <div id="description" className="scroll-mt-24 pt-8">
                   <h2 className="text-2xl font-bold font-heading mb-4">Description</h2>
                   <div className="prose max-w-none text-muted-foreground">
@@ -652,7 +659,7 @@ export default function ProductDetailPage({
                   </div>
                 </div>
                 
-                <div id="details" className="scroll-mt-24 pt-12">
+                <div id="details" className="scroll-mt-24 pt-8">
                     <h2 className="text-2xl font-bold font-heading mb-4">Product Details</h2>
                     <div className="prose max-w-none text-muted-foreground">
                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -661,7 +668,7 @@ export default function ProductDetailPage({
                     </div>
                 </div>
 
-                <div id="reviews" className="scroll-mt-24 pt-12">
+                <div id="reviews" className="scroll-mt-24 pt-8">
                   <h2 className="text-2xl font-bold font-heading mb-6">Reviews</h2>
                   {testimonials && testimonials.length > 0 ? (
                     <div className="space-y-8">
@@ -684,6 +691,24 @@ export default function ProductDetailPage({
                   ) : (
                     <p className="text-muted-foreground">No reviews for this product yet.</p>
                   )}
+                </div>
+                
+                <div id="faq" className="scroll-mt-24 pt-8">
+                    <h2 className="text-2xl font-bold font-heading mb-4">Frequently Asked Questions</h2>
+                    {relevantFaqs.length > 0 ? (
+                        <Accordion type="single" collapsible className="w-full">
+                            {relevantFaqs.map((faq: any) => (
+                                <AccordionItem value={faq.id} key={faq.id}>
+                                    <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
+                                    <AccordionContent className="prose max-w-none text-muted-foreground">
+                                        {faq.answer}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    ) : (
+                         <p className="text-muted-foreground">No frequently asked questions for this product yet.</p>
+                    )}
                 </div>
               </div>
           </div>
