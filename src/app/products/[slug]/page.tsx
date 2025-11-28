@@ -178,7 +178,7 @@ export default function ProductDetailPage({
     {}
   );
   const [price, setPrice] = useState<number | null>(null);
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>()
+  const [carouselApi, setCarouselApi] = React.useState<CarouselApi>()
 
   const categoriesRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'product_categories') : null),
@@ -645,7 +645,11 @@ export default function ProductDetailPage({
                 
                 <div id="description" className="scroll-mt-24 pt-8">
                   <h2 className="text-2xl font-bold font-heading mb-4">Description</h2>
-                  <div className="prose max-w-none text-muted-foreground">{product.description || 'No description provided.'}</div>
+                  <div className="prose max-w-none text-muted-foreground">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {product.description || 'No description provided.'}
+                    </ReactMarkdown>
+                  </div>
                 </div>
                 
                 <div id="details" className="scroll-mt-24 pt-12">
