@@ -36,8 +36,7 @@ import { Counter } from '@/components/ui/counter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/context/cart-context';
 import { useRouter } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import MarkdownPreview from '@/components/MarkdownPreview';
 import RelatedProductsCarousel from '@/components/related-products-carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -162,11 +161,12 @@ function StarRating({ rating, className }: { rating: number, className?: string 
 }
 
 export default function ProductDetailPage({
-  params,
+  params: rawParams,
 }: {
   params: { slug: string };
 }) {
-  const { slug } = React.use(params);
+  const params = React.use(rawParams);
+  const { slug } = params;
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -652,20 +652,12 @@ export default function ProductDetailPage({
             <div className="space-y-12">
                 <div id="description" className="scroll-mt-24 pt-8">
                   <h2 className="text-2xl font-bold font-heading mb-4">Description</h2>
-                  <div className="prose max-w-none text-muted-foreground">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {product.description || 'No description provided.'}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownPreview content={product.description || 'No description provided.'} className="text-muted-foreground" />
                 </div>
                 
                 <div id="details" className="scroll-mt-24 pt-8">
                     <h2 className="text-2xl font-bold font-heading mb-4">Product Details</h2>
-                    <div className="prose max-w-none text-muted-foreground">
-                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {product.longDescription || 'No details provided.'}
-                        </ReactMarkdown>
-                    </div>
+                    <MarkdownPreview content={product.longDescription || 'No details provided.'} className="text-muted-foreground" />
                 </div>
 
                 <div id="reviews" className="scroll-mt-24 pt-8">
