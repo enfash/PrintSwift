@@ -9,12 +9,12 @@ import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState, use } from 'react';
+import React, { useEffect, useState } from 'react';
 import CustomerForm, { type CustomerFormValues } from '@/components/admin/customers/CustomerForm';
 import { updateCustomer } from '@/lib/firebase/customers';
 
 export default function CustomerEditPage({ params }: { params: { id: string } }) {
-    const { id } = use(params);
+    const { id } = React.use(params);
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();

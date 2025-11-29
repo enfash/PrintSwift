@@ -1,6 +1,6 @@
 
 'use client';
-import React, { use, useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -166,7 +166,7 @@ export default function ProductDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const { slug } = use(params);
+  const { slug } = React.use(params);
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();

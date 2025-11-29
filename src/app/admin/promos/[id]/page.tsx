@@ -14,7 +14,7 @@ import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, use, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -88,7 +88,7 @@ function LivePreview({ formData }: { formData: Partial<PromoFormValues> }) {
 }
 
 export default function EditPromoPage({ params }: { params: { id: string } }) {
-    const { id } = use(params);
+    const { id } = React.use(params);
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();

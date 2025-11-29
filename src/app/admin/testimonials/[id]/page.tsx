@@ -14,7 +14,7 @@ import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState, use } from 'react';
+import React, { useEffect, useState } from 'react';
 import { cn, compressImage } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -34,7 +34,7 @@ const testimonialSchema = z.object({
 });
 
 export default function EditTestimonialPage({ params }: { params: { id: string } }) {
-    const { id } = use(params);
+    const { id } = React.use(params);
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();

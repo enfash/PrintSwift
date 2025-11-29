@@ -15,7 +15,7 @@ import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebas
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useEffect, useState, use } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import useUnsavedChangesWarning from '@/hooks/use-unsaved-changes-warning';
 import { cn, compressImage } from '@/lib/utils';
@@ -30,7 +30,7 @@ const categorySchema = z.object({
 
 
 export default function CategoryEditPage({ params }: { params: { id: string } }) {
-    const { id } = use(params);
+    const { id } = React.use(params);
     const firestore = useFirestore();
     const storage = useStorage();
     const router = useRouter();
