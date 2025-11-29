@@ -176,18 +176,20 @@ export default function Home() {
               Discover our exclusive <br/>printing categories
             </h2>
           </div>
-          <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar md:grid md:grid-cols-4 md:gap-6">
+          <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar md:grid md:grid-cols-4 md:gap-6 snap-x snap-mandatory">
                 {isLoadingCategories ? (
                     Array.from({ length: 4 }).map((_, i) => <CategorySkeleton key={i} />)
                 ) : (
                     categories?.slice(0, 8).map((category, index) => (
-                        <div key={category.id} className="w-2/5 flex-shrink-0 md:w-auto">
-                            <CategoryCard
-                            title={category.name}
-                            href={`/products?category=${category.id}`}
-                            imageUrl={category.iconUrl || `https://picsum.photos/seed/${category.id || index}/140/140`}
-                            accent={category.backgroundColor || '#E2E8F0'}
-                            />
+                        <div key={category.id} className="w-2/5 flex-shrink-0 md:w-auto snap-center">
+                            <TiltCard>
+                                <CategoryCard
+                                title={category.name}
+                                href={`/products?category=${category.id}`}
+                                imageUrl={category.iconUrl || `https://picsum.photos/seed/${category.id || index}/140/140`}
+                                accent={category.backgroundColor || '#E2E8F0'}
+                                />
+                            </TiltCard>
                         </div>
                     ))
                 )}
@@ -214,7 +216,7 @@ export default function Home() {
 
                     return (
                     <TiltCard key={product.id}>
-                        <Link href={`/products/${product.slug}`}>
+                        <Link href={`/products/${product.slug}`} className="block h-full">
                             <Card className="overflow-hidden group transition-shadow duration-300 h-full shadow-sm hover:shadow-xl">
                             <div className="overflow-hidden">
                                 <div className="aspect-square relative">
@@ -226,6 +228,9 @@ export default function Home() {
                                     className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                                     data-ai-hint="product image"
                                     />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                       <Button variant="secondary" size="sm">View Product</Button>
+                                    </div>
                                 </div>
                             </div>
                             <CardContent className="p-4 text-center">

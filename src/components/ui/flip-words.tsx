@@ -22,25 +22,56 @@ export function FlipWords({
   ariaLabel = 'rotating words',
 }: FlipWordsProps) {
   const [index, setIndex] = React.useState(0);
+  const [containerWidth, setContainerWidth] = React.useState<number | null>(null);
   const mountedRef = React.useRef(false);
 
-  // cycle index every `interval` ms
   React.useEffect(() => {
     mountedRef.current = true;
+    let max = 0;
+    const spans = words.map((word) => {
+      const span = document.createElement('span');
+      // Hide the span but keep it in the layout to measure
+      span.style.visibility = 'hidden';
+      span.style.position = 'absolute';
+      span.style.whiteSpace = 'nowrap';
+      span.style.font = 'inherit';
+      span.style.fontWeight = 'inherit';
+      span.style.letterSpacing = 'inherit';
+      span.innerText = word;
+      document.body.appendChild(span);
+      return span;
+    });
+
+    spans.forEach((span) => {
+      max = Math.max(max, span.offsetWidth);
+    });
+    setContainerWidth(max);
+
+    spans.forEach((span) => document.body.removeChild(span));
+
     const id = setInterval(() => {
       setIndex((i) => (i + 1) % words.length);
     }, interval);
+
     return () => {
       mountedRef.current = false;
       clearInterval(id);
     };
-  }, [interval, words.length]);
+  }, [words, interval]);
+
 
   const current = words[index];
 
   return (
-    // aria-live so screen readers announce changes politely
-    <span aria-live="polite" aria-label={ariaLabel} className={cn('inline-block', className)}>
+    <span 
+      aria-live="polite" 
+      aria-label={ariaLabel}
+      className={cn('inline-block align-middle', className)}
+      style={{
+        width: containerWidth ? `${containerWidth}px` : 'auto',
+        minHeight: '1.2em'
+      }}
+    >
       <AnimatePresence
         mode="popLayout"
         onExitComplete={() => {
@@ -48,7 +79,7 @@ export function FlipWords({
         }}
       >
         <motion.span
-          key={current + index} // ensure unique key even for same text repeated later
+          key={current + index}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{
