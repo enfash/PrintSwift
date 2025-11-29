@@ -9,6 +9,9 @@ import { Logo } from '@/components/logo';
 import React from 'react';
 import { SearchBar } from '@/components/search-bar';
 import { useCart } from '@/context/cart-context';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const navLinks = [
   { href: '/products', label: 'Products' },
@@ -34,6 +37,30 @@ function CartButton() {
             </Link>
         </Button>
     )
+}
+
+function HeaderPhone() {
+    const firestore = useFirestore();
+    const settingsDocRef = useMemoFirebase(
+        () => (firestore ? doc(firestore, 'settings', 'global') : null),
+        [firestore]
+    );
+    const { data: settings, isLoading } = useDoc<any>(settingsDocRef);
+
+    if (isLoading) {
+        return <Skeleton className="h-6 w-32" />;
+    }
+
+    if (!settings?.phone) {
+        return null;
+    }
+    
+    return (
+        <a href={`tel:${settings.phone}`} className="hidden md:flex items-center text-sm font-medium text-muted-foreground hover:text-foreground">
+            <Phone className="h-4 w-4 mr-2" />
+            {settings.phone}
+        </a>
+    );
 }
 
 export function Header() {
@@ -70,6 +97,8 @@ export function Header() {
             <div className="w-full max-w-sm lg:max-w-[14rem] hidden md:block">
                 <SearchBar />
             </div>
+
+            <HeaderPhone />
             
             <CartButton />
 

@@ -17,6 +17,7 @@ import TestimonialsCarousel from '@/components/home/TestimonialsCarousel';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { FlipWords } from '@/components/ui/flip-words';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const words = [
   'Delivered Fast',
@@ -121,6 +122,8 @@ function CategoryCard({ title, href = '#', imageUrl, accent = '#FFD27A' }: { tit
 export default function Home() {
   const firestore = useFirestore();
 
+  const heroImage = PlaceHolderImages.find(p => p.id === 'hero-printing');
+
   const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'product_categories') : null, [firestore]);
   const { data: categories, isLoading: isLoadingCategories } = useCollection<any>(categoriesRef);
 
@@ -131,36 +134,30 @@ export default function Home() {
     <>
       {/* Hero Section */}
       <section className="relative w-full h-[548px] flex items-center justify-center text-center bg-primary">
-        <Image
-            src="https://images.unsplash.com/photo-1693031630369-bd429a57f115?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwcmludGluZyUyMHByZXNzfGVufDB8fHx8MTc2Mjg4MDAwM3ww&ixlib=rb-4.1.0&q=80&w=1080"
-            alt="Printing Press"
-            fill
-            sizes="100vw"
-            className="object-cover opacity-20"
-            data-ai-hint="printing press"
-            priority
-          />
+        {heroImage && (
+            <Image
+                src={heroImage.imageUrl}
+                alt={heroImage.description}
+                fill
+                sizes="100vw"
+                className="object-cover opacity-20"
+                data-ai-hint={heroImage.imageHint}
+                priority
+            />
+        )}
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-primary-foreground">
           <h1 className="text-4xl md:text-[62px] font-extrabold font-heading tracking-tight leading-tight">
-            Affordable Custom Branding,{' '}
-            <FlipWords
-                words={words}
-                interval={5000}
-                letterDelay={0.04}
-                wordDelay={0.22}
-                className="text-accent"
-            />
+            Affordable Custom Branding Delivered Fast
           </h1>
           <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto text-primary-foreground/80">
-            Transform your business with premium custom printing solutions. From branded packaging to corporate gifts,
-            we bring your vision to life.
+            We help Lagos businesses print high quality packaging and branded materials quickly.
           </p>
           <div className="mt-8 flex justify-center gap-4 flex-wrap">
             <Button asChild size="lg" variant="secondary" className="font-semibold">
-              <Link href="/products">Shop All Products</Link>
+              <Link href="/products">Shop Products</Link>
             </Button>
             <Button asChild size="lg" className="font-semibold bg-accent text-accent-foreground hover:bg-accent/90">
-              <Link href="/quote">Get a Quote</Link>
+              <Link href="/quote">Request a Quote</Link>
             </Button>
           </div>
         </div>
